@@ -1,10 +1,9 @@
-import { Body, Controller, Inject, Optional, Post } from "@nestjs/common";
+import { Body, Controller, Inject, Optional, Post, ValidationPipe } from "@nestjs/common";
 import { findSampleDocsDir, runSampleRagPipeline } from "./sample-rag.pipeline";
 import { runPostgresRagPipelineFromEnv } from "./postgres-rag.pipeline";
-
-interface QueryRequest {
-  question: string;
-}
+import { parseQueryMode } from "./app.config";
+import { QueryRequestDto } from "./query-request.dto";
+import { QueryService } from "./query.service";
 
 type QueryRunner = (question: string) => Promise<unknown>;
 
@@ -21,11 +20,27 @@ export class QueryController {
   constructor(
     @Optional()
     @Inject(QUERY_CONTROLLER_DEPENDENCIES)
-    private readonly dependencies: QueryControllerDependencies = {}
+    private readonly dependencies: QueryControllerDependencies = {},
+    @Optional()
+    private readonly queryService?: QueryService
   ) {}
 
   @Post()
-  async query(@Body() body: QueryRequest) {
+  async query(
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        expectedType: QueryRequestDto
+      })
+    )
+    body: QueryRequestDto
+  ) {
+    if (this.queryService && !hasInjectedRunners(this.dependencies)) {
+      return this.queryService.query(body.question);
+    }
+
     if (resolveQueryMode(this.dependencies.env ?? process.env) === "postgres") {
       const postgresRunner = this.dependencies.postgresRunner ?? runPostgresRagPipelineFromEnv;
       return postgresRunner(body.question);
@@ -43,9 +58,9 @@ export class QueryController {
 }
 
 export function resolveQueryMode(env: Record<string, string | undefined>): "sample" | "postgres" {
-  const mode = (env.RAG_QUERY_MODE ?? "sample").trim().toLowerCase();
-  if (mode === "sample" || mode === "postgres") {
-    return mode;
-  }
-  throw new Error(`unsupported RAG_QUERY_MODE: ${env.RAG_QUERY_MODE}`);
+  return parseQueryMode(env.RAG_QUERY_MODE);
+}
+
+function hasInjectedRunners(dependencies: QueryControllerDependencies): boolean {
+  return Boolean(dependencies.sampleRunner || dependencies.postgresRunner || dependencies.env);
 }

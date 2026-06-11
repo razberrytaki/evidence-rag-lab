@@ -140,29 +140,37 @@ export async function runPostgresRagPipelineFromEnv(
   question: string,
   env: PostgresRagRuntimeEnv = process.env
 ): Promise<PostgresRagPipelineResult> {
-  const providerConfig = resolveProviderConfig(env, "live");
-
-  const embeddingProvider = new OpenAIEmbeddingClient(loadOpenAIEmbeddingConfigFromEnv(env));
-  const llmProvider = createLiveLLMProvider(providerConfig, env);
   const client = createPgClient(env.DATABASE_URL ?? DEFAULT_DATABASE_URL);
 
   await client.connect();
   try {
-    return await runPostgresRagPipeline({
-      question,
-      embeddingProvider,
-      llmProvider,
-      modelConfig: {
-        provider: providerConfig.llmProvider,
-        model: providerConfig.chatModel
-      },
-      queryExecutor: client,
-      persistTrace: true,
-      topK: DEFAULT_TOP_K
-    });
+    return await runPostgresRagPipelineWithExecutorFromEnv(question, client, env);
   } finally {
     await client.end();
   }
+}
+
+export async function runPostgresRagPipelineWithExecutorFromEnv(
+  question: string,
+  queryExecutor: QueryExecutor,
+  env: PostgresRagRuntimeEnv = process.env
+): Promise<PostgresRagPipelineResult> {
+  const providerConfig = resolveProviderConfig(env, "live");
+
+  const embeddingProvider = new OpenAIEmbeddingClient(loadOpenAIEmbeddingConfigFromEnv(env));
+  const llmProvider = createLiveLLMProvider(providerConfig, env);
+  return runPostgresRagPipeline({
+    question,
+    embeddingProvider,
+    llmProvider,
+    modelConfig: {
+      provider: providerConfig.llmProvider,
+      model: providerConfig.chatModel
+    },
+    queryExecutor,
+    persistTrace: true,
+    topK: DEFAULT_TOP_K
+  });
 }
 
 export function createLiveLLMProvider(

@@ -1,5 +1,9 @@
 import { Controller, Get } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
+import { PublicRoute } from "./public-route.decorator";
 
+@PublicRoute()
+@SkipThrottle()
 @Controller("health")
 export class HealthController {
   @Get()
