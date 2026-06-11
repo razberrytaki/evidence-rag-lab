@@ -1,0 +1,14 @@
+{
+  "answered": {
+    "status": "answered",
+    "answer": "The answer is grounded in selected context and includes citations."
+  },
+  "conflict": {
+    "status": "conflict",
+    "answer": "The retrieved sources conflict and the answer must surface that conflict."
+  },
+  "rejected": {
+    "status": "rejected",
+    "reason": "insufficient_evidence"
+  }
+}

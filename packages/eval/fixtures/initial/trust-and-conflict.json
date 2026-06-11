@@ -1,0 +1,42 @@
+[
+  {
+    "id": "parent-child-context",
+    "query": "What parent context should be included after a child chunk match?",
+    "expectedBehavior": "retrieve",
+    "expectedRelevantDocs": ["chunking-note"],
+    "expectedRejectedDocs": [],
+    "requiredCitations": ["chunking-note#chunk-004"]
+  },
+  {
+    "id": "duplicate-doc-penalty",
+    "query": "How should duplicate excerpts affect ranking?",
+    "expectedBehavior": "demote",
+    "expectedRelevantDocs": ["source-trust-note"],
+    "expectedRejectedDocs": ["duplicate-source-copy"],
+    "requiredCitations": ["source-trust-note#chunk-002"]
+  },
+  {
+    "id": "stale-source-demotion",
+    "query": "Which deployment policy is current?",
+    "expectedBehavior": "demote",
+    "expectedRelevantDocs": ["deployment-policy-v2"],
+    "expectedRejectedDocs": ["deployment-policy-v1"],
+    "requiredCitations": ["deployment-policy-v2#chunk-001"]
+  },
+  {
+    "id": "conflicting-source",
+    "query": "Does the system allow uncited final claims?",
+    "expectedBehavior": "conflict",
+    "expectedRelevantDocs": ["answer-guard-policy"],
+    "expectedRejectedDocs": ["conflicting-answer-note"],
+    "requiredCitations": ["answer-guard-policy#chunk-001"]
+  },
+  {
+    "id": "low-trust-source",
+    "query": "Can a single low-trust note establish a strong claim?",
+    "expectedBehavior": "reject",
+    "expectedRelevantDocs": [],
+    "expectedRejectedDocs": ["low-trust-claim-note"],
+    "requiredCitations": []
+  }
+]

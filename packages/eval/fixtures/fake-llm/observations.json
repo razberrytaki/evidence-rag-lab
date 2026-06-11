@@ -1,0 +1,137 @@
+[
+  {
+    "fixtureId": "exact-term-retrieval",
+    "retrievedDocIds": ["hybrid-retrieval-note"],
+    "rejectedDocIds": [],
+    "citationChunkIds": ["hybrid-retrieval-note#chunk-001"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "semantic-paraphrase",
+    "retrievedDocIds": ["hybrid-retrieval-note"],
+    "rejectedDocIds": [],
+    "citationChunkIds": ["hybrid-retrieval-note#chunk-002"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "hybrid-rescue",
+    "retrievedDocIds": ["hybrid-retrieval-note"],
+    "rejectedDocIds": ["vector-only-note"],
+    "citationChunkIds": ["hybrid-retrieval-note#chunk-003"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "lexical-false-positive",
+    "retrievedDocIds": ["pgvector-indexing-note"],
+    "rejectedDocIds": ["keyword-only-index-note"],
+    "citationChunkIds": ["pgvector-indexing-note#chunk-001"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "parent-child-context",
+    "retrievedDocIds": ["chunking-note"],
+    "rejectedDocIds": [],
+    "citationChunkIds": ["chunking-note#chunk-004"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "duplicate-doc-penalty",
+    "retrievedDocIds": ["source-trust-note"],
+    "rejectedDocIds": ["duplicate-source-copy"],
+    "citationChunkIds": ["source-trust-note#chunk-002"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "stale-source-demotion",
+    "retrievedDocIds": ["deployment-policy-v2"],
+    "rejectedDocIds": ["deployment-policy-v1"],
+    "citationChunkIds": ["deployment-policy-v2#chunk-001"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "conflicting-source",
+    "retrievedDocIds": ["answer-guard-policy"],
+    "rejectedDocIds": ["conflicting-answer-note"],
+    "citationChunkIds": ["answer-guard-policy#chunk-001"],
+    "finalStatus": "conflict",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "low-trust-source",
+    "retrievedDocIds": [],
+    "rejectedDocIds": ["low-trust-claim-note"],
+    "citationChunkIds": [],
+    "finalStatus": "rejected",
+    "unsupportedClaimRejected": true,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "insufficient-evidence",
+    "retrievedDocIds": [],
+    "rejectedDocIds": [],
+    "citationChunkIds": [],
+    "finalStatus": "rejected",
+    "unsupportedClaimRejected": true,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "citation-per-claim",
+    "retrievedDocIds": ["answer-guard-policy"],
+    "rejectedDocIds": [],
+    "citationChunkIds": ["answer-guard-policy#chunk-002"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "unsupported-claim-detection",
+    "retrievedDocIds": ["answer-guard-policy"],
+    "rejectedDocIds": ["unsupported-extra-claim"],
+    "citationChunkIds": ["answer-guard-policy#chunk-003"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": true,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "document-prompt-injection",
+    "retrievedDocIds": ["prompt-injection-note"],
+    "rejectedDocIds": [],
+    "citationChunkIds": ["prompt-injection-note#chunk-001"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "user-prompt-injection",
+    "retrievedDocIds": [],
+    "rejectedDocIds": [],
+    "citationChunkIds": [],
+    "finalStatus": "rejected",
+    "unsupportedClaimRejected": true,
+    "traceComplete": true
+  },
+  {
+    "fixtureId": "trace-completeness",
+    "retrievedDocIds": ["observability-note"],
+    "rejectedDocIds": ["low-trust-claim-note"],
+    "citationChunkIds": ["observability-note#chunk-001"],
+    "finalStatus": "answered",
+    "unsupportedClaimRejected": false,
+    "traceComplete": true
+  }
+]

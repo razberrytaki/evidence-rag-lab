@@ -1,0 +1,222 @@
+:root {
+  color: #1f2933;
+  background: #f6f8fb;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.topbar p {
+  margin-top: 6px;
+  color: #52606d;
+}
+
+.status,
+.metric,
+.queryPanel,
+.traceSection {
+  border: 1px solid #d9e2ec;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  color: #0f766e;
+  white-space: nowrap;
+}
+
+.queryPanel {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.queryLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: #52606d;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.queryInput {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #bcccdc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.queryValue {
+  width: 100%;
+  color: #1f2933;
+  overflow-wrap: anywhere;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+}
+
+.metricIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: #2563eb;
+  background: #eff6ff;
+  border-radius: 6px;
+}
+
+.metricLabel {
+  color: #52606d;
+  font-size: 13px;
+}
+
+.metricValue {
+  margin-top: 2px;
+  color: #102a43;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.traceSection {
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #d9e2ec;
+}
+
+.sectionHeader h2 {
+  font-size: 18px;
+}
+
+.sectionHeader span {
+  color: #52606d;
+  font-size: 13px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf2f7;
+  text-align: left;
+}
+
+th {
+  color: #52606d;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-width: 76px;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selected {
+  color: #0f766e;
+  background: #ccfbf1;
+}
+
+.rejected {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.candidate {
+  color: #334e68;
+  background: #e0e8f9;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    padding: 18px;
+  }
+
+  .topbar {
+    display: block;
+  }
+
+  .status {
+    margin-top: 14px;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  th,
+  td {
+    padding: 10px;
+  }
+}

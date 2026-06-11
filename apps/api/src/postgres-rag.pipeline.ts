@@ -1,0 +1,222 @@
+import { createHash } from "node:crypto";
+import type { GenerationResult, QueryTrace, RetrievalResult } from "@evidencerag/domain";
+import {
+  type EmbeddingProvider,
+  loadOpenAIEmbeddingConfigFromEnv,
+  normalizeText,
+  OpenAIEmbeddingClient,
+  type OpenAIEmbeddingEnv
+} from "@evidencerag/ingest";
+import {
+  AnthropicLLMProvider,
+  FakeLLMProvider,
+  type GenerateAnswerInput,
+  type LLMProvider,
+  loadAnthropicLLMConfigFromEnv,
+  loadOpenAICompatibleLLMConfigFromEnv,
+  OpenAICompatibleLLMProvider,
+  type ProviderEnv,
+  type ResolvedProviderConfig,
+  resolveProviderConfig
+} from "@evidencerag/generation";
+import {
+  buildPostgresHybridRetrievalSql,
+  buildQueryTraceUpsertSql,
+  mapPostgresRetrievalRow,
+  rerankByQueryEvidence,
+  shouldPersistTraceSample,
+  type PostgresRetrievalRow
+} from "@evidencerag/retrieval";
+
+const DEFAULT_DATABASE_URL = "postgresql://evidence:rag@localhost:5432/evidence_rag_lab";
+const DEFAULT_TOP_K = 3;
+const MINIMUM_TRUST_SCORE = 0.5;
+const MINIMUM_RETRIEVAL_SCORE = 0.5;
+
+export interface QueryExecutor {
+  query(text: string, values: unknown[]): Promise<{
+    rows: unknown[];
+  }>;
+}
+
+export interface ConnectableQueryExecutor extends QueryExecutor {
+  connect(): Promise<void>;
+  end(): Promise<void>;
+}
+
+export interface PostgresRagPipelineInput {
+  question: string;
+  embeddingProvider: EmbeddingProvider;
+  llmProvider?: LLMProvider;
+  modelConfig?: GenerateAnswerInput["modelConfig"];
+  queryExecutor: QueryExecutor;
+  persistTrace?: boolean;
+  traceSampleRate?: number;
+  topK?: number;
+}
+
+export interface PostgresRagPipelineResult {
+  query: string;
+  selectedContext: RetrievalResult[];
+  generation: GenerationResult;
+  trace: QueryTrace;
+}
+
+export interface PostgresRagRuntimeEnv extends OpenAIEmbeddingEnv, ProviderEnv {
+  DATABASE_URL?: string;
+}
+
+export async function runPostgresRagPipeline(
+  input: PostgresRagPipelineInput
+): Promise<PostgresRagPipelineResult> {
+  const normalizedQuery = normalizeText(input.question).toLowerCase();
+  const [embedding] = await input.embeddingProvider.embedTexts([input.question]);
+  if (!embedding) {
+    throw new Error("embedding provider returned no vector for query");
+  }
+
+  const retrievalSql = buildPostgresHybridRetrievalSql({
+    query: input.question,
+    embedding,
+    topK: input.topK ?? DEFAULT_TOP_K
+  });
+  const result = await input.queryExecutor.query(retrievalSql.text, retrievalSql.values);
+  const mappedCandidates = result.rows
+    .map((row) => mapPostgresRetrievalRow(row as PostgresRetrievalRow))
+    .map(calibratePostgresCandidateScore);
+  const candidates = rerankByQueryEvidence({
+    query: input.question,
+    candidates: mappedCandidates,
+    topK: input.topK ?? DEFAULT_TOP_K
+  });
+  const rejected = candidates
+    .filter((candidate) => candidate.score.freshnessScore < MINIMUM_TRUST_SCORE)
+    .map((candidate) => ({
+      chunkId: candidate.chunk.id,
+      reason: "stale_source"
+    }));
+  const selectedContext = candidates
+    .filter((candidate) => candidate.score.retrievalScore >= MINIMUM_RETRIEVAL_SCORE)
+    .filter((candidate) => candidate.score.trustScore >= MINIMUM_TRUST_SCORE)
+    .filter((candidate) => !rejected.some((rejection) => rejection.chunkId === candidate.chunk.id))
+    .slice(0, input.topK ?? DEFAULT_TOP_K);
+
+  const provider = input.llmProvider ?? new FakeLLMProvider();
+  const modelConfig = input.modelConfig ?? resolveDefaultModelConfig(provider);
+  const generation = await provider.generateAnswer({
+    question: input.question,
+    selectedContext,
+    citationPolicy: {
+      requireCitationPerClaim: true,
+      rejectUnsupportedClaims: true
+    },
+    modelConfig
+  });
+  const trace: QueryTrace = {
+    id: makeTraceId(input.question),
+    query: input.question,
+    normalizedQuery,
+    candidates,
+    selectedChunkIds: selectedContext.map((item) => item.chunk.id),
+    rejected,
+    generation,
+    sanitized: true
+  };
+
+  if (input.persistTrace && shouldPersistTraceSample(trace.id, input.traceSampleRate ?? 1)) {
+    const traceSql = buildQueryTraceUpsertSql(trace);
+    await input.queryExecutor.query(traceSql.text, traceSql.values);
+  }
+
+  return {
+    query: input.question,
+    selectedContext,
+    generation,
+    trace
+  };
+}
+
+export async function runPostgresRagPipelineFromEnv(
+  question: string,
+  env: PostgresRagRuntimeEnv = process.env
+): Promise<PostgresRagPipelineResult> {
+  const providerConfig = resolveProviderConfig(env, "live");
+
+  const embeddingProvider = new OpenAIEmbeddingClient(loadOpenAIEmbeddingConfigFromEnv(env));
+  const llmProvider = createLiveLLMProvider(providerConfig, env);
+  const client = createPgClient(env.DATABASE_URL ?? DEFAULT_DATABASE_URL);
+
+  await client.connect();
+  try {
+    return await runPostgresRagPipeline({
+      question,
+      embeddingProvider,
+      llmProvider,
+      modelConfig: {
+        provider: providerConfig.llmProvider,
+        model: providerConfig.chatModel
+      },
+      queryExecutor: client,
+      persistTrace: true,
+      topK: DEFAULT_TOP_K
+    });
+  } finally {
+    await client.end();
+  }
+}
+
+export function createLiveLLMProvider(
+  providerConfig: Pick<ResolvedProviderConfig, "llmProvider" | "chatModel">,
+  env: ProviderEnv,
+  fetchImpl?: typeof fetch
+): LLMProvider {
+  if (providerConfig.llmProvider === "anthropic") {
+    return new AnthropicLLMProvider({
+      ...loadAnthropicLLMConfigFromEnv(env),
+      fetchImpl
+    });
+  }
+
+  return new OpenAICompatibleLLMProvider({
+    ...loadOpenAICompatibleLLMConfigFromEnv(env),
+    fetchImpl
+  });
+}
+
+function calibratePostgresCandidateScore(candidate: RetrievalResult, index: number): RetrievalResult {
+  return {
+    ...candidate,
+    score: {
+      ...candidate.score,
+      fusedRank: index + 1,
+      // PostgreSQL RRF scores are small raw rank-fusion values. The answer gate
+      // uses a separate 0..1 confidence scale until eval-driven calibration exists.
+      retrievalScore: Math.max(0, 0.99 - index * 0.1)
+    }
+  };
+}
+
+function makeTraceId(query: string): string {
+  return `pg-trace-${createHash("sha256").update(query).digest("hex").slice(0, 12)}`;
+}
+
+function resolveDefaultModelConfig(provider: LLMProvider): GenerateAnswerInput["modelConfig"] {
+  if (provider.name === "openai-compatible" || provider.name === "anthropic" || provider.name === "fake") {
+    return {
+      provider: provider.name,
+      model: provider.name
+    };
+  }
+
+  return {
+    provider: "fake",
+    model: provider.name
+  };
+}
+
+function createPgClient(connectionString: string): ConnectableQueryExecutor {
+  const pg = require("pg") as {
+    Client: new (config: { connectionString: string }) => ConnectableQueryExecutor;
+  };
+  return new pg.Client({ connectionString });
+}

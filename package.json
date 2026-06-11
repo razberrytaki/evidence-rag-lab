@@ -1,0 +1,47 @@
+{
+  "name": "evidence-rag-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small, reproducible RAG reliability lab focused on evidence, evaluation, and explicit failure.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "pnpm -r --sort build",
+    "typecheck": "pnpm -r --sort --if-present typecheck",
+    "test": "pnpm -r --sort --if-present test",
+    "lint": "pnpm -r --sort --if-present lint",
+    "eval:report": "pnpm --filter @evidencerag/eval eval:report",
+    "provider:report": "pnpm --filter @evidencerag/eval provider:report",
+    "scale:report": "pnpm --filter @evidencerag/eval scale:report",
+    "index:report": "pnpm --filter @evidencerag/eval index:report",
+    "public:check": "pnpm build && pnpm test && pnpm typecheck && pnpm eval:report && pnpm provider:report && pnpm scale:report && pnpm index:report && pnpm security:public",
+    "db:smoke": "pnpm build && tsx scripts/db/postgres-ingest-smoke.ts",
+    "db:live-smoke": "pnpm build && tsx scripts/db/postgres-live-query-smoke.ts",
+    "db:live-generation-smoke": "pnpm build && tsx scripts/db/postgres-live-generation-smoke.ts",
+    "db:trace-retention-smoke": "pnpm build && tsx scripts/db/postgres-trace-retention-smoke.ts",
+    "db:trace-cleanup": "pnpm build && tsx scripts/db/postgres-trace-cleanup.ts",
+    "db:quality-smoke": "pnpm build && tsx scripts/db/postgres-retrieval-quality-smoke.ts",
+    "db:retrieval-compare-smoke": "pnpm build && tsx scripts/db/postgres-retrieval-mode-comparison-smoke.ts",
+    "db:retrieval-latency-smoke": "pnpm build && tsx scripts/db/postgres-retrieval-latency-smoke.ts",
+    "db:retrieval-concurrency-smoke": "pnpm build && tsx scripts/db/postgres-retrieval-concurrency-smoke.ts",
+    "dev:api": "pnpm --filter @evidencerag/api dev",
+    "dev:web": "pnpm --filter @evidencerag/web dev",
+    "security:gitleaks": "gitleaks git --redact --verbose .",
+    "security:claims": "node --test scripts/security/check-public-claims.test.mjs && node scripts/security/check-public-claims.mjs",
+    "security:readiness": "node --test scripts/security/check-public-readiness.test.mjs && node scripts/security/check-public-readiness.mjs",
+    "security:fixtures": "node scripts/security/check-public-fixtures.mjs",
+    "security:tree": "node --test scripts/security/check-public-tree.test.mjs && node scripts/security/check-public-tree.mjs",
+    "security:public": "pnpm security:fixtures && pnpm security:claims && pnpm security:tree && pnpm security:readiness"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "pg": "^8.21.0",
+    "tsx": "^4.22.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

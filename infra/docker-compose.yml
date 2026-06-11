@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: evidence-rag-lab-postgres
+    environment:
+      POSTGRES_DB: evidence_rag_lab
+      POSTGRES_USER: evidence
+      POSTGRES_PASSWORD: rag
+    ports:
+      - "5432:5432"
+    volumes:
+      - evidence-rag-lab-pg:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evidence -d evidence_rag_lab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  evidence-rag-lab-pg:

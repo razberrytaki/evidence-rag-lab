@@ -1,0 +1,4 @@
+title = "EvidenceRAG Lab public repository secret rules"
+
+[extend]
+useDefault = true

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "exact-term-retrieval",
+    "query": "What does reciprocal rank fusion do in EvidenceRAG?",
+    "expectedBehavior": "retrieve",
+    "expectedRelevantDocs": ["hybrid-retrieval-note"],
+    "expectedRejectedDocs": [],
+    "requiredCitations": ["hybrid-retrieval-note#chunk-001"]
+  },
+  {
+    "id": "semantic-paraphrase",
+    "query": "How does the system combine meaning-based search with keyword search?",
+    "expectedBehavior": "retrieve",
+    "expectedRelevantDocs": ["hybrid-retrieval-note"],
+    "expectedRejectedDocs": [],
+    "requiredCitations": ["hybrid-retrieval-note#chunk-002"]
+  },
+  {
+    "id": "hybrid-rescue",
+    "query": "Why not rely only on semantic vectors?",
+    "expectedBehavior": "retrieve",
+    "expectedRelevantDocs": ["hybrid-retrieval-note"],
+    "expectedRejectedDocs": ["vector-only-note"],
+    "requiredCitations": ["hybrid-retrieval-note#chunk-003"]
+  },
+  {
+    "id": "lexical-false-positive",
+    "query": "Which source explains index selection for EvidenceRAG?",
+    "expectedBehavior": "demote",
+    "expectedRelevantDocs": ["pgvector-indexing-note"],
+    "expectedRejectedDocs": ["keyword-only-index-note"],
+    "requiredCitations": ["pgvector-indexing-note#chunk-001"]
+  }
+]

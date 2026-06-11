@@ -1,0 +1,26 @@
+{
+  "name": "@evidencerag/eval",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "eval:report": "pnpm build && node dist/write-report.js",
+    "provider:report": "pnpm build && node dist/write-provider-comparison-report.js",
+    "scale:report": "pnpm build && node dist/write-scale-budget-report.js",
+    "index:report": "pnpm build && node dist/write-vector-index-budget-report.js"
+  },
+  "dependencies": {
+    "@evidencerag/domain": "workspace:*",
+    "@evidencerag/generation": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
