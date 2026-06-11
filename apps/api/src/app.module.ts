@@ -9,7 +9,7 @@ import { DatabaseModule } from "./database.module";
 import { HealthController } from "./health.controller";
 import { QueryController } from "./query.controller";
 import { QueryTraceController } from "./query-trace.controller";
-import { QueryService } from "./query.service";
+import { defaultQueryPipelineRunner, QUERY_PIPELINE_RUNNER, QueryService } from "./query.service";
 import { QueryTraceService } from "./query-trace.service";
 
 @Module({
@@ -30,6 +30,10 @@ import { QueryTraceService } from "./query-trace.service";
   ],
   controllers: [HealthController, QueryController, QueryTraceController],
   providers: [
+    {
+      provide: QUERY_PIPELINE_RUNNER,
+      useValue: defaultQueryPipelineRunner
+    },
     QueryService,
     QueryTraceService,
     {

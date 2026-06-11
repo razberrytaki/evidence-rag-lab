@@ -90,6 +90,25 @@ describe("public tree scanner", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it("allows known local tool artifacts at the repository root", () => {
+    const root = makeTempRepo();
+    mkdirSync(join(root, ".agents"), { recursive: true });
+    mkdirSync(join(root, ".pnpm-store"), { recursive: true });
+    writeFileSync(join(root, ".DS_Store"), "local macOS metadata\n");
+    writeFileSync(join(root, "skills-lock.json"), "{}\n");
+    writeFileSync(join(root, "README.md"), "Public setup instructions only.\n");
+
+    const result = scanPublicTree(root);
+
+    assert.deepEqual(result, {
+      ok: true,
+      failures: [],
+      scannedFileCount: 1
+    });
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
   it("allows explicit fake secret markers used by unit tests", () => {
     const root = makeTempRepo();
     const openAiApiKey = "OPENAI" + "_API_KEY";

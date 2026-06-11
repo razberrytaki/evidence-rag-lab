@@ -1,5 +1,6 @@
-import { ValidationPipe, type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { AppConfigService } from "./app.config";
+import { createRequestValidationPipe } from "./request-validation.pipe";
 
 export function configureApp(app: INestApplication): INestApplication {
   const config = app.get(AppConfigService);
@@ -8,13 +9,7 @@ export function configureApp(app: INestApplication): INestApplication {
     origin: config.corsOrigins
   });
   app.enableShutdownHooks();
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true
-    })
-  );
+  app.useGlobalPipes(createRequestValidationPipe());
 
   return app;
 }

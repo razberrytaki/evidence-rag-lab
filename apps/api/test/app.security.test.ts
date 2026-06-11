@@ -52,6 +52,21 @@ describe("App HTTP security boundaries", () => {
     });
   });
 
+  it("rejects non-whitelisted query request fields", async () => {
+    app = await createInitializedApp();
+
+    const response = await request(app.getHttpServer()).post("/query").send({
+      question: "Why not rely only on semantic vectors?",
+      extra: "field"
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      statusCode: 400,
+      message: expect.arrayContaining([expect.stringContaining("property extra should not exist")])
+    });
+  });
+
   it("requires a bearer token for protected API routes when API_AUTH_TOKEN is configured", async () => {
     process.env.API_AUTH_TOKEN = "test-api-token";
     app = await createInitializedApp();

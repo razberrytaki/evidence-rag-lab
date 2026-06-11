@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { QueryTraceController } from "../src/query-trace.controller";
+import type { QueryTraceService } from "../src/query-trace.service";
 
 describe("QueryTraceController", () => {
-  it("returns the latest persisted sanitized trace through an injected reader", async () => {
-    const controller = new QueryTraceController({
-      traceReader: async () => ({
+  it("delegates latest trace reads to QueryTraceService", async () => {
+    const queryTraceService = {
+      readLatest: vi.fn(async () => ({
         id: "pg-trace-001",
         query: "Why not rely only on semantic vectors?",
         normalizedQuery: "why not rely only on semantic vectors?",
@@ -42,13 +43,15 @@ describe("QueryTraceController", () => {
         },
         sanitized: true,
         createdAt: "2026-06-11T08:00:00.000Z"
-      })
-    });
+      }))
+    } as Pick<QueryTraceService, "readLatest">;
+    const controller = new QueryTraceController(queryTraceService as QueryTraceService);
 
     await expect(controller.getLatestTrace()).resolves.toMatchObject({
       id: "pg-trace-001",
       sanitized: true,
       selectedChunkIds: ["hybrid-retrieval-note#chunk-001"]
     });
+    expect(queryTraceService.readLatest).toHaveBeenCalledOnce();
   });
 });
