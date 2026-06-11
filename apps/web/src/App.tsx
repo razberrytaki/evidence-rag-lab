@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, Search, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   buildTraceRows,
-  fetchLatestTrace,
+  fetchLatestTraceDeduped,
   getConfiguredApiBaseUrl,
   sampleTrace,
   summarizeTrace,
@@ -18,7 +18,7 @@ export function App() {
   useEffect(() => {
     let active = true;
 
-    void fetchLatestTrace(getConfiguredApiBaseUrl()).then((result) => {
+    void fetchLatestTraceDeduped(getConfiguredApiBaseUrl()).then((result) => {
       if (active) {
         setLoadedTrace(result);
       }

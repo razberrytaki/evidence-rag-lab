@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildTraceRows, fetchLatestTrace, summarizeTrace, type PublicQueryTrace } from "./queryTrace";
+import {
+  buildTraceRows,
+  fetchLatestTrace,
+  fetchLatestTraceDeduped,
+  summarizeTrace,
+  type PublicQueryTrace
+} from "./queryTrace";
 
 describe("query trace view model", () => {
   const trace = {
@@ -91,5 +97,33 @@ describe("query trace view model", () => {
 
     expect(loaded.source).toBe("sample");
     expect(loaded.trace.id).toBe("sample-trace");
+  });
+
+  it("deduplicates concurrent latest trace requests for the same API base URL", async () => {
+    let fetchCallCount = 0;
+    let resolveTrace!: (trace: PublicQueryTrace) => void;
+    const tracePayload = new Promise<PublicQueryTrace>((resolve) => {
+      resolveTrace = resolve;
+    });
+
+    const fetcher = async () => {
+      fetchCallCount += 1;
+      return {
+        ok: true,
+        json: async () => tracePayload
+      };
+    };
+
+    const firstLoad = fetchLatestTraceDeduped("http://127.0.0.1:3000/", fetcher);
+    const secondLoad = fetchLatestTraceDeduped("http://127.0.0.1:3000", fetcher);
+
+    expect(fetchCallCount).toBe(1);
+
+    resolveTrace(trace);
+
+    await expect(Promise.all([firstLoad, secondLoad])).resolves.toEqual([
+      { source: "api", trace },
+      { source: "api", trace }
+    ]);
   });
 });

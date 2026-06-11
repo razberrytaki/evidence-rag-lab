@@ -70,6 +70,8 @@ type TraceFetch = (input: string) => Promise<{
   json(): Promise<unknown>;
 }>;
 
+const inFlightLatestTraceRequests = new WeakMap<TraceFetch, Map<string, Promise<LoadedTrace>>>();
+
 export const sampleTrace: PublicQueryTrace = {
   id: "sample-trace",
   query: "Why not rely only on semantic vectors?",
@@ -161,6 +163,34 @@ export async function fetchLatestTrace(
   } catch {
     return { source: "sample", trace: sampleTrace };
   }
+}
+
+export function fetchLatestTraceDeduped(
+  apiBaseUrl: string,
+  fetcher: TraceFetch = globalThis.fetch
+): Promise<LoadedTrace> {
+  const normalizedApiBaseUrl = trimApiBaseUrl(apiBaseUrl);
+  let requestsByBaseUrl = inFlightLatestTraceRequests.get(fetcher);
+
+  if (!requestsByBaseUrl) {
+    requestsByBaseUrl = new Map<string, Promise<LoadedTrace>>();
+    inFlightLatestTraceRequests.set(fetcher, requestsByBaseUrl);
+  }
+
+  const inFlightRequest = requestsByBaseUrl.get(normalizedApiBaseUrl);
+  if (inFlightRequest) {
+    return inFlightRequest;
+  }
+
+  const request = fetchLatestTrace(normalizedApiBaseUrl, fetcher).finally(() => {
+    requestsByBaseUrl.delete(normalizedApiBaseUrl);
+    if (requestsByBaseUrl.size === 0) {
+      inFlightLatestTraceRequests.delete(fetcher);
+    }
+  });
+
+  requestsByBaseUrl.set(normalizedApiBaseUrl, request);
+  return request;
 }
 
 export function buildTraceRows(trace: PublicQueryTrace): TraceRow[] {
