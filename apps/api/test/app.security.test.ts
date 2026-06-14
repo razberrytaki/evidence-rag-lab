@@ -76,6 +76,30 @@ describe("App HTTP security boundaries", () => {
     expect(response.status).toBe(401);
   });
 
+  it("allows protected API routes when a valid bearer token is provided", async () => {
+    process.env.API_AUTH_TOKEN = "test-api-token";
+    app = await createInitializedApp();
+
+    const response = await request(app.getHttpServer())
+      .get("/query-traces/latest")
+      .set("Authorization", "Bearer test-api-token");
+
+    expect(response.status).toBe(200);
+  });
+
+  it("keeps health public when API_AUTH_TOKEN is configured", async () => {
+    process.env.API_AUTH_TOKEN = "test-api-token";
+    app = await createInitializedApp();
+
+    const response = await request(app.getHttpServer()).get("/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      ok: true,
+      service: "evidence-rag-lab-api"
+    });
+  });
+
   it("rate limits repeated query requests", async () => {
     process.env.API_RATE_LIMIT_MAX = "1";
     process.env.API_RATE_LIMIT_WINDOW_MS = "60000";
