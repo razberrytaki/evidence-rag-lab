@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { Client, Pool } from "pg";
 import {
+  nearestRankPercentile,
   renderRetrievalConcurrencyReportMarkdown,
+  roundMilliseconds,
   sampleRetrievalQualityCases,
   type RetrievalConcurrencyMode,
   type RetrievalConcurrencyObservation
@@ -17,10 +19,7 @@ import {
   OpenAIEmbeddingClient
 } from "@evidencerag/ingest";
 import {
-  buildPostgresHybridRetrievalSql,
-  buildPostgresLexicalRetrievalSql,
-  buildPostgresVectorRetrievalSql,
-  type ParameterizedSql
+  buildPostgresRetrievalSqlForMode
 } from "@evidencerag/retrieval";
 
 interface QueryEmbedding {
@@ -81,10 +80,10 @@ async function main(): Promise<void> {
         topK: TOP_K,
         observations,
         notes: [
-          "Embedding is intentionally precomputed before timing so this isolates PostgreSQL retrieval concurrency.",
-          "Small local smoke over public sample queries; not a production load benchmark.",
-          "Each concurrency level runs the same retrieval eval cases.",
-          "Query text, provider payloads, and credentials are intentionally excluded from this report."
+          "PostgreSQL retrieval concurrency만 분리하기 위해 timing 전에 embedding을 의도적으로 미리 계산한다.",
+          "public sample query 위의 작은 local 동작 확인이며 production load benchmark가 아니다.",
+          "각 concurrency level은 같은 retrieval eval case를 실행한다.",
+          "Query text, provider payload, credential은 이 report에서 의도적으로 제외한다."
         ]
       }),
       "utf8"
@@ -157,7 +156,7 @@ async function measureRetrievalConcurrency(input: {
 
   try {
     const timings = await mapWithConcurrency(sampleRetrievalQualityCases, input.concurrency, async (testCase) => {
-      const retrievalSql = buildRetrievalSqlForMode({
+      const retrievalSql = buildPostgresRetrievalSqlForMode({
         mode: input.mode,
         query: testCase.query,
         embedding: input.embeddingsByCaseId.get(testCase.id),
@@ -204,32 +203,6 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-function buildRetrievalSqlForMode(input: {
-  mode: RetrievalConcurrencyMode;
-  query: string;
-  embedding: readonly number[] | undefined;
-  topK: number;
-}): ParameterizedSql {
-  switch (input.mode) {
-    case "lexical":
-      return buildPostgresLexicalRetrievalSql({
-        query: input.query,
-        topK: input.topK
-      });
-    case "vector":
-      return buildPostgresVectorRetrievalSql({
-        embedding: requireEmbedding(input.embedding, input.mode),
-        topK: input.topK
-      });
-    case "hybrid":
-      return buildPostgresHybridRetrievalSql({
-        query: input.query,
-        embedding: requireEmbedding(input.embedding, input.mode),
-        topK: input.topK
-      });
-  }
-}
-
 function summarizeConcurrency(
   mode: RetrievalConcurrencyMode,
   concurrency: number,
@@ -242,36 +215,14 @@ function summarizeConcurrency(
     mode,
     concurrency,
     queryCount: timings.length,
-    minMs: roundMs(sorted[0] ?? 0),
-    p50Ms: roundMs(percentileNearestRank(sorted, 0.5)),
-    p95Ms: roundMs(percentileNearestRank(sorted, 0.95)),
-    p99Ms: roundMs(percentileNearestRank(sorted, 0.99)),
-    maxMs: roundMs(sorted[sorted.length - 1] ?? 0),
-    totalMs: roundMs(successfulTimings.reduce((sum, timing) => sum + timing, 0)),
+    minMs: roundMilliseconds(sorted[0] ?? 0),
+    p50Ms: roundMilliseconds(nearestRankPercentile(sorted, 0.5)),
+    p95Ms: roundMilliseconds(nearestRankPercentile(sorted, 0.95)),
+    p99Ms: roundMilliseconds(nearestRankPercentile(sorted, 0.99)),
+    maxMs: roundMilliseconds(sorted[sorted.length - 1] ?? 0),
+    totalMs: roundMilliseconds(successfulTimings.reduce((sum, timing) => sum + timing, 0)),
     errorCount: timings.filter((timing) => !timing.ok).length
   };
-}
-
-function percentileNearestRank(sortedValues: readonly number[], percentile: number): number {
-  if (sortedValues.length === 0) {
-    return 0;
-  }
-  const index = Math.min(sortedValues.length - 1, Math.max(0, Math.ceil(sortedValues.length * percentile) - 1));
-  return sortedValues[index] ?? 0;
-}
-
-function roundMs(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function requireEmbedding(
-  embedding: readonly number[] | undefined,
-  mode: RetrievalConcurrencyMode
-): readonly number[] {
-  if (!embedding) {
-    throw new Error(`missing query embedding for ${mode} concurrency smoke`);
-  }
-  return embedding;
 }
 
 main().catch((error: unknown) => {

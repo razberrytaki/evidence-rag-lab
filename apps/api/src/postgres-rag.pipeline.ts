@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { GenerationResult, QueryTrace, RetrievalResult } from "@evidencerag/domain";
 import {
   type EmbeddingProvider,
@@ -27,21 +26,17 @@ import {
   shouldPersistTraceSample,
   type PostgresRetrievalRow
 } from "@evidencerag/retrieval";
+import { makeDeterministicTraceId } from "./trace-id";
 
-const DEFAULT_DATABASE_URL = "postgresql://evidence:rag@localhost:5432/evidence_rag_lab";
 const DEFAULT_TOP_K = 3;
 const MINIMUM_TRUST_SCORE = 0.5;
 const MINIMUM_RETRIEVAL_SCORE = 0.5;
+const MINIMUM_RERANK_SCORE = 0.5;
 
 export interface QueryExecutor {
   query(text: string, values: unknown[]): Promise<{
     rows: unknown[];
   }>;
-}
-
-export interface ConnectableQueryExecutor extends QueryExecutor {
-  connect(): Promise<void>;
-  end(): Promise<void>;
 }
 
 export interface PostgresRagPipelineInput {
@@ -62,9 +57,7 @@ export interface PostgresRagPipelineResult {
   trace: QueryTrace;
 }
 
-export interface PostgresRagRuntimeEnv extends OpenAIEmbeddingEnv, ProviderEnv {
-  DATABASE_URL?: string;
-}
+export type PostgresRagRuntimeEnv = OpenAIEmbeddingEnv & ProviderEnv;
 
 export async function runPostgresRagPipeline(
   input: PostgresRagPipelineInput
@@ -97,6 +90,7 @@ export async function runPostgresRagPipeline(
     }));
   const selectedContext = candidates
     .filter((candidate) => candidate.score.retrievalScore >= MINIMUM_RETRIEVAL_SCORE)
+    .filter((candidate) => (candidate.score.rerankScore ?? candidate.score.retrievalScore) >= MINIMUM_RERANK_SCORE)
     .filter((candidate) => candidate.score.trustScore >= MINIMUM_TRUST_SCORE)
     .filter((candidate) => !rejected.some((rejection) => rejection.chunkId === candidate.chunk.id))
     .slice(0, input.topK ?? DEFAULT_TOP_K);
@@ -113,7 +107,7 @@ export async function runPostgresRagPipeline(
     modelConfig
   });
   const trace: QueryTrace = {
-    id: makeTraceId(input.question),
+    id: makeDeterministicTraceId("pg-trace", input.question),
     query: input.question,
     normalizedQuery,
     candidates,
@@ -134,20 +128,6 @@ export async function runPostgresRagPipeline(
     generation,
     trace
   };
-}
-
-export async function runPostgresRagPipelineFromEnv(
-  question: string,
-  env: PostgresRagRuntimeEnv = process.env
-): Promise<PostgresRagPipelineResult> {
-  const client = createPgClient(env.DATABASE_URL ?? DEFAULT_DATABASE_URL);
-
-  await client.connect();
-  try {
-    return await runPostgresRagPipelineWithExecutorFromEnv(question, client, env);
-  } finally {
-    await client.end();
-  }
 }
 
 export async function runPostgresRagPipelineWithExecutorFromEnv(
@@ -204,10 +184,6 @@ function calibratePostgresCandidateScore(candidate: RetrievalResult, index: numb
   };
 }
 
-function makeTraceId(query: string): string {
-  return `pg-trace-${createHash("sha256").update(query).digest("hex").slice(0, 12)}`;
-}
-
 function resolveDefaultModelConfig(provider: LLMProvider): GenerateAnswerInput["modelConfig"] {
   if (provider.name === "openai-compatible" || provider.name === "anthropic" || provider.name === "fake") {
     return {
@@ -220,11 +196,4 @@ function resolveDefaultModelConfig(provider: LLMProvider): GenerateAnswerInput["
     provider: "fake",
     model: provider.name
   };
-}
-
-function createPgClient(connectionString: string): ConnectableQueryExecutor {
-  const pg = require("pg") as {
-    Client: new (config: { connectionString: string }) => ConnectableQueryExecutor;
-  };
-  return new pg.Client({ connectionString });
 }

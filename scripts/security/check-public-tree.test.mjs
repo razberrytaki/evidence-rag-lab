@@ -93,6 +93,7 @@ describe("public tree scanner", () => {
   it("allows known local tool artifacts at the repository root", () => {
     const root = makeTempRepo();
     mkdirSync(join(root, ".agents"), { recursive: true });
+    mkdirSync(join(root, ".obsidian"), { recursive: true });
     mkdirSync(join(root, ".pnpm-store"), { recursive: true });
     writeFileSync(join(root, ".DS_Store"), "local macOS metadata\n");
     writeFileSync(join(root, "skills-lock.json"), "{}\n");

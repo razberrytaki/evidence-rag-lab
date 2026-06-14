@@ -45,7 +45,7 @@ async function main(): Promise<void> {
       embeddingProvider,
       llmProvider,
       modelConfig: {
-        provider: "openai-compatible",
+        provider: providerConfig.llmProvider,
         model: providerConfig.chatModel
       },
       queryExecutor: client,

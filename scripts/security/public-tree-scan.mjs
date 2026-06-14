@@ -23,7 +23,7 @@ const PUBLIC_ROOT_FILES = [
 
 const PUBLIC_ROOT_FILE_SET = new Set(PUBLIC_ROOT_FILES);
 const LOCAL_ONLY_ROOT_ENTRY_PATTERN =
-  /^(?:\.git|node_modules|\.env|\.env\.local|\.env\.[^.]+\.local|\.DS_Store|\.agents|\.pnpm-store|skills-lock\.json)$/;
+  /^(?:\.git|node_modules|\.env|\.env\.local|\.env\.[^.]+\.local|\.DS_Store|\.agents|\.obsidian|\.pnpm-store|skills-lock\.json)$/;
 const TEXT_FILE_PATTERN = /(?:^|\/)(?:LICENSE|\.gitignore|\.npmrc)$|\.(cjs|css|env\.example|html|js|json|md|mjs|sql|toml|ts|tsx|txt|yaml|yml)$/i;
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", ".turbo", ".vite", "coverage", "dist", "node_modules"]);
 

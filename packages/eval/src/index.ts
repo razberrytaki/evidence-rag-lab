@@ -22,6 +22,7 @@ export interface EvalObservation {
   finalStatus: "answered" | "conflict" | "rejected";
   unsupportedClaimRejected: boolean;
   traceComplete: boolean;
+  observationSource?: "static-fixture" | "sample-runtime" | "postgres-runtime";
 }
 
 export interface EvalReportItem {
@@ -42,6 +43,10 @@ export interface EvalReport {
     passed: number;
     failed: number;
   };
+  observationSources: Array<{
+    source: NonNullable<EvalObservation["observationSource"]>;
+    count: number;
+  }>;
   metrics: {
     recallAtK: RateMetric;
     citationCoverage: RateMetric;
@@ -226,10 +231,6 @@ export interface VectorIndexBudgetReportInput {
   notes?: string[];
 }
 
-export function summarizeEval(fixtures: EvalFixture[]): string {
-  return `${fixtures.length} fixtures configured for deterministic RAG reliability evaluation.`;
-}
-
 export * from "./sample-retrieval-quality-cases";
 
 export function evaluateFixtures(fixtures: EvalFixture[], observations: EvalObservation[]): EvalReport {
@@ -243,6 +244,7 @@ export function evaluateFixtures(fixtures: EvalFixture[], observations: EvalObse
       passed,
       failed: fixtures.length - passed
     },
+    observationSources: summarizeObservationSources(observations),
     metrics: {
       recallAtK: buildMetric(fixtures, observations, shouldMeasureRecall, hasExpectedRelevantDocs),
       citationCoverage: buildMetric(fixtures, observations, shouldMeasureCitationCoverage, hasRequiredCitations),
@@ -265,26 +267,43 @@ export function evaluateFixtures(fixtures: EvalFixture[], observations: EvalObse
 
 export function renderEvalReportMarkdown(report: EvalReport): string {
   const lines = [
-    "# Eval Report",
+    "# 평가 리포트",
     "",
-    "Generated from deterministic eval fixtures. Live retrieval metrics are added as the runtime pipeline replaces fake observations.",
+    "deterministic eval fixture와 sample-runtime pipeline observation에서 생성된다.",
+    "현재 runtime observation은 insufficient-evidence 계열 negative guard를 우선 검증한다.",
     "",
-    `Summary: ${report.summary.passed}/${report.summary.total} fixtures passed.`,
+    `요약: ${report.summary.passed}/${report.summary.total} fixture 통과.`,
     "",
-    "| Metric | Result | Rate |",
+    "| Metric | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@k", report.metrics.recallAtK),
     metricRow("citation coverage", report.metrics.citationCoverage),
     metricRow("unsupported-claim rejection", report.metrics.unsupportedClaimRejection),
     metricRow("trace completeness", report.metrics.traceCompleteness),
     "",
-    "| Fixture | Status | Notes |",
+    "| Observation source | Count |",
+    "|---|---:|",
+    ...report.observationSources.map((item) => `| ${item.source} | ${item.count} |`),
+    "",
+    "| Fixture | 상태 | 메모 |",
     "|---|---|---|",
-    ...report.items.map((item) => `| ${item.id} | ${item.passed ? "pass" : "fail"} | ${item.notes.join("; ")} |`),
+    ...report.items.map((item) => `| ${item.id} | ${formatPassFail(item.passed)} | ${item.notes.join("; ")} |`),
     ""
   ];
 
   return lines.join("\n");
+}
+
+function summarizeObservationSources(
+  observations: EvalObservation[]
+): Array<{ source: NonNullable<EvalObservation["observationSource"]>; count: number }> {
+  const counts = new Map<NonNullable<EvalObservation["observationSource"]>, number>();
+  for (const observation of observations) {
+    const source = observation.observationSource ?? "static-fixture";
+    counts.set(source, (counts.get(source) ?? 0) + 1);
+  }
+
+  return [...counts].map(([source, count]) => ({ source, count }));
 }
 
 export function evaluateRankedRetrieval(input: {
@@ -320,23 +339,23 @@ export function evaluateRankedRetrieval(input: {
 
 export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalReport): string {
   const lines = [
-    "# Retrieval Quality Report",
+    "# 검색 품질 리포트",
     "",
-    "Generated from live PostgreSQL + pgvector retrieval observations on public sample docs.",
-    "This is a small quality smoke, not a scale benchmark.",
+    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
+    "작은 품질 동작 확인이며 scale benchmark가 아니다.",
     "",
-    `Summary: ${report.summary.passed}/${report.summary.total} ranked retrieval cases passed.`,
+    `요약: ${report.summary.passed}/${report.summary.total} ranked retrieval case 통과.`,
     "",
-    "| Metric | Result | Rate |",
+    "| Metric | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@3", report.metrics.recallAtK),
     `| mean reciprocal rank | ${report.metrics.meanReciprocalRank.toFixed(3)} | |`,
     "",
-    "| Case | Status | Matched doc | Reciprocal rank | Notes |",
+    "| Case | 상태 | Matched doc | Reciprocal rank | 메모 |",
     "|---|---|---|---:|---|",
     ...report.items.map(
       (item) =>
-        `| ${item.id} | ${item.passed ? "pass" : "fail"} | ${item.matchedDocId ?? "-"} | ${item.reciprocalRank.toFixed(
+        `| ${item.id} | ${formatPassFail(item.passed)} | ${item.matchedDocId ?? "-"} | ${item.reciprocalRank.toFixed(
           3
         )} | ${item.notes.join("; ")} |`
     ),
@@ -350,12 +369,12 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
   const k = requirePositiveInteger(input.k, "k");
   const categoryRows = buildRetrievalModeCategoryRows(input.modes);
   const lines = [
-    "# Retrieval Mode Comparison Report",
+    "# 검색 모드 비교 리포트",
     "",
-    "Generated from live PostgreSQL retrieval observations over the public sample docs.",
-    "This compares retrieval modes for portfolio trade-off evidence, not production scale.",
+    "public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.",
+    "production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.",
     "",
-    "| Mode | Recall | Rate | Mean reciprocal rank |",
+    "| Mode | Recall | 비율 | Mean reciprocal rank |",
     "|---|---:|---:|---:|",
     ...input.modes.map(
       ({ mode, report }) =>
@@ -366,28 +385,28 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
     "",
     ...(categoryRows.length > 0
       ? [
-          "| Category | Mode | Recall | Rate | Mean reciprocal rank |",
+          "| Category | Mode | Recall | 비율 | Mean reciprocal rank |",
           "|---|---|---:|---:|---:|",
           ...categoryRows,
           ""
         ]
       : []),
-    "| Case | Mode | Category | Status | Matched doc | Reciprocal rank | Notes |",
+    "| Case | Mode | Category | 상태 | Matched doc | Reciprocal rank | 메모 |",
     "|---|---|---|---|---|---:|---|",
     ...input.modes.flatMap(({ mode, report }) =>
       report.items.map(
         (item) =>
-          `| ${item.id} | ${mode} | ${item.category ?? "-"} | ${item.passed ? "pass" : "fail"} | ${item.matchedDocId ?? "-"} | ${item.reciprocalRank.toFixed(
+          `| ${item.id} | ${mode} | ${item.category ?? "-"} | ${formatPassFail(item.passed)} | ${item.matchedDocId ?? "-"} | ${item.reciprocalRank.toFixed(
             3
           )} | ${item.notes.join("; ")} |`
       )
     ),
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
-      : [`- Recall is measured at top ${k}.`, "- Hybrid should remain justified by measured retrieval behavior."]),
+      : [`- Recall은 top ${k} 기준으로 측정한다.`, "- Hybrid는 측정된 retrieval behavior로 계속 정당화되어야 한다."]),
     ""
   ];
 
@@ -396,14 +415,14 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
 
 export function renderProviderComparisonReportMarkdown(input: ProviderComparisonReportInput): string {
   const lines = [
-    "# Provider Comparison Report",
+    "# Provider 비교 리포트",
     "",
-    `Generated on ${input.generatedAt}.`,
+    `생성일: ${input.generatedAt}.`,
     "",
-    "This report compares generation provider boundaries for the public portfolio.",
-    "It is not a quality benchmark unless a live smoke row says `pass`.",
+    "public portfolio를 위해 generation provider boundary를 비교한다.",
+    "live 동작 확인 row가 `통과`라고 표시하지 않는 한 quality benchmark가 아니다.",
     "",
-    "| Provider | Role | Request surface | Setup | Live smoke | Model | Claims | Citations | Trace persisted | Reason |",
+    "| Provider | Role | Request surface | Setup | Live 동작 확인 | Model | Claims | Citations | Trace persisted | Reason |",
     "|---|---|---|---|---|---|---:|---:|---|---|",
     ...input.providers.map(providerLiveSmokeRow),
     "",
@@ -414,13 +433,13 @@ export function renderProviderComparisonReportMarkdown(input: ProviderComparison
         `| ${provider.provider} | ${provider.deterministicChecks.join(", ")} | ${provider.tradeOffs.join("; ")} |`
     ),
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- OpenAI remains required for embeddings.",
-          "- Provider comparison is explicit so setup errors are not hidden by fallback."
+          "- embedding에는 OpenAI가 계속 필요하다.",
+          "- Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다."
         ]),
     ""
   ];
@@ -432,14 +451,14 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
   const topK = requirePositiveInteger(input.topK, "topK");
   const caseCount = requirePositiveInteger(input.caseCount, "caseCount");
   const lines = [
-    "# Retrieval Latency Report",
+    "# 검색 지연 시간 리포트",
     "",
-    `Generated on ${input.generatedAt}.`,
-    `${caseCount} retrieval eval cases at top ${topK}.`,
+    `생성일: ${input.generatedAt}.`,
+    `retrieval eval case ${caseCount}개, top ${topK}.`,
     `Embedding model: \`${input.embeddingModel}\` (${input.embeddingDimensions} dimensions).`,
     "",
-    "Generated from live PostgreSQL + pgvector retrieval observations over public sample docs.",
-    "This is a small latency smoke, not a production scale benchmark.",
+    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
+    "작은 지연 시간 동작 확인이며 production scale benchmark가 아니다.",
     "",
     "| Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |",
     "|---|---:|---:|---:|---:|---:|---:|",
@@ -452,13 +471,13 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
         )} |`
     ),
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- Query text, provider payloads, and credentials are intentionally excluded from this report.",
-          "- Use this smoke to compare local changes, not to claim 10M-document latency."
+          "- Query text, provider payload, credential은 이 report에서 의도적으로 제외한다.",
+          "- 이 동작 확인은 local change 비교용이며 10M-document latency claim용이 아니다."
         ]),
     ""
   ];
@@ -470,16 +489,16 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
   const topK = requirePositiveInteger(input.topK, "topK");
   const caseCount = requirePositiveInteger(input.caseCount, "caseCount");
   const lines = [
-    "# Retrieval Concurrency Report",
+    "# 검색 동시성 리포트",
     "",
-    `Generated on ${input.generatedAt}.`,
-    `${caseCount} retrieval eval cases at top ${topK}.`,
+    `생성일: ${input.generatedAt}.`,
+    `retrieval eval case ${caseCount}개, top ${topK}.`,
     "",
-    "Generated from live PostgreSQL + pgvector retrieval observations over public sample docs.",
-    "This is a small local concurrency smoke, not a production load benchmark.",
-    "Embeddings are precomputed before the measured section so database retrieval concurrency stays visible.",
+    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
+    "작은 local 동시성 동작 확인이며 production load benchmark가 아니다.",
+    "database retrieval concurrency가 보이도록 측정 구간 전에 embedding을 미리 계산한다.",
     "",
-    "| Mode | Concurrency | Queries | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Errors |",
+    "| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |",
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ...input.observations.map(
       (observation) =>
@@ -492,18 +511,30 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
         )} | ${formatMs(observation.totalMs)} | ${observation.errorCount} |`
     ),
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- Query text, provider payloads, and credentials are intentionally excluded from this report.",
-          "- Use this smoke to compare local changes, not to claim production throughput."
+          "- Query text, provider payload, credential은 이 report에서 의도적으로 제외한다.",
+          "- 이 동작 확인은 local change 비교용이며 production throughput claim용이 아니다."
         ]),
     ""
   ];
 
   return lines.join("\n");
+}
+
+export function nearestRankPercentile(sortedValues: readonly number[], percentile: number): number {
+  if (sortedValues.length === 0) {
+    return 0;
+  }
+  const index = Math.min(sortedValues.length - 1, Math.max(0, Math.ceil(sortedValues.length * percentile) - 1));
+  return sortedValues[index] ?? 0;
+}
+
+export function roundMilliseconds(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 export function estimateScaleBudget(assumptions: ScaleBudgetAssumptions): ScaleBudgetEstimate {
@@ -538,13 +569,13 @@ export function estimateScaleBudget(assumptions: ScaleBudgetAssumptions): ScaleB
 export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): string {
   const estimate = estimateScaleBudget(input.assumptions);
   const lines = [
-    "# Scale Budget Report",
+    "# Scale Budget 리포트",
     "",
-    `Generated on ${input.generatedAt}.`,
-    "This is sizing math, not a production benchmark.",
-    "No 10M-document load was executed for this report.",
+    `생성일: ${input.generatedAt}.`,
+    "이는 sizing math이며 production benchmark가 아니다.",
+    "이 report를 위해 10M-document load를 실행하지 않았다.",
     "",
-    "| Assumption | Value |",
+    "| Assumption | 값 |",
     "|---|---:|",
     `| documents | ${formatInteger(input.assumptions.documentCount)} |`,
     `| average chunks per document | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
@@ -555,7 +586,7 @@ export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): 
     `| daily queries | ${formatInteger(input.assumptions.dailyQueryCount)} |`,
     `| trace retention days | ${formatInteger(input.assumptions.traceRetentionDays)} |`,
     "",
-    "| Estimate | Value |",
+    "| Estimate | 값 |",
     "|---|---:|",
     `| documents | ${formatInteger(estimate.documentCount)} |`,
     `| chunks | ${formatInteger(estimate.chunkCount)} |`,
@@ -564,13 +595,13 @@ export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): 
     `| vector + chunk metadata | ${formatBytesAsGb(estimate.vectorAndMetadataBytes)} |`,
     `| retained sanitized traces | ${formatBytesAsGb(estimate.retainedTraceBytes)} |`,
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- These estimates are decimal GB and exclude index overhead, WAL, replicas, backups, and vacuum bloat.",
-          "- Use this report to discuss bottlenecks, not to claim production capacity."
+          "- 이 추정치는 decimal GB이며 index overhead, WAL, replica, backup, vacuum bloat를 제외한다.",
+          "- 이 report는 bottleneck 논의용이며 production capacity claim용이 아니다."
         ]),
     ""
   ];
@@ -621,13 +652,13 @@ export function estimateVectorIndexBudget(assumptions: VectorIndexBudgetAssumpti
 export function renderVectorIndexBudgetReportMarkdown(input: VectorIndexBudgetReportInput): string {
   const estimate = estimateVectorIndexBudget(input.assumptions);
   const lines = [
-    "# Vector Index Budget Report",
+    "# Vector Index Budget 리포트",
     "",
-    `Generated on ${input.generatedAt}.`,
-    "This is sizing math, not measured PostgreSQL or pgvector index size.",
-    "No large index build was executed for this report.",
+    `생성일: ${input.generatedAt}.`,
+    "이는 sizing math이며 measured PostgreSQL 또는 pgvector index size가 아니다.",
+    "이 report를 위해 large index build를 실행하지 않았다.",
     "",
-    "| Assumption | Value |",
+    "| Assumption | 값 |",
     "|---|---:|",
     `| documents | ${formatInteger(input.assumptions.documentCount)} |`,
     `| average chunks per document | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
@@ -639,7 +670,7 @@ export function renderVectorIndexBudgetReportMarkdown(input: VectorIndexBudgetRe
     `| HNSW graph bytes per neighbor | ${formatInteger(input.assumptions.hnswGraphBytesPerNeighbor)} |`,
     `| HNSW build memory multiplier | ${input.assumptions.hnswBuildMemoryMultiplier.toFixed(2)} |`,
     "",
-    "| Estimate | Value |",
+    "| Estimate | 값 |",
     "|---|---:|",
     `| chunks | ${formatInteger(estimate.chunkCount)} |`,
     `| raw vector payload | ${formatBytesAsGb(estimate.vectorBytes)} |`,
@@ -649,13 +680,13 @@ export function renderVectorIndexBudgetReportMarkdown(input: VectorIndexBudgetRe
     `| HNSW build working set estimate | ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} |`,
     `| graph overhead vs vector payload | ${formatRatioPercent(estimate.graphOverVectorRate)} |`,
     "",
-    "## Notes",
+    "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- HNSW graph math is an explicit scenario, not measured pgvector index size.",
-          "- Use this report to discuss memory pressure and required production load testing."
+          "- HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.",
+          "- 이 report는 memory pressure와 필요한 production load testing 논의용이다."
         ]),
     ""
   ];
@@ -668,7 +699,7 @@ function evaluateFixture(fixture: EvalFixture, observation: EvalObservation | un
     return {
       id: fixture.id,
       passed: false,
-      notes: ["missing observation"]
+      notes: ["관측값 없음"]
     };
   }
 
@@ -682,7 +713,7 @@ function evaluateFixture(fixture: EvalFixture, observation: EvalObservation | un
   return {
     id: fixture.id,
     passed: checks.length === 0,
-    notes: checks.length === 0 ? ["ok"] : checks
+    notes: checks.length === 0 ? ["정상"] : checks
   };
 }
 
@@ -697,7 +728,7 @@ function evaluateRankedRetrievalCase(
       passed: false,
       reciprocalRank: 0,
       ...(testCase.category ? { category: testCase.category } : {}),
-      notes: ["missing observation"]
+      notes: ["관측값 없음"]
     };
   }
 
@@ -710,7 +741,7 @@ function evaluateRankedRetrievalCase(
       passed: false,
       reciprocalRank: 0,
       ...(testCase.category ? { category: testCase.category } : {}),
-      notes: [`missing relevant docs in top ${k}: ${testCase.expectedRelevantDocIds.join(", ")}`]
+      notes: [`top ${k} 안에 relevant doc 없음: ${testCase.expectedRelevantDocIds.join(", ")}`]
     };
   }
 
@@ -722,7 +753,7 @@ function evaluateRankedRetrievalCase(
     reciprocalRank: roundRate(1 / rank),
     ...(testCase.category ? { category: testCase.category } : {}),
     matchedDocId,
-    notes: [`first relevant doc at rank ${rank}`]
+    notes: [`첫 relevant doc rank ${rank}`]
   };
 }
 
@@ -752,35 +783,35 @@ function buildRetrievalModeCategoryRows(modes: RetrievalModeReport[]): string[] 
 
 function checkExpectedRelevantDocs(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.expectedRelevantDocs.filter((docId) => !observation.retrievedDocIds.includes(docId));
-  return missing.length > 0 ? `missing relevant docs: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `relevant doc 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkExpectedRejectedDocs(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.expectedRejectedDocs.filter((docId) => !observation.rejectedDocIds.includes(docId));
-  return missing.length > 0 ? `missing rejected docs: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `rejected doc 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkRequiredCitations(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.requiredCitations.filter((chunkId) => !observation.citationChunkIds.includes(chunkId));
-  return missing.length > 0 ? `missing citations: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `citation 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkExpectedBehavior(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   switch (fixture.expectedBehavior) {
     case "conflict":
-      return observation.finalStatus === "conflict" ? undefined : "expected conflict status";
+      return observation.finalStatus === "conflict" ? undefined : "conflict status 필요";
     case "reject":
-      return observation.finalStatus === "rejected" ? undefined : "expected rejected status";
+      return observation.finalStatus === "rejected" ? undefined : "rejected status 필요";
     case "trace":
-      return observation.traceComplete ? undefined : "expected complete trace";
+      return observation.traceComplete ? undefined : "complete trace 필요";
     case "validate":
       return observation.unsupportedClaimRejected || fixture.expectedRejectedDocs.length === 0
         ? undefined
-        : "expected unsupported claim rejection";
+        : "unsupported claim rejection 필요";
     case "cite":
       return fixture.requiredCitations.length === 0 || observation.citationChunkIds.length > 0
         ? undefined
-        : "expected citation coverage";
+        : "citation coverage 필요";
     case "demote":
     case "retrieve":
       return undefined;
@@ -843,12 +874,27 @@ function metricRow(label: string, metric: RateMetric): string {
 
 function providerLiveSmokeRow(provider: ProviderComparisonItem): string {
   if (provider.liveSmoke.status !== "pass") {
-    return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${provider.liveSmoke.status} | - | - | - | - | ${provider.liveSmoke.reason} |`;
+    return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${formatProviderLiveSmokeStatus(provider.liveSmoke.status)} | - | - | - | - | ${provider.liveSmoke.reason} |`;
   }
 
-  return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | pass | ${provider.liveSmoke.model} | ${provider.liveSmoke.claimCount} | ${provider.liveSmoke.citationCount} | ${
-    provider.liveSmoke.tracePersisted ? "yes" : "no"
+  return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${formatProviderLiveSmokeStatus(provider.liveSmoke.status)} | ${provider.liveSmoke.model} | ${provider.liveSmoke.claimCount} | ${provider.liveSmoke.citationCount} | ${
+    provider.liveSmoke.tracePersisted ? "예" : "아니오"
   } | - |`;
+}
+
+function formatProviderLiveSmokeStatus(status: ProviderLiveSmoke["status"]): string {
+  switch (status) {
+    case "pass":
+      return "통과";
+    case "fail":
+      return "실패";
+    case "not-run":
+      return "미실행";
+  }
+}
+
+function formatPassFail(passed: boolean): string {
+  return passed ? "통과" : "실패";
 }
 
 function roundRate(value: number): number {
@@ -864,7 +910,7 @@ function formatRatioPercent(rate: number): string {
 }
 
 function formatMs(value: number): string {
-  return value.toFixed(2);
+  return roundMilliseconds(value).toFixed(2);
 }
 
 function formatInteger(value: number): string {

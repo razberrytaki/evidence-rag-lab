@@ -26,7 +26,8 @@ describe("PostgreSQL RAG pipeline", () => {
               document_version: "v1",
               chunk_id: "hybrid-retrieval-note#chunk-001",
               heading_path: ["Hybrid Retrieval Note"],
-              normalized_text: "Hybrid retrieval combines lexical retrieval and vector retrieval.",
+              normalized_text:
+                "Hybrid retrieval explains why teams should not rely only on semantic vectors because lexical retrieval preserves exact signals.",
               content_hash: "hash-001",
               chunk_version: "v1",
               lexical_rank: "1",
@@ -59,6 +60,7 @@ describe("PostgreSQL RAG pipeline", () => {
     expect(result.generation.status).toBe("answered");
     expect(result.selectedContext[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
     expect(result.selectedContext[0]?.score.retrievalScore).toBe(0.99);
+    expect(result.selectedContext[0]?.score.rerankScore).toBeGreaterThanOrEqual(0.5);
     expect(result.trace.sanitized).toBe(true);
     expect(result.trace.candidates[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
   });
@@ -136,15 +138,59 @@ describe("PostgreSQL RAG pipeline", () => {
     });
 
     expect(result.selectedContext.map((context) => context.chunk.id)).toEqual([
-      "reranker-latency-note#chunk-001",
-      "generic-vector-note#chunk-001"
+      "reranker-latency-note#chunk-001"
     ]);
     expect(result.selectedContext[0]?.score).toMatchObject({
       rerankRank: 1,
       rerankScore: 0.787,
-      retrievalScore: 0.99
+      retrievalScore: 0.89
     });
     expect(result.trace.candidates[0]?.chunk.id).toBe("reranker-latency-note#chunk-001");
+  });
+
+  it("rejects PostgreSQL vector candidates when query evidence is below the answer threshold", async () => {
+    const embeddingProvider: EmbeddingProvider = {
+      embedTexts: async () => [[0.1, 0.2, 0.3]]
+    };
+    const queryExecutor = {
+      query: async () => ({
+        rows: [
+          {
+            document_id: "generic-vector-note",
+            document_title: "Generic Vector Note",
+            source_type: "public-doc",
+            source_url: null,
+            document_version: "v1",
+            chunk_id: "generic-vector-note#chunk-001",
+            heading_path: ["Generic Vector Note"],
+            normalized_text: "Vector retrieval can return semantically close but generic context.",
+            content_hash: "hash-generic",
+            chunk_version: "v1",
+            lexical_rank: null,
+            vector_rank: 1,
+            retrieval_score: "0.016"
+          }
+        ]
+      })
+    };
+
+    const result = await runPostgresRagPipeline({
+      question: "What is the rollback owner for an unpublished billing incident?",
+      embeddingProvider,
+      queryExecutor,
+      topK: 3
+    });
+
+    expect(result.selectedContext).toEqual([]);
+    expect(result.trace.candidates[0]?.score).toMatchObject({
+      retrievalScore: 0.99
+    });
+    expect(result.trace.candidates[0]?.score.rerankScore ?? 1).toBeLessThan(0.5);
+    expect(result.generation).toEqual({
+      status: "rejected",
+      reason: "insufficient_evidence",
+      message: "No selected context was available."
+    });
   });
 
   it("persists the sanitized query trace when trace persistence is enabled", async () => {
@@ -168,7 +214,8 @@ describe("PostgreSQL RAG pipeline", () => {
               document_version: "v1",
               chunk_id: "hybrid-retrieval-note#chunk-001",
               heading_path: ["Hybrid Retrieval Note"],
-              normalized_text: "raw chunk text must stay out of the stored trace payload",
+              normalized_text:
+                "Hybrid retrieval explains why teams should not rely only on semantic vectors while raw chunk text must stay out of the stored trace payload.",
               content_hash: "hash-001",
               chunk_version: "v1",
               lexical_rank: 1,
@@ -212,7 +259,8 @@ describe("PostgreSQL RAG pipeline", () => {
               document_version: "v1",
               chunk_id: "hybrid-retrieval-note#chunk-001",
               heading_path: ["Hybrid Retrieval Note"],
-              normalized_text: "Hybrid retrieval combines lexical retrieval and vector retrieval.",
+              normalized_text:
+                "Hybrid retrieval explains why teams should not rely only on semantic vectors because lexical retrieval preserves exact signals.",
               content_hash: "hash-001",
               chunk_version: "v1",
               lexical_rank: 1,
@@ -253,7 +301,8 @@ describe("PostgreSQL RAG pipeline", () => {
             document_version: "v1",
             chunk_id: "hybrid-retrieval-note#chunk-001",
             heading_path: ["Hybrid Retrieval Note"],
-            normalized_text: "Hybrid retrieval combines lexical retrieval and vector retrieval.",
+            normalized_text:
+              "Hybrid retrieval explains why teams should not rely only on semantic vectors because lexical retrieval preserves exact signals.",
             content_hash: "hash-001",
             chunk_version: "v1",
             lexical_rank: 1,

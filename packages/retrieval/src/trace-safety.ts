@@ -188,13 +188,6 @@ function redactSensitiveText(value: string): string {
     .replace(/\bsk-[A-Za-z0-9_-]+\b/g, "[redacted-secret]");
 }
 
-function requirePositiveInteger(value: number, fieldName: string): number {
-  if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(`${fieldName} must be a positive integer`);
-  }
-  return value;
-}
-
 function requireRetentionDays(value: number, fieldName: string): number {
   if (!Number.isInteger(value) || value < 1 || value > MAX_TRACE_RETENTION_DAYS) {
     throw new Error(`${fieldName} must be between 1 and ${MAX_TRACE_RETENTION_DAYS}`);

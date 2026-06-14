@@ -155,8 +155,8 @@ export async function fetchLatestTrace(
       return { source: "sample", trace: sampleTrace };
     }
 
-    const trace = (await response.json()) as PublicQueryTrace | null;
-    if (!trace) {
+    const trace = await response.json();
+    if (!isPublicQueryTrace(trace)) {
       return { source: "sample", trace: sampleTrace };
     }
     return { source: "api", trace };
@@ -238,6 +238,80 @@ export function getConfiguredApiBaseUrl(): string {
 
 function trimApiBaseUrl(apiBaseUrl: string): string {
   return apiBaseUrl.replace(/\/+$/, "");
+}
+
+function isPublicQueryTrace(value: unknown): value is PublicQueryTrace {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.query === "string" &&
+    typeof value.normalizedQuery === "string" &&
+    isStringArray(value.selectedChunkIds) &&
+    Array.isArray(value.rejected) &&
+    value.rejected.every(isTraceRejection) &&
+    Array.isArray(value.candidates) &&
+    value.candidates.every(isTraceCandidate) &&
+    isTraceGeneration(value.generation) &&
+    typeof value.sanitized === "boolean" &&
+    typeof value.createdAt === "string"
+  );
+}
+
+function isTraceCandidate(value: unknown): value is PublicQueryTraceCandidate {
+  return (
+    isRecord(value) &&
+    typeof value.chunkId === "string" &&
+    typeof value.documentId === "string" &&
+    isStringArray(value.headingPath) &&
+    isScoreBreakdown(value.score)
+  );
+}
+
+function isScoreBreakdown(value: unknown): value is PublicScoreBreakdown {
+  return (
+    isRecord(value) &&
+    isOptionalNumber(value.lexicalRank) &&
+    isOptionalNumber(value.vectorRank) &&
+    isOptionalNumber(value.fusedRank) &&
+    isOptionalNumber(value.rerankRank) &&
+    isOptionalNumber(value.rerankScore) &&
+    typeof value.retrievalScore === "number" &&
+    typeof value.trustScore === "number" &&
+    typeof value.freshnessScore === "number" &&
+    typeof value.duplicatePenalty === "number"
+  );
+}
+
+function isTraceRejection(value: unknown): value is PublicQueryTrace["rejected"][number] {
+  return isRecord(value) && typeof value.chunkId === "string" && typeof value.reason === "string";
+}
+
+function isTraceGeneration(value: unknown): value is PublicQueryTrace["generation"] {
+  if (!isRecord(value) || typeof value.status !== "string") {
+    return false;
+  }
+  if (value.status === "rejected") {
+    return typeof value.reason === "string" && typeof value.message === "string";
+  }
+  if (value.status === "answered" || value.status === "conflict") {
+    return Array.isArray(value.claims);
+  }
+  return false;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isOptionalNumber(value: unknown): boolean {
+  return value === undefined || typeof value === "number";
 }
 
 function formatRank(rank: number | undefined): string {

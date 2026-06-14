@@ -12,6 +12,10 @@ export interface QueryEvidenceRerankInput {
   topK: number;
 }
 
+export interface TokenizeTextOptions {
+  stopWords?: ReadonlySet<string> | readonly string[];
+}
+
 const RERANK_STOP_WORDS = new Set([
   "a",
   "an",
@@ -65,8 +69,7 @@ export function rerankByQueryEvidence(input: QueryEvidenceRerankInput): Retrieva
         ...candidate,
         score: {
           ...candidate.score,
-          rerankScore,
-          retrievalScore: rerankScore
+          rerankScore
         }
       };
     })
@@ -76,8 +79,7 @@ export function rerankByQueryEvidence(input: QueryEvidenceRerankInput): Retrieva
       ...candidate,
       score: {
         ...candidate.score,
-        rerankRank: index + 1,
-        retrievalScore: roundScore(Math.max(0, 0.99 - index * 0.1))
+        rerankRank: index + 1
       }
     }));
 }
@@ -111,10 +113,15 @@ function compareRerankedCandidates(left: RetrievalResult, right: RetrievalResult
 }
 
 function tokenizeForRerank(input: string): string[] {
+  return tokenizeText(input, { stopWords: RERANK_STOP_WORDS });
+}
+
+export function tokenizeText(input: string, options: TokenizeTextOptions = {}): string[] {
+  const stopWords = options.stopWords ? new Set(options.stopWords) : undefined;
   return (input.toLowerCase().match(/[a-z0-9]+/g) ?? [])
     .map((token) => (token.length > 3 && token.endsWith("s") ? token.slice(0, -1) : token))
     .filter((token) => token.length > 1)
-    .filter((token) => !RERANK_STOP_WORDS.has(token));
+    .filter((token) => !stopWords?.has(token));
 }
 
 function roundScore(value: number): number {

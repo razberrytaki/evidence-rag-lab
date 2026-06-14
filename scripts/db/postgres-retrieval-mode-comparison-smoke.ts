@@ -17,14 +17,12 @@ import {
   OpenAIEmbeddingClient
 } from "@evidencerag/ingest";
 import {
-  buildPostgresHybridRetrievalSql,
-  buildPostgresLexicalRetrievalSql,
-  buildPostgresVectorRetrievalSql,
+  buildPostgresRetrievalSqlForMode,
   mapPostgresRetrievalRow,
-  type ParameterizedSql
+  type PostgresRetrievalMode
 } from "@evidencerag/retrieval";
 
-type RetrievalMode = "lexical" | "vector" | "hybrid";
+type RetrievalMode = PostgresRetrievalMode;
 
 interface RetrievalModeReportOutput {
   mode: RetrievalMode;
@@ -67,9 +65,9 @@ async function main(): Promise<void> {
         k: TOP_K,
         modes: modeReports.map(({ mode, report }) => ({ mode, report })),
         notes: [
-          "Identifier-aware lexical retrieval now passes the exact-token stress category.",
-          "Vector-only retrieves every expected document but loses one rank position in the trace-observability category.",
-          "Hybrid keeps recall equal to vector-only while restoring MRR to 1.000 on this 20-document smoke."
+          "Identifier-aware lexical retrieval은 이제 exact-token stress category를 통과한다.",
+          "Vector-only는 모든 expected document를 찾지만 trace-observability category에서 rank position 하나를 잃는다.",
+          "Hybrid는 이 20-document 동작 확인에서 vector-only와 같은 recall을 유지하면서 MRR을 1.000으로 복구한다."
         ]
       }),
       "utf8"
@@ -149,7 +147,7 @@ async function runRetrievalObservations(
       throw new Error(`embedding provider returned no vector for case ${testCase.id}`);
     }
 
-    const retrievalSql = buildRetrievalSqlForMode({
+    const retrievalSql = buildPostgresRetrievalSqlForMode({
       mode,
       query: testCase.query,
       embedding,
@@ -167,32 +165,6 @@ async function runRetrievalObservations(
   }
 
   return observations;
-}
-
-function buildRetrievalSqlForMode(input: {
-  mode: RetrievalMode;
-  query: string;
-  embedding: readonly number[];
-  topK: number;
-}): ParameterizedSql {
-  switch (input.mode) {
-    case "lexical":
-      return buildPostgresLexicalRetrievalSql({
-        query: input.query,
-        topK: input.topK
-      });
-    case "vector":
-      return buildPostgresVectorRetrievalSql({
-        embedding: input.embedding,
-        topK: input.topK
-      });
-    case "hybrid":
-      return buildPostgresHybridRetrievalSql({
-        query: input.query,
-        embedding: input.embedding,
-        topK: input.topK
-      });
-  }
 }
 
 function deduplicatePreservingOrder(values: string[]): string[] {

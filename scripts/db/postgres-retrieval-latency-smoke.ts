@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { Client } from "pg";
 import {
+  nearestRankPercentile,
   renderRetrievalLatencyReportMarkdown,
+  roundMilliseconds,
   sampleRetrievalQualityCases,
   type RetrievalLatencyMode,
   type RetrievalLatencyObservation
@@ -17,10 +19,7 @@ import {
   OpenAIEmbeddingClient
 } from "@evidencerag/ingest";
 import {
-  buildPostgresHybridRetrievalSql,
-  buildPostgresLexicalRetrievalSql,
-  buildPostgresVectorRetrievalSql,
-  type ParameterizedSql
+  buildPostgresRetrievalSqlForMode
 } from "@evidencerag/retrieval";
 
 type RetrievalDbMode = Exclude<RetrievalLatencyMode, "embedding">;
@@ -77,10 +76,10 @@ async function main(): Promise<void> {
         embeddingDimensions: embeddingConfig.dimensions,
         observations,
         notes: [
-          "Small sample smoke over public sample docs; not a 10M-document benchmark.",
-          "Embedding latency is measured as one OpenAI embeddings call per eval query.",
-          "Database retrieval latency excludes embedding time so lexical, vector, and hybrid SQL trade-offs remain visible.",
-          "Query text, provider payloads, and credentials are intentionally excluded from this report."
+          "public sample docs 위의 작은 sample 동작 확인이며 10M-document benchmark가 아니다.",
+          "Embedding latency는 eval query당 OpenAI embeddings call 1회로 측정한다.",
+          "Database retrieval latency는 embedding time을 제외해 lexical, vector, hybrid SQL trade-off가 보이게 한다.",
+          "Query text, provider payload, credential은 이 report에서 의도적으로 제외한다."
         ]
       }),
       "utf8"
@@ -142,7 +141,7 @@ async function measureDatabaseRetrievalLatency(
   const timings: number[] = [];
 
   for (const testCase of sampleRetrievalQualityCases) {
-    const retrievalSql = buildRetrievalSqlForMode({
+    const retrievalSql = buildPostgresRetrievalSqlForMode({
       mode,
       query: testCase.query,
       embedding: embeddingsByCaseId.get(testCase.id),
@@ -157,32 +156,6 @@ async function measureDatabaseRetrievalLatency(
   return summarizeLatency(mode, timings);
 }
 
-function buildRetrievalSqlForMode(input: {
-  mode: RetrievalDbMode;
-  query: string;
-  embedding: readonly number[] | undefined;
-  topK: number;
-}): ParameterizedSql {
-  switch (input.mode) {
-    case "lexical":
-      return buildPostgresLexicalRetrievalSql({
-        query: input.query,
-        topK: input.topK
-      });
-    case "vector":
-      return buildPostgresVectorRetrievalSql({
-        embedding: requireEmbedding(input.embedding, input.mode),
-        topK: input.topK
-      });
-    case "hybrid":
-      return buildPostgresHybridRetrievalSql({
-        query: input.query,
-        embedding: requireEmbedding(input.embedding, input.mode),
-        topK: input.topK
-      });
-  }
-}
-
 function summarizeLatency(mode: RetrievalLatencyMode, timings: readonly number[]): RetrievalLatencyObservation {
   if (timings.length === 0) {
     throw new Error(`cannot summarize empty latency timings for ${mode}`);
@@ -192,28 +165,12 @@ function summarizeLatency(mode: RetrievalLatencyMode, timings: readonly number[]
   return {
     mode,
     sampleCount: timings.length,
-    minMs: roundMs(sorted[0] ?? 0),
-    p50Ms: roundMs(percentileNearestRank(sorted, 0.5)),
-    p95Ms: roundMs(percentileNearestRank(sorted, 0.95)),
-    maxMs: roundMs(sorted[sorted.length - 1] ?? 0),
-    totalMs: roundMs(timings.reduce((sum, timing) => sum + timing, 0))
+    minMs: roundMilliseconds(sorted[0] ?? 0),
+    p50Ms: roundMilliseconds(nearestRankPercentile(sorted, 0.5)),
+    p95Ms: roundMilliseconds(nearestRankPercentile(sorted, 0.95)),
+    maxMs: roundMilliseconds(sorted[sorted.length - 1] ?? 0),
+    totalMs: roundMilliseconds(timings.reduce((sum, timing) => sum + timing, 0))
   };
-}
-
-function percentileNearestRank(sortedValues: readonly number[], percentile: number): number {
-  const index = Math.min(sortedValues.length - 1, Math.max(0, Math.ceil(sortedValues.length * percentile) - 1));
-  return sortedValues[index] ?? 0;
-}
-
-function roundMs(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function requireEmbedding(embedding: readonly number[] | undefined, mode: RetrievalDbMode): readonly number[] {
-  if (!embedding) {
-    throw new Error(`missing query embedding for ${mode} latency smoke`);
-  }
-  return embedding;
 }
 
 main().catch((error: unknown) => {

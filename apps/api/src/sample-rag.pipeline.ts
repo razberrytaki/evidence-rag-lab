@@ -1,21 +1,18 @@
-import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type {
   DocumentChunk,
   GenerationResult,
   QueryTrace,
   RetrievalResult,
-  SourceDocument,
-  SourceType
+  SourceDocument
 } from "@evidencerag/domain";
 import { FakeLLMProvider } from "@evidencerag/generation";
-import { makeChunk, normalizeText } from "@evidencerag/ingest";
-import { reciprocalRankFusion } from "@evidencerag/retrieval";
+import { loadMarkdownDocumentSet, normalizeText } from "@evidencerag/ingest";
+import { reciprocalRankFusion, tokenizeText } from "@evidencerag/retrieval";
 import { computeTrustScore } from "@evidencerag/scoring";
+import { makeDeterministicTraceId } from "./trace-id";
 
-const SOURCE_TYPES = new Set<SourceType>(["public-doc", "synthetic-conflict", "synthetic-stale"]);
 const STOP_WORDS = new Set([
   "a",
   "all",
@@ -99,7 +96,7 @@ export async function runSampleRagPipeline(input: RunSampleRagPipelineInput): Pr
     }
   });
   const trace: QueryTrace = {
-    id: makeTraceId(input.question),
+    id: makeDeterministicTraceId("trace", input.question),
     query: input.question,
     normalizedQuery,
     candidates,
@@ -135,93 +132,12 @@ export function findSampleDocsDir(startDir = process.cwd()): string {
 }
 
 async function loadSampleDocuments(sampleDocsDir: string): Promise<LoadedDocument[]> {
-  const paths = (await listMarkdownFiles(sampleDocsDir))
-    .filter((path) => !path.endsWith("README.md"))
-    .sort((left, right) => left.localeCompare(right));
-
-  return Promise.all(
-    paths.map(async (path) => {
-      const raw = await readFile(path, "utf8");
-      const { source, body } = parseSourceDocument(raw);
-      return {
-        source,
-        chunk: makeChunk(source, body, 1)
-      };
-    })
+  return (await loadMarkdownDocumentSet(sampleDocsDir)).flatMap((document) =>
+    document.chunks.map((chunk) => ({
+      source: document.source,
+      chunk: chunk.chunk
+    }))
   );
-}
-
-async function listMarkdownFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const nested = await Promise.all(
-    entries.map(async (entry) => {
-      const path = join(directory, entry.name);
-      if (entry.isDirectory()) {
-        return listMarkdownFiles(path);
-      }
-      return entry.isFile() && entry.name.endsWith(".md") ? [path] : [];
-    })
-  );
-  return nested.flat();
-}
-
-function parseSourceDocument(raw: string): { source: SourceDocument; body: string } {
-  if (!raw.startsWith("---\n")) {
-    throw new Error("sample document is missing frontmatter");
-  }
-
-  const end = raw.indexOf("\n---", 4);
-  if (end === -1) {
-    throw new Error("sample document has unterminated frontmatter");
-  }
-
-  const frontmatter = parseFrontmatter(raw.slice(4, end));
-  const body = normalizeText(raw.slice(end + 4));
-  const id = requireFrontmatter(frontmatter, "id");
-  const sourceType = parseSourceType(requireFrontmatter(frontmatter, "sourceType"));
-  const source: SourceDocument = {
-    id,
-    title: extractTitle(body, id),
-    sourceType,
-    sourceUrl: frontmatter.get("sourceUrl"),
-    version: frontmatter.get("version"),
-    publishedAt: frontmatter.get("accessed"),
-    licenseNote: requireFrontmatter(frontmatter, "licenseNote")
-  };
-
-  return { source, body };
-}
-
-function parseFrontmatter(frontmatter: string): Map<string, string> {
-  const parsed = new Map<string, string>();
-  for (const line of frontmatter.split("\n")) {
-    const separator = line.indexOf(":");
-    if (separator === -1) {
-      continue;
-    }
-    parsed.set(line.slice(0, separator).trim(), line.slice(separator + 1).trim());
-  }
-  return parsed;
-}
-
-function requireFrontmatter(frontmatter: Map<string, string>, key: string): string {
-  const value = frontmatter.get(key);
-  if (!value) {
-    throw new Error(`sample document is missing ${key}`);
-  }
-  return value;
-}
-
-function parseSourceType(value: string): SourceType {
-  if (!SOURCE_TYPES.has(value as SourceType)) {
-    throw new Error(`unknown sourceType: ${value}`);
-  }
-  return value as SourceType;
-}
-
-function extractTitle(body: string, fallback: string): string {
-  const title = body.match(/^#\s+(.+)$/m)?.[1]?.trim();
-  return title ?? fallback;
 }
 
 function rankCandidates(documents: LoadedDocument[], normalizedQuery: string): RetrievalResult[] {
@@ -316,14 +232,7 @@ function searchableText(document: LoadedDocument): string {
 }
 
 function queryTokens(input: string): string[] {
-  return (normalizeText(input).toLowerCase().match(/[a-z0-9]+/g) ?? [])
-    .map(stemToken)
-    .filter((token) => token.length > 1)
-    .filter((token) => !STOP_WORDS.has(token));
-}
-
-function stemToken(token: string): string {
-  return token.length > 3 && token.endsWith("s") ? token.slice(0, -1) : token;
+  return tokenizeText(normalizeText(input), { stopWords: STOP_WORDS });
 }
 
 function intentBoost(documentId: string, tokens: string[]): number {
@@ -349,8 +258,4 @@ function hasAny(values: Set<string>, expected: string[]): boolean {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
-}
-
-function makeTraceId(query: string): string {
-  return `trace-${createHash("sha256").update(query).digest("hex").slice(0, 12)}`;
 }

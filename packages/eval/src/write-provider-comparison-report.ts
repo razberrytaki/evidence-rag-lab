@@ -5,7 +5,7 @@ import { renderProviderComparisonReportMarkdown, type ProviderComparisonReportIn
 const repoRoot = join(__dirname, "..", "..", "..");
 
 const report: ProviderComparisonReportInput = {
-  generatedAt: "2026-06-11",
+  generatedAt: "2026-06-12",
   providers: [
     {
       provider: "openai-compatible",
@@ -25,7 +25,7 @@ const report: ProviderComparisonReportInput = {
         "empty-context-rejection",
         "malformed-json-redaction"
       ],
-      tradeOffs: ["portable across OpenAI-compatible providers", "less OpenAI-native than Responses API"]
+      tradeOffs: ["OpenAI-compatible provider 전반에 portable", "Responses API보다 OpenAI-native 성격은 약함"]
     },
     {
       provider: "anthropic",
@@ -34,7 +34,7 @@ const report: ProviderComparisonReportInput = {
       setup: "OPENAI_API_KEY + ANTHROPIC_API_KEY",
       liveSmoke: {
         status: "not-run",
-        reason: "ANTHROPIC_API_KEY is not configured"
+        reason: "ANTHROPIC_API_KEY가 설정되지 않음"
       },
       deterministicChecks: [
         "request-shape",
@@ -43,7 +43,7 @@ const report: ProviderComparisonReportInput = {
         "malformed-json-redaction",
         "env-config-loading"
       ],
-      tradeOffs: ["explicit provider selection", "no automatic fallback"]
+      tradeOffs: ["명시적 provider selection", "automatic fallback 없음"]
     },
     {
       provider: "fake",
@@ -52,16 +52,16 @@ const report: ProviderComparisonReportInput = {
       setup: "none",
       liveSmoke: {
         status: "not-run",
-        reason: "FakeLLMProvider is deterministic CI/test only"
+        reason: "FakeLLMProvider는 deterministic CI/test 전용"
       },
       deterministicChecks: ["citation-shape", "empty-context-rejection"],
-      tradeOffs: ["stable eval output", "not a model-quality signal"]
+      tradeOffs: ["stable eval output", "model-quality signal 아님"]
     }
   ],
   notes: [
-    "OpenAI remains required for embeddings because retrieval query embedding uses text-embedding-3-small.",
-    "Provider comparison is explicit so setup errors are not hidden by fallback.",
-    "Only OpenAI-compatible live generation has been smoke-tested in this environment; Anthropic live smoke requires ANTHROPIC_API_KEY."
+    "retrieval query embedding이 text-embedding-3-small을 사용하므로 embedding에는 OpenAI가 계속 필요하다.",
+    "Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다.",
+    "이 환경에서는 OpenAI-compatible live generation만 동작 확인된 상태다. Anthropic live 동작 확인에는 ANTHROPIC_API_KEY가 필요하다."
   ]
 };
 

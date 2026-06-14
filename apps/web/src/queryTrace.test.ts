@@ -99,6 +99,19 @@ describe("query trace view model", () => {
     expect(loaded.trace.id).toBe("sample-trace");
   });
 
+  it("falls back to the bundled sample when the API returns an invalid trace shape", async () => {
+    const loaded = await fetchLatestTrace("http://127.0.0.1:3000", async () => ({
+      ok: true,
+      json: async () => ({
+        id: "broken-trace",
+        candidates: "not-an-array"
+      })
+    }));
+
+    expect(loaded.source).toBe("sample");
+    expect(loaded.trace.id).toBe("sample-trace");
+  });
+
   it("deduplicates concurrent latest trace requests for the same API base URL", async () => {
     let fetchCallCount = 0;
     let resolveTrace!: (trace: PublicQueryTrace) => void;

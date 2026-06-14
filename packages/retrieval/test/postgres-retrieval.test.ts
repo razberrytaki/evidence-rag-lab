@@ -7,6 +7,7 @@ import {
   buildLatestQueryTraceSql,
   buildPostgresHybridRetrievalSql,
   buildPostgresLexicalRetrievalSql,
+  buildPostgresRetrievalSqlForMode,
   buildPostgresVectorRetrievalSql,
   buildQueryTraceUpsertSql,
   extractLexicalExactTerms,
@@ -16,7 +17,8 @@ import {
   rerankByQueryEvidence,
   runExpiredQueryTraceCleanup,
   sanitizeQueryTraceForStorage,
-  shouldPersistTraceSample
+  shouldPersistTraceSample,
+  tokenizeText
 } from "../src";
 
 const repoRoot = join(__dirname, "..", "..", "..");
@@ -96,6 +98,40 @@ describe("PostgreSQL retrieval mode SQL", () => {
     expect(sql.text).not.toContain("websearch_to_tsquery");
     expect(sql.values).toEqual(["[0.25,-0.5,0.75]", 5, 60]);
   });
+
+  it("selects retrieval SQL by mode and validates embeddings in one shared helper", () => {
+    const lexical = buildPostgresRetrievalSqlForMode({
+      mode: "lexical",
+      query: "Which note names RAG_QUERY_MODE=postgres?",
+      topK: 5
+    });
+    const vector = buildPostgresRetrievalSqlForMode({
+      mode: "vector",
+      query: "Which note describes semantic vectors?",
+      embedding: [0.25, -0.5, 0.75],
+      topK: 5
+    });
+    const hybrid = buildPostgresRetrievalSqlForMode({
+      mode: "hybrid",
+      query: "Which note compares lexical and vector retrieval?",
+      embedding: [0.25, -0.5, 0.75],
+      topK: 5
+    });
+
+    expect(lexical.text).toContain("websearch_to_tsquery");
+    expect(lexical.text).not.toContain("embedding <=>");
+    expect(vector.text).toContain("embedding <=> $1::vector");
+    expect(vector.text).not.toContain("websearch_to_tsquery");
+    expect(hybrid.text).toContain("websearch_to_tsquery");
+    expect(hybrid.text).toContain("embedding <=> $2::vector");
+    expect(() =>
+      buildPostgresRetrievalSqlForMode({
+        mode: "vector",
+        query: "Which note describes semantic vectors?",
+        topK: 5
+      })
+    ).toThrow("missing query embedding for vector retrieval");
+  });
 });
 
 describe("PostgreSQL retrieval row mapper", () => {
@@ -163,6 +199,16 @@ describe("PostgreSQL retrieval row mapper", () => {
 });
 
 describe("deterministic query-evidence reranker", () => {
+  it("shares text tokenization with configurable stop words", () => {
+    expect(tokenizeText("Which semantic vectors describe rollback owners?", { stopWords: new Set(["which"]) })).toEqual([
+      "semantic",
+      "vector",
+      "describe",
+      "rollback",
+      "owner"
+    ]);
+  });
+
   it("reranks candidates by query token evidence without mutating raw retrieval ranks", () => {
     const reranked = rerankByQueryEvidence({
       query: "Which note describes reranker latency budget?",
@@ -208,15 +254,15 @@ describe("deterministic query-evidence reranker", () => {
       vectorRank: 2,
       rerankRank: 1,
       rerankScore: 0.787,
-      retrievalScore: 0.99
+      retrievalScore: 0.89
     });
     expect(reranked[1]?.score).toMatchObject({
       rerankRank: 2,
-      retrievalScore: 0.89
+      retrievalScore: 0.79
     });
     expect(reranked[2]?.score).toMatchObject({
       rerankRank: 3,
-      retrievalScore: 0.79
+      retrievalScore: 0.99
     });
     expect(reranked[0]?.score.rerankScore).toBeGreaterThan(reranked[1]?.score.rerankScore ?? 0);
     expect(reranked[1]?.score.rerankScore).toBeGreaterThan(reranked[2]?.score.rerankScore ?? 0);

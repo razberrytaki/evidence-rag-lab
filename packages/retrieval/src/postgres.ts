@@ -22,6 +22,17 @@ export interface PostgresVectorRetrievalInput {
   reciprocalRankK?: number;
 }
 
+export type PostgresRetrievalMode = "lexical" | "vector" | "hybrid";
+
+export interface PostgresRetrievalSqlForModeInput {
+  mode: PostgresRetrievalMode;
+  query: string;
+  embedding?: readonly number[];
+  topK: number;
+  reciprocalRankK?: number;
+  textSearchConfig?: string;
+}
+
 export interface ParameterizedSql {
   text: string;
   values: unknown[];
@@ -309,6 +320,31 @@ LIMIT $3
   };
 }
 
+export function buildPostgresRetrievalSqlForMode(input: PostgresRetrievalSqlForModeInput): ParameterizedSql {
+  switch (input.mode) {
+    case "lexical":
+      return buildPostgresLexicalRetrievalSql({
+        query: input.query,
+        topK: input.topK,
+        textSearchConfig: input.textSearchConfig
+      });
+    case "vector":
+      return buildPostgresVectorRetrievalSql({
+        embedding: requireRetrievalEmbedding(input.embedding, input.mode),
+        topK: input.topK,
+        reciprocalRankK: input.reciprocalRankK
+      });
+    case "hybrid":
+      return buildPostgresHybridRetrievalSql({
+        query: input.query,
+        embedding: requireRetrievalEmbedding(input.embedding, input.mode),
+        topK: input.topK,
+        reciprocalRankK: input.reciprocalRankK,
+        textSearchConfig: input.textSearchConfig
+      });
+  }
+}
+
 export function formatPgVector(embedding: readonly number[]): string {
   if (embedding.length === 0) {
     throw new Error("embedding must contain at least one dimension");
@@ -453,6 +489,16 @@ function requirePositiveInteger(value: number, fieldName: string): number {
     throw new Error(`${fieldName} must be a positive integer`);
   }
   return value;
+}
+
+function requireRetrievalEmbedding(
+  embedding: readonly number[] | undefined,
+  mode: Exclude<PostgresRetrievalMode, "lexical">
+): readonly number[] {
+  if (!embedding) {
+    throw new Error(`missing query embedding for ${mode} retrieval`);
+  }
+  return embedding;
 }
 
 function optionalNumber(value: number | string | null | undefined): number | undefined {

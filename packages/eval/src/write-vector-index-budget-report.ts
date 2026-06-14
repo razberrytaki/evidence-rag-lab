@@ -5,7 +5,7 @@ import { renderVectorIndexBudgetReportMarkdown, type VectorIndexBudgetReportInpu
 const repoRoot = join(__dirname, "..", "..", "..");
 
 const report: VectorIndexBudgetReportInput = {
-  generatedAt: "2026-06-11",
+  generatedAt: "2026-06-12",
   assumptions: {
     documentCount: 10_000_000,
     averageChunksPerDocument: 8,
@@ -18,10 +18,10 @@ const report: VectorIndexBudgetReportInput = {
     hnswBuildMemoryMultiplier: 2
   },
   notes: [
-    "HNSW graph math is an explicit scenario, not measured pgvector index size.",
-    "The graph estimate excludes PostgreSQL page overhead, index tuple overhead, WAL, replicas, backups, vacuum bloat, and cache effects.",
-    "The build working set estimate is a planning estimate for memory pressure discussion, not an observed maintenance_work_mem requirement.",
-    "Production validation still needs larger indexes, warm/cold cache splits, p99 latency, recall checks, and failure-rate reporting."
+    "HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.",
+    "graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.",
+    "build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.",
+    "Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다."
   ]
 };
 
