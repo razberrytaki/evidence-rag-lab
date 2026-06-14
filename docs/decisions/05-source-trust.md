@@ -1,27 +1,27 @@
-# Decision: Source Trust
+# 결정: Source Trust
 
-## Context
+## 맥락
 
-Retrieved chunks are not equally reliable.
+검색된 chunk의 신뢰도는 동일하지 않다.
 
-## Recommended choice
+## 권장 선택
 
-Score freshness, source type, duplicate penalty, and retrieval agreement.
+freshness, source type, duplicate penalty, retrieval agreement를 점수화한다.
 
-## Alternatives considered
+## 검토한 대안
 
 - source-type-only score
 - LLM trust judge
 
-## Trade-off
+## 트레이드오프
 
-Deterministic trust scoring is inspectable and CI-friendly. It is less flexible
-than a model judge but easier to defend in a portfolio walkthrough.
+deterministic trust scoring은 검사 가능하고 CI 친화적이다. model judge보다
+유연성은 낮지만, 포트폴리오 walkthrough에서 방어하기 쉽다.
 
-## Evaluation evidence
+## 평가 근거
 
-Use `duplicate-doc-penalty`, `stale-source-demotion`, and `low-trust-source`.
+`duplicate-doc-penalty`, `stale-source-demotion`, `low-trust-source`를 사용한다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Add source ownership, update frequency, and per-document lineage.
+source ownership, update frequency, per-document lineage를 추가한다.

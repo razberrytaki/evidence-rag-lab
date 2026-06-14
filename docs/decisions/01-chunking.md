@@ -1,28 +1,28 @@
-# Decision: Chunking
+# 결정: 청킹
 
-## Context
+## 맥락
 
-Small chunks improve retrieval precision, but large chunks preserve context.
+작은 청크는 검색 정밀도를 높이지만, 큰 청크는 문맥 보존에 유리하다.
 
-## Recommended choice
+## 권장 선택
 
-Use heading-aware recursive chunking for MVP.
+MVP에서는 제목 구조를 인식하는 재귀적 청킹을 사용한다.
 
-## Alternatives considered
+## 검토한 대안
 
-- fixed-size chunking
-- semantic chunking
+- 고정 크기 청킹
+- 시맨틱 청킹
 
-## Trade-off
+## 트레이드오프
 
-Heading-aware recursive chunking is simple enough to inspect and good enough for
-public technical docs. Semantic chunking remains a later comparison because it
-adds model dependency and harder-to-debug boundaries.
+제목 기반 재귀 청킹은 사람이 검사하기 충분히 단순하고, 공개 기술 문서에는
+충분히 잘 맞는다. 시맨틱 청킹은 모델 의존성과 디버깅하기 어려운 경계를
+추가하므로 이후 비교 대상으로 남긴다.
 
-## Evaluation evidence
+## 평가 근거
 
-Use the `parent-child-context` fixture and chunk preview traces.
+`parent-child-context` fixture와 청크 미리보기 trace를 사용한다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Measure chunk count growth, index update cost, and parent-context fetch latency.
+청크 수 증가, 인덱스 갱신 비용, parent context 조회 지연 시간을 측정한다.

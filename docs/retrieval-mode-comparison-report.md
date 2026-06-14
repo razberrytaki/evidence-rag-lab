@@ -1,15 +1,15 @@
-# Retrieval Mode Comparison Report
+# 검색 모드 비교 리포트
 
-Generated from live PostgreSQL retrieval observations over the public sample docs.
-This compares retrieval modes for portfolio trade-off evidence, not production scale.
+public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.
+production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.
 
-| Mode | Recall | Rate | Mean reciprocal rank |
+| Mode | Recall | 비율 | Mean reciprocal rank |
 |---|---:|---:|---:|
 | lexical | 14/20 | 70% | 0.700 |
 | vector | 20/20 | 100% | 0.975 |
 | hybrid | 20/20 | 100% | 1.000 |
 
-| Category | Mode | Recall | Rate | Mean reciprocal rank |
+| Category | Mode | Recall | 비율 | Mean reciprocal rank |
 |---|---|---:|---:|---:|
 | answer-guard | lexical | 1/3 | 33% | 0.333 |
 | exact-token | lexical | 5/5 | 100% | 1.000 |
@@ -30,71 +30,71 @@ This compares retrieval modes for portfolio trade-off evidence, not production s
 | trust-observability | hybrid | 3/3 | 100% | 1.000 |
 | version-conflict | hybrid | 3/3 | 100% | 1.000 |
 
-| Case | Mode | Category | Status | Matched doc | Reciprocal rank | Notes |
+| Case | Mode | Category | 상태 | Matched doc | Reciprocal rank | 메모 |
 |---|---|---|---|---|---:|---|
-| hybrid-retrieval | lexical | semantic | fail | - | 0.000 | missing relevant docs in top 3: hybrid-retrieval-note |
-| pgvector-hnsw | lexical | semantic | pass | pgvector-indexing-note | 1.000 | first relevant doc at rank 1 |
-| deployment-policy-current | lexical | version-conflict | pass | deployment-policy-v2 | 1.000 | first relevant doc at rank 1 |
-| prompt-injection-document-text | lexical | answer-guard | fail | - | 0.000 | missing relevant docs in top 3: prompt-injection-note |
-| deployment-policy-stale | lexical | version-conflict | fail | - | 0.000 | missing relevant docs in top 3: deployment-policy-v1 |
-| chunking-boundary | lexical | retrieval-design | pass | chunking-strategy-note | 1.000 | first relevant doc at rank 1 |
-| parent-child-retrieval | lexical | retrieval-design | fail | - | 0.000 | missing relevant docs in top 3: parent-child-retrieval-note |
-| reranker-latency-budget | lexical | retrieval-design | fail | - | 0.000 | missing relevant docs in top 3: reranker-latency-note |
-| source-trust-score | lexical | trust-observability | pass | source-trust-note | 1.000 | first relevant doc at rank 1 |
-| citation-validation | lexical | answer-guard | fail | - | 0.000 | missing relevant docs in top 3: citation-validation-note |
-| insufficient-evidence-rejection | lexical | answer-guard | pass | insufficient-evidence-note | 1.000 | first relevant doc at rank 1 |
-| trace-observability | lexical | trust-observability | pass | trace-observability-note | 1.000 | first relevant doc at rank 1 |
-| retrieval-cache-invalidation | lexical | retrieval-design | pass | retrieval-cache-note | 1.000 | first relevant doc at rank 1 |
-| version-history | lexical | version-conflict | pass | version-history-note | 1.000 | first relevant doc at rank 1 |
-| duplicate-detection | lexical | trust-observability | pass | duplicate-detection-note | 1.000 | first relevant doc at rank 1 |
-| rag-query-mode-config-key | lexical | exact-token | pass | config-key-routing-note | 1.000 | first relevant doc at rank 1 |
-| unknown-chunk-error-code | lexical | exact-token | pass | error-code-runbook-note | 1.000 | first relevant doc at rank 1 |
-| selected-chunk-ids-field | lexical | exact-token | pass | api-field-contract-note | 1.000 | first relevant doc at rank 1 |
-| rrf-acronym-collision | lexical | exact-token | pass | acronym-collision-note | 1.000 | first relevant doc at rank 1 |
-| runbook-id-rollback | lexical | exact-token | pass | runbook-id-rollback-note | 1.000 | first relevant doc at rank 1 |
-| hybrid-retrieval | vector | semantic | pass | hybrid-retrieval-note | 1.000 | first relevant doc at rank 1 |
-| pgvector-hnsw | vector | semantic | pass | pgvector-indexing-note | 1.000 | first relevant doc at rank 1 |
-| deployment-policy-current | vector | version-conflict | pass | deployment-policy-v2 | 1.000 | first relevant doc at rank 1 |
-| prompt-injection-document-text | vector | answer-guard | pass | prompt-injection-note | 1.000 | first relevant doc at rank 1 |
-| deployment-policy-stale | vector | version-conflict | pass | deployment-policy-v1 | 1.000 | first relevant doc at rank 1 |
-| chunking-boundary | vector | retrieval-design | pass | chunking-strategy-note | 1.000 | first relevant doc at rank 1 |
-| parent-child-retrieval | vector | retrieval-design | pass | parent-child-retrieval-note | 1.000 | first relevant doc at rank 1 |
-| reranker-latency-budget | vector | retrieval-design | pass | reranker-latency-note | 1.000 | first relevant doc at rank 1 |
-| source-trust-score | vector | trust-observability | pass | source-trust-note | 1.000 | first relevant doc at rank 1 |
-| citation-validation | vector | answer-guard | pass | citation-validation-note | 1.000 | first relevant doc at rank 1 |
-| insufficient-evidence-rejection | vector | answer-guard | pass | insufficient-evidence-note | 1.000 | first relevant doc at rank 1 |
-| trace-observability | vector | trust-observability | pass | trace-observability-note | 0.500 | first relevant doc at rank 2 |
-| retrieval-cache-invalidation | vector | retrieval-design | pass | retrieval-cache-note | 1.000 | first relevant doc at rank 1 |
-| version-history | vector | version-conflict | pass | version-history-note | 1.000 | first relevant doc at rank 1 |
-| duplicate-detection | vector | trust-observability | pass | duplicate-detection-note | 1.000 | first relevant doc at rank 1 |
-| rag-query-mode-config-key | vector | exact-token | pass | config-key-routing-note | 1.000 | first relevant doc at rank 1 |
-| unknown-chunk-error-code | vector | exact-token | pass | error-code-runbook-note | 1.000 | first relevant doc at rank 1 |
-| selected-chunk-ids-field | vector | exact-token | pass | api-field-contract-note | 1.000 | first relevant doc at rank 1 |
-| rrf-acronym-collision | vector | exact-token | pass | acronym-collision-note | 1.000 | first relevant doc at rank 1 |
-| runbook-id-rollback | vector | exact-token | pass | runbook-id-rollback-note | 1.000 | first relevant doc at rank 1 |
-| hybrid-retrieval | hybrid | semantic | pass | hybrid-retrieval-note | 1.000 | first relevant doc at rank 1 |
-| pgvector-hnsw | hybrid | semantic | pass | pgvector-indexing-note | 1.000 | first relevant doc at rank 1 |
-| deployment-policy-current | hybrid | version-conflict | pass | deployment-policy-v2 | 1.000 | first relevant doc at rank 1 |
-| prompt-injection-document-text | hybrid | answer-guard | pass | prompt-injection-note | 1.000 | first relevant doc at rank 1 |
-| deployment-policy-stale | hybrid | version-conflict | pass | deployment-policy-v1 | 1.000 | first relevant doc at rank 1 |
-| chunking-boundary | hybrid | retrieval-design | pass | chunking-strategy-note | 1.000 | first relevant doc at rank 1 |
-| parent-child-retrieval | hybrid | retrieval-design | pass | parent-child-retrieval-note | 1.000 | first relevant doc at rank 1 |
-| reranker-latency-budget | hybrid | retrieval-design | pass | reranker-latency-note | 1.000 | first relevant doc at rank 1 |
-| source-trust-score | hybrid | trust-observability | pass | source-trust-note | 1.000 | first relevant doc at rank 1 |
-| citation-validation | hybrid | answer-guard | pass | citation-validation-note | 1.000 | first relevant doc at rank 1 |
-| insufficient-evidence-rejection | hybrid | answer-guard | pass | insufficient-evidence-note | 1.000 | first relevant doc at rank 1 |
-| trace-observability | hybrid | trust-observability | pass | trace-observability-note | 1.000 | first relevant doc at rank 1 |
-| retrieval-cache-invalidation | hybrid | retrieval-design | pass | retrieval-cache-note | 1.000 | first relevant doc at rank 1 |
-| version-history | hybrid | version-conflict | pass | version-history-note | 1.000 | first relevant doc at rank 1 |
-| duplicate-detection | hybrid | trust-observability | pass | duplicate-detection-note | 1.000 | first relevant doc at rank 1 |
-| rag-query-mode-config-key | hybrid | exact-token | pass | config-key-routing-note | 1.000 | first relevant doc at rank 1 |
-| unknown-chunk-error-code | hybrid | exact-token | pass | error-code-runbook-note | 1.000 | first relevant doc at rank 1 |
-| selected-chunk-ids-field | hybrid | exact-token | pass | api-field-contract-note | 1.000 | first relevant doc at rank 1 |
-| rrf-acronym-collision | hybrid | exact-token | pass | acronym-collision-note | 1.000 | first relevant doc at rank 1 |
-| runbook-id-rollback | hybrid | exact-token | pass | runbook-id-rollback-note | 1.000 | first relevant doc at rank 1 |
+| hybrid-retrieval | lexical | semantic | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: hybrid-retrieval-note |
+| pgvector-hnsw | lexical | semantic | 통과 | pgvector-indexing-note | 1.000 | 첫 relevant doc rank 1 |
+| deployment-policy-current | lexical | version-conflict | 통과 | deployment-policy-v2 | 1.000 | 첫 relevant doc rank 1 |
+| prompt-injection-document-text | lexical | answer-guard | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: prompt-injection-note |
+| deployment-policy-stale | lexical | version-conflict | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: deployment-policy-v1 |
+| chunking-boundary | lexical | retrieval-design | 통과 | chunking-strategy-note | 1.000 | 첫 relevant doc rank 1 |
+| parent-child-retrieval | lexical | retrieval-design | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: parent-child-retrieval-note |
+| reranker-latency-budget | lexical | retrieval-design | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: reranker-latency-note |
+| source-trust-score | lexical | trust-observability | 통과 | source-trust-note | 1.000 | 첫 relevant doc rank 1 |
+| citation-validation | lexical | answer-guard | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: citation-validation-note |
+| insufficient-evidence-rejection | lexical | answer-guard | 통과 | insufficient-evidence-note | 1.000 | 첫 relevant doc rank 1 |
+| trace-observability | lexical | trust-observability | 통과 | trace-observability-note | 1.000 | 첫 relevant doc rank 1 |
+| retrieval-cache-invalidation | lexical | retrieval-design | 통과 | retrieval-cache-note | 1.000 | 첫 relevant doc rank 1 |
+| version-history | lexical | version-conflict | 통과 | version-history-note | 1.000 | 첫 relevant doc rank 1 |
+| duplicate-detection | lexical | trust-observability | 통과 | duplicate-detection-note | 1.000 | 첫 relevant doc rank 1 |
+| rag-query-mode-config-key | lexical | exact-token | 통과 | config-key-routing-note | 1.000 | 첫 relevant doc rank 1 |
+| unknown-chunk-error-code | lexical | exact-token | 통과 | error-code-runbook-note | 1.000 | 첫 relevant doc rank 1 |
+| selected-chunk-ids-field | lexical | exact-token | 통과 | api-field-contract-note | 1.000 | 첫 relevant doc rank 1 |
+| rrf-acronym-collision | lexical | exact-token | 통과 | acronym-collision-note | 1.000 | 첫 relevant doc rank 1 |
+| runbook-id-rollback | lexical | exact-token | 통과 | runbook-id-rollback-note | 1.000 | 첫 relevant doc rank 1 |
+| hybrid-retrieval | vector | semantic | 통과 | hybrid-retrieval-note | 1.000 | 첫 relevant doc rank 1 |
+| pgvector-hnsw | vector | semantic | 통과 | pgvector-indexing-note | 1.000 | 첫 relevant doc rank 1 |
+| deployment-policy-current | vector | version-conflict | 통과 | deployment-policy-v2 | 1.000 | 첫 relevant doc rank 1 |
+| prompt-injection-document-text | vector | answer-guard | 통과 | prompt-injection-note | 1.000 | 첫 relevant doc rank 1 |
+| deployment-policy-stale | vector | version-conflict | 통과 | deployment-policy-v1 | 1.000 | 첫 relevant doc rank 1 |
+| chunking-boundary | vector | retrieval-design | 통과 | chunking-strategy-note | 1.000 | 첫 relevant doc rank 1 |
+| parent-child-retrieval | vector | retrieval-design | 통과 | parent-child-retrieval-note | 1.000 | 첫 relevant doc rank 1 |
+| reranker-latency-budget | vector | retrieval-design | 통과 | reranker-latency-note | 1.000 | 첫 relevant doc rank 1 |
+| source-trust-score | vector | trust-observability | 통과 | source-trust-note | 1.000 | 첫 relevant doc rank 1 |
+| citation-validation | vector | answer-guard | 통과 | citation-validation-note | 1.000 | 첫 relevant doc rank 1 |
+| insufficient-evidence-rejection | vector | answer-guard | 통과 | insufficient-evidence-note | 1.000 | 첫 relevant doc rank 1 |
+| trace-observability | vector | trust-observability | 통과 | trace-observability-note | 0.500 | 첫 relevant doc rank 2 |
+| retrieval-cache-invalidation | vector | retrieval-design | 통과 | retrieval-cache-note | 1.000 | 첫 relevant doc rank 1 |
+| version-history | vector | version-conflict | 통과 | version-history-note | 1.000 | 첫 relevant doc rank 1 |
+| duplicate-detection | vector | trust-observability | 통과 | duplicate-detection-note | 1.000 | 첫 relevant doc rank 1 |
+| rag-query-mode-config-key | vector | exact-token | 통과 | config-key-routing-note | 1.000 | 첫 relevant doc rank 1 |
+| unknown-chunk-error-code | vector | exact-token | 통과 | error-code-runbook-note | 1.000 | 첫 relevant doc rank 1 |
+| selected-chunk-ids-field | vector | exact-token | 통과 | api-field-contract-note | 1.000 | 첫 relevant doc rank 1 |
+| rrf-acronym-collision | vector | exact-token | 통과 | acronym-collision-note | 1.000 | 첫 relevant doc rank 1 |
+| runbook-id-rollback | vector | exact-token | 통과 | runbook-id-rollback-note | 1.000 | 첫 relevant doc rank 1 |
+| hybrid-retrieval | hybrid | semantic | 통과 | hybrid-retrieval-note | 1.000 | 첫 relevant doc rank 1 |
+| pgvector-hnsw | hybrid | semantic | 통과 | pgvector-indexing-note | 1.000 | 첫 relevant doc rank 1 |
+| deployment-policy-current | hybrid | version-conflict | 통과 | deployment-policy-v2 | 1.000 | 첫 relevant doc rank 1 |
+| prompt-injection-document-text | hybrid | answer-guard | 통과 | prompt-injection-note | 1.000 | 첫 relevant doc rank 1 |
+| deployment-policy-stale | hybrid | version-conflict | 통과 | deployment-policy-v1 | 1.000 | 첫 relevant doc rank 1 |
+| chunking-boundary | hybrid | retrieval-design | 통과 | chunking-strategy-note | 1.000 | 첫 relevant doc rank 1 |
+| parent-child-retrieval | hybrid | retrieval-design | 통과 | parent-child-retrieval-note | 1.000 | 첫 relevant doc rank 1 |
+| reranker-latency-budget | hybrid | retrieval-design | 통과 | reranker-latency-note | 1.000 | 첫 relevant doc rank 1 |
+| source-trust-score | hybrid | trust-observability | 통과 | source-trust-note | 1.000 | 첫 relevant doc rank 1 |
+| citation-validation | hybrid | answer-guard | 통과 | citation-validation-note | 1.000 | 첫 relevant doc rank 1 |
+| insufficient-evidence-rejection | hybrid | answer-guard | 통과 | insufficient-evidence-note | 1.000 | 첫 relevant doc rank 1 |
+| trace-observability | hybrid | trust-observability | 통과 | trace-observability-note | 1.000 | 첫 relevant doc rank 1 |
+| retrieval-cache-invalidation | hybrid | retrieval-design | 통과 | retrieval-cache-note | 1.000 | 첫 relevant doc rank 1 |
+| version-history | hybrid | version-conflict | 통과 | version-history-note | 1.000 | 첫 relevant doc rank 1 |
+| duplicate-detection | hybrid | trust-observability | 통과 | duplicate-detection-note | 1.000 | 첫 relevant doc rank 1 |
+| rag-query-mode-config-key | hybrid | exact-token | 통과 | config-key-routing-note | 1.000 | 첫 relevant doc rank 1 |
+| unknown-chunk-error-code | hybrid | exact-token | 통과 | error-code-runbook-note | 1.000 | 첫 relevant doc rank 1 |
+| selected-chunk-ids-field | hybrid | exact-token | 통과 | api-field-contract-note | 1.000 | 첫 relevant doc rank 1 |
+| rrf-acronym-collision | hybrid | exact-token | 통과 | acronym-collision-note | 1.000 | 첫 relevant doc rank 1 |
+| runbook-id-rollback | hybrid | exact-token | 통과 | runbook-id-rollback-note | 1.000 | 첫 relevant doc rank 1 |
 
-## Notes
+## 메모
 
-- Identifier-aware lexical retrieval now passes the exact-token stress category.
-- Vector-only retrieves every expected document but loses one rank position in the trace-observability category.
-- Hybrid keeps recall equal to vector-only while restoring MRR to 1.000 on this 20-document smoke.
+- Identifier-aware lexical retrieval은 이제 exact-token stress category를 통과한다.
+- Vector-only는 모든 expected document를 찾지만 trace-observability category에서 rank position 하나를 잃는다.
+- Hybrid는 이 20-document 동작 확인에서 vector-only와 같은 recall을 유지하면서 MRR을 1.000으로 복구한다.

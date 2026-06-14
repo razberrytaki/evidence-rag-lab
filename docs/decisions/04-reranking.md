@@ -1,48 +1,49 @@
-# Decision: Reranking
+# 결정: Reranking
 
-## Context
+## 맥락
 
-Approximate retrieval can return noisy candidates.
+approximate retrieval은 noisy candidate를 반환할 수 있다.
 
-## Recommended choice
+## 권장 선택
 
-Define a reranker interface and begin with a lightweight deterministic reranker.
+reranker interface를 정의하고, 가벼운 deterministic reranker로 시작한다.
 
-## Alternatives considered
+## 검토한 대안
 
 - cross-encoder reranker
 - ColBERT late interaction
 - LLM reranking
 
-## Trade-off
+## 트레이드오프
 
-A lightweight reranker is easy to test and explain. Model-based rerankers can
-improve relevance but add cost, latency, and provider dependency.
+가벼운 reranker는 테스트하고 설명하기 쉽다. model-based reranker는 relevance를
+개선할 수 있지만 비용, latency, provider dependency를 추가한다.
 
-The current implementation uses deterministic query-token evidence coverage,
-the existing calibrated retrieval prior, and trust score. It annotates
-`rerankScore` and `rerankRank`, then the API selection gate still applies
-retrieval confidence and source trust thresholds before generation.
+현재 구현은 deterministic query-token evidence coverage, 기존 calibrated
+retrieval prior, trust score를 사용한다. `rerankScore`와 `rerankRank`를 기록하되
+`retrievalScore`를 덮어쓰지 않는다. API selection gate는 generation 전에
+retrieval confidence, query-evidence rerank score, source trust threshold를 모두
+적용한다.
 
-This keeps the MVP honest: it proves the reranking boundary and trace shape
-without implying model-grade relevance. Cross-encoder, ColBERT, or LLM rerankers
-can replace the scoring function later without changing generation or trace
-storage contracts.
+이 선택은 MVP를 과장하지 않게 한다. model-grade relevance를 암시하지 않고도
+reranking boundary와 trace shape를 증명한다. Cross-encoder, ColBERT, LLM
+reranker는 나중에 generation이나 trace storage contract를 바꾸지 않고 scoring
+function만 대체할 수 있다.
 
-## Evaluation evidence
+## 평가 근거
 
-- `rerankByQueryEvidence` reranks candidates by query evidence while preserving
-  original lexical and vector ranks.
-- `apps/api/src/postgres-rag.pipeline.ts` reranks PostgreSQL candidates before
-  selecting generation context.
-- `apps/web/src/queryTrace.ts` displays `rerankRank` and `rerankScore` when a
-  persisted sanitized trace includes them.
-- Tests cover a generic vector-first candidate being demoted behind a more
-  query-specific reranker latency candidate.
-- This is still deterministic reranking, not a model-quality benchmark.
+- `rerankByQueryEvidence`는 original lexical/vector rank를 보존하면서 query
+  evidence 기준으로 candidate를 rerank한다.
+- `apps/api/src/postgres-rag.pipeline.ts`는 generation context를 선택하기 전에
+  PostgreSQL candidate를 rerank하고 low query-evidence candidate를 제외한다.
+- `apps/web/src/queryTrace.ts`는 persisted sanitized trace에 `rerankRank`와
+  `rerankScore`가 있으면 이를 표시한다.
+- test는 generic vector-first candidate가 더 query-specific한 reranker latency
+  candidate 뒤로 내려가는 경우를 다룬다.
+- 이는 여전히 deterministic reranking이며 model-quality benchmark가 아니다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Benchmark reranking latency budget separately from retrieval latency. Compare
-the deterministic baseline against cross-encoder, ColBERT late interaction, and
-LLM reranking under fixed candidate counts and timeout budgets.
+reranking latency budget을 retrieval latency와 분리해 benchmark한다. 고정된
+candidate count와 timeout budget 아래에서 deterministic baseline을 cross-encoder,
+ColBERT late interaction, LLM reranking과 비교한다.

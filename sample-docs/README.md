@@ -1,30 +1,29 @@
 # Sample Docs
 
-`sample-docs` is a 20-document set for retrieval and generation evaluation. It
-is not production data and does not include company material or private
-operating notes.
+`sample-docs`는 retrieval과 generation evaluation을 위한 20-document set이다. 이는
+production data가 아니며 company material이나 private operating note를 포함하지 않는다.
+문서 metadata는 full YAML parser가 아니라 `key: value` 한 줄 형식의 frontmatter subset만 사용한다.
 
-Allowed content:
+허용 content:
 
-- short public-doc excerpts with source URL and usage note
-- synthetic stale documents
-- synthetic conflict documents
-- out-of-scope query notes for insufficient-evidence tests
+- source URL과 usage note가 있는 짧은 public-doc excerpt
+- synthetic stale document
+- synthetic conflict document
+- insufficient-evidence test를 위한 out-of-scope query note
 
-Each public excerpt must include:
+각 public excerpt는 다음을 포함해야 한다:
 
 - source URL
 - accessed date
-- license or usage note
-- reason it is included in eval
+- license 또는 usage note
+- eval에 포함한 이유
 
-Current themes:
+현재 theme:
 
-- hybrid retrieval and pgvector HNSW
-- chunking and parent-child retrieval
-- reranker latency and retrieval cache invalidation
-- source trust, duplicate detection, and version history
-- citation validation, prompt-injection text, and insufficient-evidence rejection
+- hybrid retrieval과 pgvector HNSW
+- chunking과 parent-child retrieval
+- reranker latency와 retrieval cache invalidation
+- source trust, duplicate detection, version history
+- citation validation, prompt-injection text, insufficient-evidence rejection
 - sanitized trace observability
-- exact identifier stress cases for config keys, API fields, error codes,
-  acronyms, and runbook IDs
+- config key, API field, error code, acronym, runbook ID를 위한 exact identifier stress case

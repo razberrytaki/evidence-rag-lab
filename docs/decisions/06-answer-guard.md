@@ -1,36 +1,36 @@
-# Decision: Answer Guard
+# 결정: Answer Guard
 
-## Context
+## 맥락
 
-RAG quality fails when generation adds unsupported claims.
+generation이 근거 없는 claim을 추가하면 RAG 품질은 실패한다.
 
-## Recommended choice
+## 권장 선택
 
-Use a context-bound prompt, citation validation, and unsupported-claim rejection.
+context-bound prompt, citation validation, unsupported-claim rejection을 사용한다.
 
-## Alternatives considered
+## 검토한 대안
 
 - prompt-only guard
 - extractive-only answer
 
-## Trade-off
+## 트레이드오프
 
-Post-generation validation makes failure explicit. It can reject useful answers
-when citation coverage is incomplete, but that is acceptable for this lab.
+post-generation validation은 실패를 명시적으로 만든다. citation coverage가
+불완전하면 유용한 답변도 reject할 수 있지만, 이 lab에서는 그 편이 허용 가능한
+trade-off다.
 
-## Evaluation evidence
+## 평가 근거
 
-Use `insufficient-evidence`, `citation-per-claim`,
-`unsupported-claim-detection`, and prompt injection fixtures.
+`insufficient-evidence`, `citation-per-claim`, `unsupported-claim-detection`,
+prompt injection fixture를 사용한다.
 
-- `OpenAICompatibleLLMProvider` rejects empty selected context before any live
-  call.
-- Provider citations are accepted only when `documentId` and `chunkId` match the
-  selected context.
-- Malformed provider JSON becomes a sanitized
-  `citation_validation_failed` rejection instead of exposing raw provider
-  content.
+- `OpenAICompatibleLLMProvider`는 live call 전에 empty selected context를
+  reject한다.
+- provider citation은 `documentId`와 `chunkId`가 selected context와 일치할 때만
+  accept된다.
+- malformed provider JSON은 raw provider content를 노출하지 않고 sanitized
+  `citation_validation_failed` rejection이 된다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Track rejection reasons and false rejects as first-class metrics.
+rejection reason과 false reject를 first-class metric으로 추적한다.

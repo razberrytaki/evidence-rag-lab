@@ -1,73 +1,72 @@
-# Decision: Hybrid Retrieval
+# 결정: 하이브리드 검색
 
-## Context
+## 맥락
 
-Vector search handles semantic matches. Lexical search protects exact terms.
+벡터 검색은 의미적으로 가까운 표현을 처리한다. lexical 검색은 정확한 용어를
+보호한다.
 
-## Recommended choice
+## 권장 선택
 
-Use PostgreSQL full-text search plus identifier-aware exact-token matching plus
-pgvector, combined by reciprocal rank fusion.
+PostgreSQL full-text search, 식별자 인식 exact-token matching, pgvector를 함께
+사용하고 reciprocal rank fusion으로 결합한다.
 
-## Alternatives considered
+## 검토한 대안
 
 - vector-only retrieval
 - lexical-only retrieval
 - weighted score fusion
 
-## Trade-off
+## 트레이드오프
 
-Reciprocal rank fusion avoids early score calibration work and makes ranking
-easier to explain in the trace viewer. Identifier-aware lexical matching handles
-config keys, API fields, error codes, acronyms, and runbook IDs that PostgreSQL
-full-text search alone can miss. The result is still sample-doc specific and
-must be re-evaluated before production.
+reciprocal rank fusion은 초기 score calibration 부담을 줄이고, trace viewer에서
+ranking을 설명하기 쉽게 만든다. 식별자 인식 lexical matching은 PostgreSQL
+full-text search만으로 놓칠 수 있는 config key, API field, error code,
+acronym, runbook ID를 처리한다. 현재 결과는 여전히 sample-doc 기준이므로
+production 적용 전 재평가가 필요하다.
 
-## Evaluation evidence
+## 평가 근거
 
-- Use `exact-term-retrieval`, `semantic-paraphrase`, and `hybrid-rescue`.
-- `apps/api/src/postgres-rag.pipeline.ts` routes `/query` through PostgreSQL
-  retrieval when `RAG_QUERY_MODE=postgres`.
-- `pnpm db:live-smoke` verifies the OpenAI embedding + PostgreSQL retrieval
-  path over the sample chunks, but this remains a smoke check rather than a
-  quality benchmark.
-- `pnpm db:quality-smoke` runs 20 live ranked retrieval cases over stored
-  sample-doc embeddings and writes `docs/retrieval-quality-report.md`.
-- Current sample-doc result: recall@3 `20/20`, MRR `1.000`.
-- `pnpm db:retrieval-compare-smoke` runs the same 20 ranked cases through
-  lexical-only, vector-only, and hybrid retrieval and writes
-  `docs/retrieval-mode-comparison-report.md`.
-- Current mode comparison result: lexical-only recall@3 `14/20`, MRR `0.700`;
+- `exact-term-retrieval`, `semantic-paraphrase`, `hybrid-rescue`를 사용한다.
+- `apps/api/src/postgres-rag.pipeline.ts`는 `RAG_QUERY_MODE=postgres`일 때
+  `/query`를 PostgreSQL retrieval 경로로 보낸다.
+- `pnpm db:live-smoke`는 sample chunk에 대해 OpenAI embedding + PostgreSQL
+  retrieval 경로를 검증한다. 단, 이는 quality benchmark가 아니라 간이 검증이다.
+- `pnpm db:quality-smoke`는 저장된 sample-doc embedding 위에서 20개의 live
+  ranked retrieval case를 실행하고 `docs/retrieval-quality-report.md`를 쓴다.
+- 현재 sample-doc 결과: recall@3 `20/20`, MRR `1.000`.
+- `pnpm db:retrieval-compare-smoke`는 같은 20개 ranked case를 lexical-only,
+  vector-only, hybrid retrieval로 실행하고
+  `docs/retrieval-mode-comparison-report.md`를 쓴다.
+- 현재 mode 비교 결과: lexical-only recall@3 `14/20`, MRR `0.700`;
   vector-only recall@3 `20/20`, MRR `0.975`; hybrid recall@3 `20/20`, MRR
   `1.000`.
-- `pnpm db:retrieval-latency-smoke` measures the same 20 cases and writes
-  `docs/retrieval-latency-report.md` with separate aggregate timings for
-  embedding, lexical SQL, vector SQL, and hybrid SQL. This keeps quality and
-  latency trade-offs visible without logging raw queries or provider payloads.
-- Current local latency smoke result: embedding P50 `147.91ms`, P95 `164.35ms`;
+- `pnpm db:retrieval-latency-smoke`는 같은 20개 case를 측정하고 embedding,
+  lexical SQL, vector SQL, hybrid SQL의 aggregate timing을 분리해
+  `docs/retrieval-latency-report.md`에 쓴다. raw query나 provider payload를
+  기록하지 않고도 품질과 latency trade-off를 볼 수 있게 한다.
+- 현재 local latency 간이 검증 결과: embedding P50 `147.91ms`, P95 `164.35ms`;
   lexical SQL P50 `2.59ms`; vector SQL P50 `2.08ms`; hybrid SQL P50 `1.32ms`.
-  This says embedding dominates the current tiny sample run. It does not imply
-  hybrid SQL will stay fastest at larger scale.
-- `pnpm db:retrieval-concurrency-smoke` precomputes embeddings, then measures
-  PostgreSQL lexical, vector, and hybrid retrieval at concurrency `1` and `4`.
-  It writes `docs/retrieval-concurrency-report.md` without query text, provider
-  payloads, prompts, or credentials.
-- Current local concurrency smoke at concurrency `4`: lexical P50 `1.01ms`, P95
+  이는 현재의 작은 sample run에서 embedding이 지배적이라는 뜻이다. 더 큰 규모에서도
+  hybrid SQL이 가장 빠르게 유지된다는 의미는 아니다.
+- `pnpm db:retrieval-concurrency-smoke`는 embedding을 미리 계산한 뒤,
+  concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
+  측정한다. query text, provider payload, prompt, credential 없이
+  `docs/retrieval-concurrency-report.md`를 쓴다.
+- 현재 local concurrency 간이 검증, concurrency `4`: lexical P50 `1.01ms`, P95
   `9.18ms`, P99 `9.35ms`; vector P50 `1.75ms`, P95 `9.12ms`, P99 `9.92ms`;
-  hybrid P50 `2.28ms`, P95 `10.08ms`, P99 `11.10ms`; all rows had `0` errors.
-  This is a small local smoke, not a load benchmark.
-- Interpretation: identifier-aware lexical retrieval now passes the exact-token
-  category `5/5`, but still misses semantic and answer-guard cases. Hybrid
-  preserves vector-level recall while recovering the missed vector rank position.
-  It is still a small smoke, not a production benchmark. Hybrid remains the
-  default because exact-term and semantic rank signals stay visible in the same
-  trace, which is useful when scaling into acronyms, rare terms, IDs, and
-  embedding drift.
-- PostgreSQL RRF returns small raw rank-fusion values, so the API path currently
-  applies a simple rank-based 0..1 answer confidence calibration. This is an MVP
-  gate, not a production scoring claim.
+  hybrid P50 `2.28ms`, P95 `10.08ms`, P99 `11.10ms`; 모든 row error `0`.
+  이는 작은 local 간이 검증이며 load benchmark가 아니다.
+- 해석: 식별자 인식 lexical retrieval은 exact-token category `5/5`를 통과하지만,
+  semantic case와 answer-guard case는 여전히 놓친다. Hybrid는 vector 수준의
+  recall을 유지하면서 놓친 vector rank position을 회복한다. 이것도 작은 간이 검증이며
+  production benchmark가 아니다. Hybrid를 기본값으로 유지하는 이유는 exact-term과
+  semantic rank signal이 같은 trace에 남아, acronym, rare term, ID, embedding
+  drift로 확장할 때 판단 근거가 보이기 때문이다.
+- PostgreSQL RRF는 작은 raw rank-fusion 값을 반환하므로 API 경로는 현재 단순한
+  rank 기반 0..1 answer confidence calibration을 적용한다. 이는 MVP gate이며
+  production scoring claim이 아니다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Compare PostgreSQL full-text search against OpenSearch BM25 and measure recall,
-latency, and operational cost.
+PostgreSQL full-text search와 OpenSearch BM25를 비교하고 recall, latency,
+운영 비용을 측정한다.

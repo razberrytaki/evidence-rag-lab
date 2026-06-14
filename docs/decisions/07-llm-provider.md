@@ -1,65 +1,65 @@
-# Decision: LLM Provider
+# 결정: LLM Provider
 
-## Context
+## 맥락
 
-The project needs generation, but CI must not depend on live model calls.
+이 프로젝트에는 generation이 필요하지만, CI가 live model call에 의존하면 안 된다.
 
-## Recommended choice
+## 권장 선택
 
-Use OpenAI-compatible generation by default, Anthropic as a comparison adapter,
-and `FakeLLMProvider` for deterministic CI.
+기본 generation은 OpenAI-compatible provider를 사용한다. Anthropic은 비교용
+adapter로 둔다. deterministic CI에는 `FakeLLMProvider`를 사용한다.
 
-The live OpenAI-compatible adapter uses `POST /chat/completions` instead of the
-newer OpenAI-only Responses API because compatibility is the point of this
-boundary. OpenAI currently recommends the Responses API for OpenAI-first
-applications, but many OpenAI-compatible providers still expose the Chat
-Completions contract. Source references:
-[Chat Completions API](https://developers.openai.com/api/reference/resources/chat)
-and [OpenAI text generation guide](https://developers.openai.com/api/docs/guides/text).
+live OpenAI-compatible adapter는 newer OpenAI-only Responses API 대신
+`POST /chat/completions`를 사용한다. 이 boundary의 목적이 compatibility이기
+때문이다. OpenAI-first application에서는 현재 OpenAI가 Responses API를 권장하지만,
+많은 OpenAI-compatible provider는 여전히 Chat Completions contract를 노출한다.
+참고:
+[Chat Completions API](https://developers.openai.com/api/reference/resources/chat),
+[OpenAI text generation guide](https://developers.openai.com/api/docs/guides/text).
 
-The Anthropic adapter uses the Messages API request shape: `model`,
-`max_tokens`, and a `messages` array. The official TypeScript SDK documents the
-same `client.messages.create({ max_tokens, messages, model })` call shape:
+Anthropic adapter는 Messages API request shape를 사용한다: `model`, `max_tokens`,
+`messages` array. 공식 TypeScript SDK도 같은
+`client.messages.create({ max_tokens, messages, model })` call shape를 문서화한다:
 [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript).
 
-## Alternatives considered
+## 검토한 대안
 
 - automatic provider fallback
 - one provider only
-- OpenAI Responses API as the only generation surface
-- Anthropic SDK dependency instead of a small HTTP adapter
+- OpenAI Responses API를 유일한 generation surface로 사용
+- 작은 HTTP adapter 대신 Anthropic SDK dependency 추가
 
-## Trade-off
+## 트레이드오프
 
-Provider comparison stays explicit. Automatic fallback would hide setup errors
-and confuse evaluation.
+provider 비교는 명시적으로 남긴다. automatic fallback은 setup error를 숨기고
+evaluation을 혼동시킬 수 있다.
 
-Chat Completions is less OpenAI-native than Responses API, but it keeps the
-adapter portable. Provider output is still treated as untrusted: the adapter
-asks for structured JSON, validates citations against selected context, and
-rejects malformed provider JSON without returning raw provider content.
+Chat Completions는 Responses API보다 OpenAI-native 성격이 약하지만 adapter를
+portable하게 만든다. provider output은 여전히 untrusted로 취급한다. adapter는
+structured JSON을 요청하고, citation을 selected context 기준으로 검증하고,
+malformed provider JSON을 raw provider content 반환 없이 reject한다.
 
-Anthropic stays a comparison adapter, not a fallback path. `LLM_PROVIDER` must be
-set explicitly, and missing provider setup fails early. The project does not add
-the Anthropic SDK dependency because the adapter only needs one Messages API
-call shape and injected `fetch` keeps tests deterministic.
+Anthropic은 fallback path가 아니라 comparison adapter로 유지한다. `LLM_PROVIDER`는
+명시적으로 설정해야 하고, provider setup이 빠지면 early fail한다. adapter에는
+Messages API call shape 하나만 필요하고 injected `fetch`로 test deterministic을
+유지할 수 있으므로 Anthropic SDK dependency는 추가하지 않는다.
 
-## Evaluation evidence
+## 평가 근거
 
-- Use provider config tests and fake generation contract tests.
-- `OpenAICompatibleLLMProvider` tests use injected `fetch` to verify request
-  shape, citation validation, empty-context rejection, and malformed JSON
-  rejection.
-- `AnthropicLLMProvider` tests use injected `fetch` to verify Messages API
-  request shape, citation validation, empty-context rejection, malformed JSON
-  rejection, and env config loading.
-- `createLiveLLMProvider` tests verify `LLM_PROVIDER=anthropic` selects the
-  Anthropic adapter.
-- `pnpm db:live-generation-smoke` verifies live provider-selected generation over
-  the DB-backed retrieval path and persists a sanitized trace.
-- CI and eval still use `FakeLLMProvider`; live generation remains an explicit
-  local smoke path.
+- provider config test와 fake generation contract test를 사용한다.
+- `OpenAICompatibleLLMProvider` test는 injected `fetch`로 request shape,
+  citation validation, empty-context rejection, malformed JSON rejection을
+  검증한다.
+- `AnthropicLLMProvider` test는 injected `fetch`로 Messages API request shape,
+  citation validation, empty-context rejection, malformed JSON rejection, env
+  config loading을 검증한다.
+- `createLiveLLMProvider` test는 `LLM_PROVIDER=anthropic`일 때 Anthropic
+  adapter가 선택되는지 검증한다.
+- `pnpm db:live-generation-smoke`는 DB-backed retrieval path에서 live
+  provider-selected generation을 검증하고 sanitized trace를 저장한다.
+- CI와 eval은 여전히 `FakeLLMProvider`를 사용한다. live generation은 명시적인
+  local 간이 검증 경로로 남긴다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Measure provider latency, cost, and citation adherence separately.
+provider latency, cost, citation adherence를 분리 측정한다.

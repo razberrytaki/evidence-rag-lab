@@ -1,59 +1,59 @@
-# Decision: Trace Retention and Privacy
+# 결정: Trace Retention and Privacy
 
-## Context
+## 맥락
 
-RAG observability needs traces, but traces can accidentally become a second
-store of prompts, context, provider output, or personal data.
+RAG observability에는 trace가 필요하다. 하지만 trace는 실수로 prompt, context,
+provider output, personal data의 두 번째 저장소가 될 수 있다.
 
-## Recommended choice
+## 권장 선택
 
-Store only sanitized trace summaries, sample trace persistence deterministically,
-and delete expired trace rows with a retention cleanup command that can be
-scheduled by the hosting environment.
+sanitized trace summary만 저장한다. trace persistence는 deterministic하게 sample한다.
+expired trace row는 hosting environment에서 schedule할 수 있는 retention cleanup
+command로 삭제한다.
 
-Defaults:
+기본값:
 
-- retain sanitized traces for 7 days
-- sample rate `1` in local lab mode
-- redact email addresses and API-key-like secrets from stored query and rejection
-  text
-- never store raw chunk text, parent context text, citation quotes, answer text,
-  raw prompts, raw provider responses, or token billing payloads
+- sanitized trace는 7일 보관
+- local lab mode sample rate `1`
+- 저장된 query는 redacted user query preview로 제한하고, query/rejection text에서
+  email address, API-key-like secret redact
+- raw chunk text, parent context text, citation quote, answer text, full provider prompt,
+  raw context bundle, raw provider response, token billing payload는 절대 저장하지 않음
 
-## Alternatives considered
+## 검토한 대안
 
-- store full raw traces for easier debugging
-- aggregate-only metrics with no per-query trace
-- random sampling at write time
-- indefinite sanitized trace retention
+- 더 쉬운 debugging을 위해 full raw trace 저장
+- per-query trace 없이 aggregate-only metric만 저장
+- write time random sampling
+- sanitized trace 무기한 보관
 
-## Trade-off
+## 트레이드오프
 
-Sanitized trace summaries lose some replay/debugging detail, but they are safer
-for a public portfolio and closer to production privacy boundaries. Deterministic
-sampling by trace id makes local tests reproducible and avoids hiding failures
-behind randomness. Short retention limits stale observability data, but long-term
-trend analysis must come from aggregate eval reports rather than raw traces.
+sanitized trace summary는 replay/debugging detail 일부를 잃는다. 하지만 public
+portfolio에 더 안전하고 production privacy boundary에 더 가깝다. trace id 기반
+deterministic sampling은 local test를 reproducible하게 만들고, failure가 randomness
+뒤에 숨는 것을 피한다. 짧은 retention은 stale observability data를 제한한다. 대신
+장기 trend analysis는 raw trace가 아니라 aggregate eval report에서 나와야 한다.
 
-## Evaluation evidence
+## 평가 근거
 
-- `sanitizeQueryTraceForStorage` redacts email addresses and API-key-like secrets
-  from query, normalized query, rejected reasons, and rejected generation
-  messages.
-- `buildQueryTraceUpsertSql` stores sanitized payloads only.
-- `shouldPersistTraceSample` makes deterministic trace-id-based sampling
-  decisions.
-- `buildExpiredQueryTraceDeleteSql` deletes traces older than a cutoff and
-  returns deleted ids for audit.
-- `runExpiredQueryTraceCleanup` wraps the delete SQL behind an executor and
-  returns an aggregate audit summary.
-- `pnpm db:trace-retention-smoke` verifies an expired trace is deleted while a
-  fresh trace remains.
-- `pnpm db:trace-cleanup` is the idempotent operations command intended for cron,
-  GitHub Actions, or a hosted scheduler.
+- `sanitizeQueryTraceForStorage`는 query preview, normalized query preview,
+  rejected reason, rejected generation message에서 email address와 API-key-like secret을
+  redact한다.
+- `buildQueryTraceUpsertSql`는 sanitized payload만 저장한다.
+- `shouldPersistTraceSample`은 trace-id 기반 deterministic sampling decision을
+  만든다.
+- `buildExpiredQueryTraceDeleteSql`는 cutoff보다 오래된 trace를 삭제하고 audit용
+  deleted id를 반환한다.
+- `runExpiredQueryTraceCleanup`은 delete SQL을 executor 뒤로 감싸고 aggregate audit
+  summary를 반환한다.
+- `pnpm db:trace-retention-smoke`는 expired trace가 삭제되고 fresh trace가 남는지
+  검증한다.
+- `pnpm db:trace-cleanup`은 cron, GitHub Actions, hosted scheduler용 idempotent
+  operations command다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Attach `pnpm db:trace-cleanup` to the production scheduler, export aggregate
-metrics before deletion, and add a stricter PII redaction pass before any trace
-leaves a private network boundary.
+`pnpm db:trace-cleanup`을 production scheduler에 연결한다. 삭제 전 aggregate metric을
+export한다. trace가 private network boundary 밖으로 나가기 전에 더 엄격한 PII
+redaction pass를 추가한다.

@@ -1,15 +1,15 @@
-# Publication Checklist
+# 공개 전 체크리스트
 
-Use this checklist before making the repository public or sharing it as a
-portfolio artifact.
+repository를 public으로 전환하거나 portfolio artifact로 공유하기 전에 이 checklist를
+사용한다.
 
-## Local gate
+## 로컬 gate
 
 ```bash
 pnpm public:check
 ```
 
-This command runs:
+이 command는 다음을 실행한다:
 
 - `pnpm build`
 - `pnpm test`
@@ -20,46 +20,46 @@ This command runs:
 - `pnpm index:report`
 - `pnpm security:public`
 
-The security gate intentionally runs after deterministic report generation so
-newly written public artifacts are scanned before publication.
+security gate는 deterministic report generation 이후 실행된다. publication 전에 새로
+작성된 public artifact까지 scan하기 위해서다.
 
-## Security gate
+## 보안 gate
 
-`pnpm security:public` combines:
+`pnpm security:public`은 다음을 결합한다:
 
-- fixture hygiene checks for public sample docs and eval fixtures
-- claim safety checks for affirmative production, zero-hallucination,
-  10M-throughput, and shipped-BM25 claims, including adjacent-line claims
-- publishable tree scanning for unexpected root entries, secrets, raw traces,
-  provider responses, dumps, `.npmrc` auth tokens, and embedding/vector caches
-- public readiness checks for `LICENSE`, CI gate alignment, and the local
-  `public:check` script
-- required publish files must not be hidden by `.gitignore` rules
+- public sample docs와 eval fixture hygiene check
+- production, zero-hallucination, 10M-throughput, shipped-BM25에 대한 affirmative
+  claim safety check. adjacent-line claim도 포함
+- unexpected root entry, secret, raw trace, provider response, dump, `.npmrc` auth
+  token, embedding/vector cache를 찾는 publishable tree scan
+- `LICENSE`, CI gate alignment, local `public:check` script를 확인하는 public
+  readiness check
+- 필요한 publish file이 `.gitignore` rule에 숨겨지면 안 됨
 
-Run `pnpm security:gitleaks` after the first commit. Before the first commit,
-gitleaks can scan `0 commits`, so it does not replace the working-tree scanner.
+첫 commit 이후 `pnpm security:gitleaks`를 실행한다. 첫 commit 전에는 gitleaks가
+`0 commits`를 scan할 수 있으므로 working-tree scanner를 대체하지 못한다.
 
 ## CI gate
 
-GitHub Actions CI must run:
+GitHub Actions CI는 다음을 실행해야 한다:
 
 - `pnpm build`
 - `pnpm test`
 - `pnpm typecheck`
 - `pnpm security:public`
 
-The readiness scanner checks `run:` commands as executable steps. A command name
-inside echoed text does not satisfy the gate.
+readiness scanner는 `run:` command를 executable step으로 확인한다. echoed text 안에
+command name이 들어 있는 것은 gate를 만족하지 않는다.
 
-The separate supply-chain workflow runs Socket Firewall through `sfw pnpm
-install --frozen-lockfile`.
+별도 supply-chain workflow는 Socket Firewall을 `sfw pnpm install --frozen-lockfile`로
+실행한다.
 
-## Manual review
+## 수동 검토
 
-- Confirm `.env` is ignored and not staged.
-- Confirm generated reports contain aggregate data only.
-- Confirm docs do not claim production 10M-document throughput or guaranteed
-  zero hallucination.
-- Confirm sample docs are synthetic or short public excerpts with usage notes.
-- Confirm live provider responses, prompts, token billing payloads, raw query
-  traces, database dumps, and embedding caches are absent.
+- `.env`가 ignored 상태이며 staged 상태가 아닌지 확인한다.
+- generated report가 aggregate data만 포함하는지 확인한다.
+- docs가 production 10M-document throughput 또는 환각 0% 보장을
+  주장하지 않는지 확인한다.
+- sample docs가 synthetic이거나 usage note가 있는 짧은 public excerpt인지 확인한다.
+- live provider response, prompt, token billing payload, raw query trace, database
+  dump, embedding cache가 없는지 확인한다.

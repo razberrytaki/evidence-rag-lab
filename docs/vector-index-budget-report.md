@@ -1,10 +1,10 @@
-# Vector Index Budget Report
+# Vector Index Budget 리포트
 
-Generated on 2026-06-11.
-This is sizing math, not measured PostgreSQL or pgvector index size.
-No large index build was executed for this report.
+생성일: 2026-06-12.
+이는 sizing math이며 measured PostgreSQL 또는 pgvector index size가 아니다.
+이 report를 위해 large index build를 실행하지 않았다.
 
-| Assumption | Value |
+| Assumption | 값 |
 |---|---:|
 | documents | 10,000,000 |
 | average chunks per document | 8 |
@@ -16,7 +16,7 @@ No large index build was executed for this report.
 | HNSW graph bytes per neighbor | 8 |
 | HNSW build memory multiplier | 2.00 |
 
-| Estimate | Value |
+| Estimate | 값 |
 |---|---:|
 | chunks | 80,000,000 |
 | raw vector payload | 491.52 GB |
@@ -26,9 +26,9 @@ No large index build was executed for this report.
 | HNSW build working set estimate | 1169.41 GB |
 | graph overhead vs vector payload | 2.3% |
 
-## Notes
+## 메모
 
-- HNSW graph math is an explicit scenario, not measured pgvector index size.
-- The graph estimate excludes PostgreSQL page overhead, index tuple overhead, WAL, replicas, backups, vacuum bloat, and cache effects.
-- The build working set estimate is a planning estimate for memory pressure discussion, not an observed maintenance_work_mem requirement.
-- Production validation still needs larger indexes, warm/cold cache splits, p99 latency, recall checks, and failure-rate reporting.
+- HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.
+- graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.
+- build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.
+- Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다.

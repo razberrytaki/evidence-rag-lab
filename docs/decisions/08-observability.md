@@ -1,52 +1,51 @@
-# Decision: Observability
+# 결정: Observability
 
-## Context
+## 맥락
 
-RAG failures are hard to debug without retrieval and scoring traces.
+retrieval trace와 scoring trace가 없으면 RAG failure를 디버깅하기 어렵다.
 
-## Recommended choice
+## 권장 선택
 
-Store sanitized query traces with candidate chunks, score breakdown, selected
-context, rejected reasons, and final decision.
+candidate chunk, score breakdown, selected context, rejected reason, final
+decision을 포함한 sanitized query trace를 저장한다.
 
-Retention, redaction, and sampling details are tracked separately in
-`docs/decisions/10-trace-retention-and-privacy.md`.
+retention, redaction, sampling 세부 사항은
+`docs/decisions/10-trace-retention-and-privacy.md`에서 따로 추적한다.
 
-## Alternatives considered
+## 검토한 대안
 
-- raw prompt logs
-- aggregate-only metrics
+- full provider prompt log
+- aggregate-only metric
 
-## Trade-off
+## 트레이드오프
 
-Sanitized traces are safer for a public repo and still useful for debugging.
-Raw logs would expose prompts, context, and provider responses.
+sanitized trace는 public repo에 더 안전하면서도 debugging에 유용하다. raw log는
+full provider prompt, context, provider response를 노출한다.
 
-## Evaluation evidence
+## 평가 근거
 
-- Use `trace-completeness`.
-- `buildQueryTraceUpsertSql` persists sanitized traces to `query_traces` without
-  raw chunk text or citation quotes.
-- `buildLatestQueryTraceSql` reads only `sanitized = true` rows and orders by the
-  newest trace first.
-- `GET /query-traces/latest` returns the latest sanitized trace for local
-  inspection.
-- The Vite trace viewer loads that endpoint and falls back to a bundled
-  sanitized sample when the API has no trace yet.
-- Trace candidates can include `fusedRank`, `rerankRank`, and `rerankScore`, so
-  retrieval fusion and reranking decisions stay visible without raw context
-  text.
-- `pnpm db:live-smoke` verifies the DB-backed query path persists a sanitized
-  trace row (`tracePersisted: true`).
-- `pnpm db:live-generation-smoke` verifies the live generation path persists a
-  sanitized trace and prints only aggregate generation status, claim count,
-  citation count, and selected chunk IDs.
-- `sanitizeQueryTraceForStorage` redacts email addresses and API-key-like
-  secrets before storage.
-- `pnpm db:trace-retention-smoke` verifies expired sanitized traces can be
-  deleted without deleting fresh traces.
+- `trace-completeness`를 사용한다.
+- `buildQueryTraceUpsertSql`는 raw chunk text나 citation quote 없이 sanitized
+  trace를 `query_traces`에 저장한다.
+- `buildLatestQueryTraceSql`는 `sanitized = true` row만 읽고 newest trace를
+  먼저 정렬한다.
+- `GET /query-traces/latest`는 local inspection용 latest sanitized trace를
+  반환한다.
+- Vite trace viewer는 해당 endpoint를 읽고, API에 trace가 아직 없으면 bundled
+  sanitized sample로 fallback한다.
+- trace candidate는 `fusedRank`, `rerankRank`, `rerankScore`를 포함할 수 있다.
+  따라서 raw context text 없이도 retrieval fusion과 reranking decision이 보인다.
+- `pnpm db:live-smoke`는 DB-backed query path가 sanitized trace row를 저장하는지
+  검증한다(`tracePersisted: true`).
+- `pnpm db:live-generation-smoke`는 live generation path가 sanitized trace를
+  저장하는지 검증하고, aggregate generation status, claim count, citation count,
+  selected chunk ID만 출력한다.
+- `sanitizeQueryTraceForStorage`는 저장 전에 email address와 API-key-like secret을
+  redact한다.
+- `pnpm db:trace-retention-smoke`는 expired sanitized trace를 삭제하되 fresh trace는
+  삭제하지 않는지 검증한다.
 
-## Follow-up if scaling to 10M
+## 10M 규모 확장 시 후속 작업
 
-Move trace cleanup to a scheduled job and export aggregate metrics before
-deleting trace rows.
+trace cleanup을 scheduled job으로 옮기고, trace row 삭제 전에 aggregate metric을
+export한다.
