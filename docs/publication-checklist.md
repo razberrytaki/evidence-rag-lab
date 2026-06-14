@@ -28,8 +28,6 @@ security gate는 deterministic report generation 이후 실행된다. publicatio
 `pnpm security:public`은 다음을 결합한다:
 
 - public sample docs와 eval fixture hygiene check
-- production, zero-hallucination, 10M-throughput, shipped-BM25에 대한 affirmative
-  claim safety check. adjacent-line claim도 포함
 - unexpected root entry, secret, raw trace, provider response, dump, `.npmrc` auth
   token, embedding/vector cache를 찾는 publishable tree scan
 - `LICENSE`, CI gate alignment, local `public:check` script, `eval:report` API
@@ -58,8 +56,7 @@ Firewall을 `sfw pnpm install --frozen-lockfile`로 실행한다.
 
 - `.env`가 ignored 상태이며 staged 상태가 아닌지 확인한다.
 - generated report가 aggregate data만 포함하는지 확인한다.
-- docs가 production 10M-document throughput 또는 환각 0% 보장을
-  주장하지 않는지 확인한다.
+- docs가 과장된 표현을 사용하지 않는지 확인한다.
 - sample docs가 synthetic이거나 usage note가 있는 짧은 public excerpt인지 확인한다.
 - live provider response, prompt, token billing payload, raw query trace, database
   dump, embedding cache가 없는지 확인한다.

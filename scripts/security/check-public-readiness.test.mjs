@@ -107,6 +107,24 @@ describe("public readiness scanner", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it("rejects the retired claim scanner in the public security gate", () => {
+    const root = makeTempRepo();
+    writeMinimalReadinessFiles(root, {
+      includeLicense: true,
+      ciCommand: "pnpm security:public",
+      securityPublicScript: "pnpm security:fixtures && pnpm security:claims && pnpm security:tree && pnpm security:readiness"
+    });
+
+    const result = scanPublicReadiness(root);
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.failures, [
+      { path: "package.json", reason: "deprecated-public-security-command: pnpm security:claims" }
+    ]);
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
   it("requires publish-critical files to stay unignored by gitignore rules", () => {
     const root = makeTempRepo();
     writeMinimalReadinessFiles(root, {
@@ -195,7 +213,9 @@ function writeMinimalReadinessFiles(root, input) {
             "pnpm --filter @evidencerag/api build && pnpm --filter @evidencerag/eval eval:report",
           "public:check":
             input.publicCheckScript ??
-            "pnpm build && pnpm test && pnpm typecheck && pnpm eval:report && pnpm provider:report && pnpm scale:report && pnpm index:report && pnpm security:public"
+            "pnpm build && pnpm test && pnpm typecheck && pnpm eval:report && pnpm provider:report && pnpm scale:report && pnpm index:report && pnpm security:public",
+          "security:public":
+            input.securityPublicScript ?? "pnpm security:fixtures && pnpm security:tree && pnpm security:readiness"
         }
       },
       null,

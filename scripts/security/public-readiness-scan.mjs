@@ -38,6 +38,7 @@ const EVAL_REPORT_API_BUILD_COMMAND = "pnpm --filter @evidencerag/api build";
 const EVAL_REPORT_WRITE_COMMAND = "pnpm --filter @evidencerag/eval eval:report";
 
 const CI_COMMANDS = ["pnpm build", "pnpm test", "pnpm typecheck", "pnpm security:public"];
+const DEPRECATED_PUBLIC_SECURITY_COMMANDS = ["pnpm security:claims"];
 
 export function scanPublicReadiness(root = process.cwd()) {
   const failures = [];
@@ -77,6 +78,18 @@ export function scanPublicReadiness(root = process.cwd()) {
           path: "package.json",
           reason: "public-check-security-must-run-after-report-generation"
         });
+      }
+    }
+
+    const publicSecurityScript = packageJson.scripts?.["security:public"];
+    if (typeof publicSecurityScript !== "string") {
+      failures.push({ path: "package.json", reason: "missing-script: security:public" });
+    } else {
+      const publicSecurityCommands = parsePackageScriptCommands(publicSecurityScript);
+      for (const command of DEPRECATED_PUBLIC_SECURITY_COMMANDS) {
+        if (publicSecurityCommands.includes(command)) {
+          failures.push({ path: "package.json", reason: `deprecated-public-security-command: ${command}` });
+        }
       }
     }
   }

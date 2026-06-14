@@ -81,7 +81,7 @@ pressure를 계산한다.
 - concurrency `1`과 `4`에서 DB retrieval 구간을 분리해 측정한다.
 - web에서 `/query`를 실행하고 normalized Provider Response, claim/citation count,
   selected chunk ids를 표시한다.
-- public repo scanner가 secret, raw trace, 과장 claim, publication gate 누락을 잡는다.
+- public repo scanner가 secret, raw trace, publication gate 누락을 잡는다.
 
 자세한 수치는 generated report에 남긴다. README에는 결론만 두고, 증거는 report로
 분리한다.

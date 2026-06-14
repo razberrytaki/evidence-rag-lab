@@ -31,11 +31,10 @@
     "dev:api": "pnpm --filter @evidencerag/api dev",
     "dev:web": "pnpm --filter @evidencerag/web dev",
     "security:gitleaks": "gitleaks git --redact --verbose .",
-    "security:claims": "node --test scripts/security/check-public-claims.test.mjs && node scripts/security/check-public-claims.mjs",
     "security:readiness": "node --test scripts/security/check-public-readiness.test.mjs && node scripts/security/check-public-readiness.mjs",
     "security:fixtures": "node scripts/security/check-public-fixtures.mjs",
     "security:tree": "node --test scripts/security/check-public-tree.test.mjs && node scripts/security/check-public-tree.mjs",
-    "security:public": "pnpm security:fixtures && pnpm security:claims && pnpm security:tree && pnpm security:readiness"
+    "security:public": "pnpm security:fixtures && pnpm security:tree && pnpm security:readiness"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

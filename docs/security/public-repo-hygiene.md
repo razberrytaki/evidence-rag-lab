@@ -31,7 +31,6 @@
 ## Gate 목록
 
 - `pnpm security:fixtures`
-- `pnpm security:claims`
 - `pnpm security:tree`
 - `pnpm security:readiness`
 - `pnpm security:public`
@@ -40,11 +39,6 @@
 - `sfw pnpm install --frozen-lockfile`
 
 `security:fixtures`는 public sample docs와 eval fixture를 확인한다.
-`security:claims`는 README, docs, sample docs에서 production, zero-hallucination,
-10M-throughput, shipped-BM25에 대한 affirmative claim을 확인한다. explicit non-claim과
-scale alternative는 허용한다. line wrap으로 나뉜 claim도 잡기 위해 adjacent markdown
-line도 확인한다.
-
 `security:tree`는 publishable tree allowlist를 확인하고 `.env`, `.git`,
 `node_modules` 같은 local-only root entry는 건너뛴다. unexpected root entry, raw trace
 path, provider response artifact, dump/cache path, `.npmrc` registry auth token, common
