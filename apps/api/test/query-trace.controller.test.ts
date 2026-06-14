@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { QueryTraceController } from "../src/query-trace.controller";
-import type { QueryTraceService } from "../src/query-trace.service";
+import { QueryTraceController } from "../src/query-traces/query-trace.controller";
+import type { QueryTraceService } from "../src/query-traces/query-trace.service";
 
 describe("QueryTraceController", () => {
   it("delegates latest trace reads to QueryTraceService", async () => {

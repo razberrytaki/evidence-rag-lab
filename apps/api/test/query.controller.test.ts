@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { QueryController } from "../src/query.controller";
-import type { QueryService } from "../src/query.service";
+import { QueryController } from "../src/query/query.controller";
+import type { QueryService } from "../src/query/query.service";
 
 describe("QueryController", () => {
   it("delegates query execution to QueryService", async () => {

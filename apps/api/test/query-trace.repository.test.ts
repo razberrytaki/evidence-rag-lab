@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readLatestQueryTrace } from "../src/query-trace.repository";
+import { readLatestQueryTrace } from "../src/query-traces/query-trace.repository";
 
 describe("query trace repository", () => {
   it("reads and maps the latest sanitized query trace", async () => {

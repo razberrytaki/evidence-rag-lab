@@ -9,7 +9,7 @@ import {
   loadOpenAIEmbeddingConfigFromEnv,
   OpenAIEmbeddingClient
 } from "@evidencerag/ingest";
-import { runPostgresRagPipeline } from "../../apps/api/src/postgres-rag.pipeline";
+import { runPostgresRagPipeline } from "../../apps/api/src/rag/postgres/postgres-rag.pipeline";
 
 const DEFAULT_DATABASE_URL = "postgresql://evidence:rag@localhost:5432/evidence_rag_lab";
 const DEFAULT_QUERY = "Why not rely only on semantic vectors?";

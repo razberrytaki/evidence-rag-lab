@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeDeterministicTraceId } from "../src/trace-id";
+import { makeDeterministicTraceId } from "../src/common/trace-id";
 
 describe("trace id helpers", () => {
   it("builds deterministic trace ids with caller-owned prefixes", () => {

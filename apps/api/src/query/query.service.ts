@@ -1,13 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { SampleRagPipelineResult } from "./sample-rag.pipeline";
-import { findSampleDocsDir, runSampleRagPipeline } from "./sample-rag.pipeline";
+import { AppConfigService } from "../config/app.config";
+import { PG_POOL, type PgPool } from "../database/database.module";
 import {
   runPostgresRagPipelineWithExecutorFromEnv,
   type PostgresRagRuntimeEnv,
   type PostgresRagPipelineResult
-} from "./postgres-rag.pipeline";
-import { AppConfigService } from "./app.config";
-import { PG_POOL, type PgPool } from "./database.module";
+} from "../rag/postgres/postgres-rag.pipeline";
+import type { SampleRagPipelineResult } from "../rag/sample/sample-rag.pipeline";
+import { findSampleDocsDir, runSampleRagPipeline } from "../rag/sample/sample-rag.pipeline";
 
 export const QUERY_PIPELINE_RUNNER = Symbol("QUERY_PIPELINE_RUNNER");
 

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runSampleRagPipeline } from "../src/sample-rag.pipeline";
+import { runSampleRagPipeline } from "../src/rag/sample/sample-rag.pipeline";
 
 const repoRoot = join(__dirname, "..", "..", "..");
 const sampleDocsDir = join(repoRoot, "sample-docs");

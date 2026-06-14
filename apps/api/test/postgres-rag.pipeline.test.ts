@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { EmbeddingProvider } from "@evidencerag/ingest";
 import type { LLMProvider } from "@evidencerag/generation";
-import { createLiveLLMProvider, runPostgresRagPipeline } from "../src/postgres-rag.pipeline";
+import { createLiveLLMProvider } from "../src/rag/postgres/live-llm-provider";
+import { runPostgresRagPipeline } from "../src/rag/postgres/postgres-rag.pipeline";
 
 describe("PostgreSQL RAG pipeline", () => {
   it("embeds the query, retrieves PostgreSQL rows, calibrates DB scores, and generates a grounded answer", async () => {

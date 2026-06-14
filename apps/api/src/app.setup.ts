@@ -1,6 +1,6 @@
 import type { INestApplication } from "@nestjs/common";
-import { AppConfigService } from "./app.config";
-import { createRequestValidationPipe } from "./request-validation.pipe";
+import { createRequestValidationPipe } from "./common/request-validation.pipe";
+import { AppConfigService } from "./config/app.config";
 
 export function configureApp(app: INestApplication): INestApplication {
   const config = app.get(AppConfigService);

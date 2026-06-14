@@ -1,7 +1,7 @@
 import { Inject, Injectable, Module, OnApplicationShutdown } from "@nestjs/common";
-import { AppConfigModule } from "./app-config.module";
-import { AppConfigService } from "./app.config";
-import type { QueryExecutor } from "./postgres-rag.pipeline";
+import { AppConfigModule } from "../config/app-config.module";
+import { AppConfigService } from "../config/app.config";
+import type { QueryExecutor } from "./query-executor";
 
 export const PG_POOL = Symbol("PG_POOL");
 

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { StoredQueryTrace } from "@evidencerag/retrieval";
-import { AppConfigService } from "./app.config";
-import { PG_POOL, type PgPool } from "./database.module";
+import { AppConfigService } from "../config/app.config";
+import { PG_POOL, type PgPool } from "../database/database.module";
 import { readLatestQueryTrace } from "./query-trace.repository";
 
 @Injectable()

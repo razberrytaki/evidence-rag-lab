@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AppConfigService, QueryMode } from "../src/app.config";
-import type { PgPool } from "../src/database.module";
-import { QueryService, type QueryPipelineRunner } from "../src/query.service";
+import type { AppConfigService, QueryMode } from "../src/config/app.config";
+import type { PgPool } from "../src/database/database.module";
+import { QueryService, type QueryPipelineRunner } from "../src/query/query.service";
 
 describe("QueryService", () => {
   it("routes sample-mode questions through the sample pipeline runner", async () => {

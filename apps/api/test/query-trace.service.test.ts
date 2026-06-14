@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AppConfigService, QueryMode } from "../src/app.config";
-import type { PgPool } from "../src/database.module";
-import { QueryTraceService } from "../src/query-trace.service";
+import type { AppConfigService, QueryMode } from "../src/config/app.config";
+import type { PgPool } from "../src/database/database.module";
+import { QueryTraceService } from "../src/query-traces/query-trace.service";
 
 describe("QueryTraceService", () => {
   it("returns null without touching PostgreSQL when the API runs in sample mode", async () => {

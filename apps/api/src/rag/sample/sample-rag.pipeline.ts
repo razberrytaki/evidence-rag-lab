@@ -11,7 +11,7 @@ import { FakeLLMProvider } from "@evidencerag/generation";
 import { loadMarkdownDocumentSet, normalizeText } from "@evidencerag/ingest";
 import { reciprocalRankFusion, tokenizeText } from "@evidencerag/retrieval";
 import { computeTrustScore } from "@evidencerag/scoring";
-import { makeDeterministicTraceId } from "./trace-id";
+import { makeDeterministicTraceId } from "../../common/trace-id";
 
 const STOP_WORDS = new Set([
   "a",

@@ -32,7 +32,7 @@ API 선택 절차는 생성 전에 검색 신뢰도, 질의-근거 재순위화 
 
 - `rerankByQueryEvidence`는 원래 키워드/벡터 순위를 보존하면서 질의
   근거 기준으로 후보를 재순위화한다.
-- `apps/api/src/postgres-rag.pipeline.ts`는 생성 문맥을 선택하기 전에
+- `apps/api/src/rag/postgres/postgres-rag.pipeline.ts`는 생성 문맥을 선택하기 전에
   PostgreSQL 후보를 재순위화하고 질의 근거가 낮은 후보를 제외한다.
 - `apps/web/src/queryTrace.ts`는 저장된 정리 추적 기록에 `rerankRank`와
   `rerankScore`가 있으면 이를 표시한다.

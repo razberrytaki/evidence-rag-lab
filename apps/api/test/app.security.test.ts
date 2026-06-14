@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/app.setup";
-import { validateAppConfig } from "../src/app.config";
+import { validateAppConfig } from "../src/config/app.config";
 
 const MUTABLE_ENV_KEYS = [
   "API_AUTH_TOKEN",

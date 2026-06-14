@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { AppConfigService } from "./app.config";
+import { AppConfigService } from "../config/app.config";
 import { IS_PUBLIC_ROUTE } from "./public-route.decorator";
 
 @Injectable()

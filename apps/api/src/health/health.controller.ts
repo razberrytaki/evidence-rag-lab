@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
-import { PublicRoute } from "./public-route.decorator";
+import { PublicRoute } from "../security/public-route.decorator";
 
 @PublicRoute()
 @SkipThrottle()

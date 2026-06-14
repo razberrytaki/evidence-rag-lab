@@ -7,15 +7,10 @@ import {
   type OpenAIEmbeddingEnv
 } from "@evidencerag/ingest";
 import {
-  AnthropicLLMProvider,
   FakeLLMProvider,
   type GenerateAnswerInput,
   type LLMProvider,
-  loadAnthropicLLMConfigFromEnv,
-  loadOpenAICompatibleLLMConfigFromEnv,
-  OpenAICompatibleLLMProvider,
   type ProviderEnv,
-  type ResolvedProviderConfig,
   resolveProviderConfig
 } from "@evidencerag/generation";
 import {
@@ -26,18 +21,14 @@ import {
   shouldPersistTraceSample,
   type PostgresRetrievalRow
 } from "@evidencerag/retrieval";
-import { makeDeterministicTraceId } from "./trace-id";
+import { makeDeterministicTraceId } from "../../common/trace-id";
+import type { QueryExecutor } from "../../database/query-executor";
+import { createLiveLLMProvider } from "./live-llm-provider";
 
 const DEFAULT_TOP_K = 3;
 const MINIMUM_TRUST_SCORE = 0.5;
 const MINIMUM_RETRIEVAL_SCORE = 0.5;
 const MINIMUM_RERANK_SCORE = 0.5;
-
-export interface QueryExecutor {
-  query(text: string, values: unknown[]): Promise<{
-    rows: unknown[];
-  }>;
-}
 
 export interface PostgresRagPipelineInput {
   question: string;
@@ -149,24 +140,6 @@ export async function runPostgresRagPipelineWithExecutorFromEnv(
     queryExecutor,
     persistTrace: true,
     topK: DEFAULT_TOP_K
-  });
-}
-
-export function createLiveLLMProvider(
-  providerConfig: Pick<ResolvedProviderConfig, "llmProvider" | "chatModel">,
-  env: ProviderEnv,
-  fetchImpl?: typeof fetch
-): LLMProvider {
-  if (providerConfig.llmProvider === "anthropic") {
-    return new AnthropicLLMProvider({
-      ...loadAnthropicLLMConfigFromEnv(env),
-      fetchImpl
-    });
-  }
-
-  return new OpenAICompatibleLLMProvider({
-    ...loadOpenAICompatibleLLMConfigFromEnv(env),
-    fetchImpl
   });
 }
 

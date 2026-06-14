@@ -57,7 +57,7 @@ async function buildSampleRuntimeObservations(fixtures: EvalFixture[]): Promise<
 }
 
 async function loadSampleRuntimeModule(): Promise<SampleRuntimeModule> {
-  const modulePath = join(repoRoot, "apps", "api", "dist", "sample-rag.pipeline.js");
+  const modulePath = join(repoRoot, "apps", "api", "dist", "rag", "sample", "sample-rag.pipeline.js");
   if (!existsSync(modulePath)) {
     throw new Error(`sample runtime module was not built: ${modulePath}. Run pnpm build before pnpm eval:report.`);
   }
