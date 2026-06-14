@@ -76,11 +76,13 @@ export async function runSampleRagPipeline(input: RunSampleRagPipelineInput): Pr
       chunkId: candidate.chunk.id,
       reason: "stale_source"
     }));
-  const selectedContext = candidates
-    .filter((candidate) => candidate.score.retrievalScore >= 0.5)
-    .filter((candidate) => candidate.score.trustScore >= 0.5)
-    .filter((candidate) => !rejected.some((rejection) => rejection.chunkId === candidate.chunk.id))
-    .slice(0, 3);
+  const selectedContext = isContextBypassAttempt(normalizedQuery)
+    ? []
+    : candidates
+        .filter((candidate) => candidate.score.retrievalScore >= 0.5)
+        .filter((candidate) => candidate.score.trustScore >= 0.5)
+        .filter((candidate) => !rejected.some((rejection) => rejection.chunkId === candidate.chunk.id))
+        .slice(0, 3);
 
   const provider = new FakeLLMProvider();
   const generation = await provider.generateAnswer({
@@ -233,6 +235,15 @@ function searchableText(document: LoadedDocument): string {
 
 function queryTokens(input: string): string[] {
   return tokenizeText(normalizeText(input), { stopWords: STOP_WORDS });
+}
+
+function isContextBypassAttempt(normalizedQuery: string): boolean {
+  const tokens = new Set(queryTokens(normalizedQuery));
+  return (
+    tokens.has("ignore") &&
+    (tokens.has("context") || tokens.has("retrieved")) &&
+    (tokens.has("memory") || tokens.has("answer") || tokens.has("citation"))
+  );
 }
 
 function intentBoost(documentId: string, tokens: string[]): number {

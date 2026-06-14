@@ -39,4 +39,12 @@ describe("sample docs loader", () => {
       "https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking"
     );
   });
+
+  it("keeps the hybrid retrieval sample aligned with the live vector-only question", async () => {
+    const documents = await loadMarkdownDocumentSet(sampleDocsDir);
+    const hybridRetrieval = documents.find((document) => document.source.id === "hybrid-retrieval-note");
+    const text = hybridRetrieval?.chunks[0]?.chunk.text.toLowerCase() ?? "";
+
+    expect(text).toMatch(/not\s+rely only on semantic vectors/);
+  });
 });

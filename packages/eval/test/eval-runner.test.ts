@@ -336,8 +336,8 @@ describe("eval runner", () => {
           liveSmoke: {
             status: "pass",
             model: "gpt-5.4-mini",
-            claimCount: 4,
-            citationCount: 4,
+            claimCount: 3,
+            citationCount: 3,
             tracePersisted: true
           },
           deterministicChecks: [
@@ -386,7 +386,7 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# Provider 비교 리포트");
     expect(markdown).toContain(
-      "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 통과 | gpt-5.4-mini | 4 | 4 | 예 | - |"
+      "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 통과 | gpt-5.4-mini | 3 | 3 | 예 | - |"
     );
     expect(markdown).toContain("| Provider | Role | Request surface | Setup | Live 동작 확인 | Model | Claims | Citations | Trace persisted | Reason |");
     expect(markdown).toContain(

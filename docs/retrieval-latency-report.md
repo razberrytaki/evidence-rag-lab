@@ -1,6 +1,6 @@
 # 검색 지연 시간 리포트
 
-생성일: 2026-06-12.
+생성일: 2026-06-14.
 retrieval eval case 20개, top 3.
 Embedding model: `text-embedding-3-small` (1536 dimensions).
 
@@ -9,10 +9,10 @@ public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서
 
 | Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |
 |---|---:|---:|---:|---:|---:|---:|
-| embedding | 20 | 136.02 | 272.34 | 330.39 | 363.15 | 5401.87 |
-| lexical | 20 | 1.03 | 1.60 | 3.08 | 4.07 | 37.56 |
-| vector | 20 | 0.71 | 0.85 | 1.52 | 1.68 | 19.61 |
-| hybrid | 20 | 0.96 | 1.12 | 1.87 | 2.11 | 24.66 |
+| embedding | 20 | 157.96 | 263.45 | 351.96 | 427.41 | 5422.50 |
+| lexical | 20 | 0.53 | 0.71 | 1.53 | 4.78 | 20.00 |
+| vector | 20 | 0.75 | 0.88 | 1.18 | 1.22 | 18.43 |
+| hybrid | 20 | 0.90 | 1.17 | 1.49 | 1.49 | 23.87 |
 
 ## 메모
 

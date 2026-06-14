@@ -7,7 +7,7 @@ live 동작 확인 row가 `통과`라고 표시하지 않는 한 quality benchma
 
 | Provider | Role | Request surface | Setup | Live 동작 확인 | Model | Claims | Citations | Trace persisted | Reason |
 |---|---|---|---|---|---|---:|---:|---|---|
-| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 통과 | gpt-5.4-mini | 4 | 4 | 예 | - |
+| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 통과 | gpt-5.4-mini | 3 | 3 | 예 | - |
 | anthropic | comparison-adapter | POST /messages | OPENAI_API_KEY + ANTHROPIC_API_KEY | 미실행 | - | - | - | - | ANTHROPIC_API_KEY가 설정되지 않음 |
 | fake | test-double | in-process | none | 미실행 | - | - | - | - | FakeLLMProvider는 deterministic CI/test 전용 |
 

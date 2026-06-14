@@ -5,7 +5,7 @@ production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mod
 
 | Mode | Recall | 비율 | Mean reciprocal rank |
 |---|---:|---:|---:|
-| lexical | 14/20 | 70% | 0.700 |
+| lexical | 15/20 | 75% | 0.750 |
 | vector | 20/20 | 100% | 0.975 |
 | hybrid | 20/20 | 100% | 1.000 |
 
@@ -14,7 +14,7 @@ production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mod
 | answer-guard | lexical | 1/3 | 33% | 0.333 |
 | exact-token | lexical | 5/5 | 100% | 1.000 |
 | retrieval-design | lexical | 2/4 | 50% | 0.500 |
-| semantic | lexical | 1/2 | 50% | 0.500 |
+| semantic | lexical | 2/2 | 100% | 1.000 |
 | trust-observability | lexical | 3/3 | 100% | 1.000 |
 | version-conflict | lexical | 2/3 | 67% | 0.667 |
 | answer-guard | vector | 3/3 | 100% | 1.000 |
@@ -32,7 +32,7 @@ production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mod
 
 | Case | Mode | Category | 상태 | Matched doc | Reciprocal rank | 메모 |
 |---|---|---|---|---|---:|---|
-| hybrid-retrieval | lexical | semantic | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: hybrid-retrieval-note |
+| hybrid-retrieval | lexical | semantic | 통과 | hybrid-retrieval-note | 1.000 | 첫 relevant doc rank 1 |
 | pgvector-hnsw | lexical | semantic | 통과 | pgvector-indexing-note | 1.000 | 첫 relevant doc rank 1 |
 | deployment-policy-current | lexical | version-conflict | 통과 | deployment-policy-v2 | 1.000 | 첫 relevant doc rank 1 |
 | prompt-injection-document-text | lexical | answer-guard | 실패 | - | 0.000 | top 3 안에 relevant doc 없음: prompt-injection-note |

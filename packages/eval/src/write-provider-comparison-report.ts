@@ -15,8 +15,8 @@ const report: ProviderComparisonReportInput = {
       liveSmoke: {
         status: "pass",
         model: "gpt-5.4-mini",
-        claimCount: 4,
-        citationCount: 4,
+        claimCount: 3,
+        citationCount: 3,
         tracePersisted: true
       },
       deterministicChecks: [
