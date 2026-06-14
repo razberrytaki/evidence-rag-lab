@@ -5,6 +5,10 @@ deterministic eval fixture와 sample-runtime pipeline observation에서 생성�
 
 요약: 15/15 fixture 통과.
 
+## 읽는 법
+
+- fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.
+
 | Metric | 결과 | 비율 |
 |---|---:|---:|
 | recall@k | 12/12 | 100% |

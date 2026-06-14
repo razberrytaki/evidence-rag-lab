@@ -147,16 +147,14 @@ export interface RetrievalConcurrencyReportInput {
 }
 
 export type ProviderComparisonRole = "default-live" | "comparison-adapter" | "test-double";
-export type ProviderLiveSmoke =
+export type ProviderLiveVerification =
   | {
-      status: "pass";
-      model: string;
-      claimCount: number;
-      citationCount: number;
-      tracePersisted: boolean;
+      status: "separate-command";
+      command: string;
     }
   | {
-      status: "fail" | "not-run";
+      status: "not-run" | "not-applicable";
+      command: string;
       reason: string;
     };
 
@@ -165,7 +163,7 @@ export interface ProviderComparisonItem {
   role: ProviderComparisonRole;
   requestSurface: string;
   setup: string;
-  liveSmoke: ProviderLiveSmoke;
+  liveVerification: ProviderLiveVerification;
   deterministicChecks: string[];
   tradeOffs: string[];
 }
@@ -274,6 +272,10 @@ export function renderEvalReportMarkdown(report: EvalReport): string {
     "",
     `요약: ${report.summary.passed}/${report.summary.total} fixture 통과.`,
     "",
+    "## 읽는 법",
+    "",
+    "- fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.",
+    "",
     "| Metric | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@k", report.metrics.recallAtK),
@@ -346,6 +348,10 @@ export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalRepor
     "",
     `요약: ${report.summary.passed}/${report.summary.total} ranked retrieval case 통과.`,
     "",
+    "## 읽는 법",
+    "",
+    "- absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.",
+    "",
     "| Metric | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@3", report.metrics.recallAtK),
@@ -373,6 +379,10 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
     "",
     "public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.",
     "production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.",
+    "",
+    "## 읽는 법",
+    "",
+    "- mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.",
     "",
     "| Mode | Recall | 비율 | Mean reciprocal rank |",
     "|---|---:|---:|---:|",
@@ -420,11 +430,16 @@ export function renderProviderComparisonReportMarkdown(input: ProviderComparison
     `생성일: ${input.generatedAt}.`,
     "",
     "public portfolio를 위해 generation provider boundary를 비교한다.",
-    "live 동작 확인 row가 `통과`라고 표시하지 않는 한 quality benchmark가 아니다.",
+    "이 report는 provider adapter boundary를 정적으로 비교한다. live model call은 실행하지 않는다.",
+    "live generation 검증은 `pnpm db:live-generation-smoke` 같은 별도 command에서 수행한다.",
     "",
-    "| Provider | Role | Request surface | Setup | Live 동작 확인 | Model | Claims | Citations | Trace persisted | Reason |",
-    "|---|---|---|---|---|---|---:|---:|---|---|",
-    ...input.providers.map(providerLiveSmokeRow),
+    "## 읽는 법",
+    "",
+    "- adapter contract와 live 검증 경계를 분리해서 본다. 이 report의 row는 live 품질 benchmark가 아니다.",
+    "",
+    "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |",
+    "|---|---|---|---|---|---|---|",
+    ...input.providers.map(providerLiveVerificationRow),
     "",
     "| Provider | Deterministic checks | Trade-offs |",
     "|---|---|---|",
@@ -459,6 +474,10 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     "",
     "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
     "작은 지연 시간 동작 확인이며 production scale benchmark가 아니다.",
+    "",
+    "## 읽는 법",
+    "",
+    "- absolute latency보다 embedding cost와 database retrieval cost가 분리되어 보이는지 본다.",
     "",
     "| Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |",
     "|---|---:|---:|---:|---:|---:|---:|",
@@ -497,6 +516,10 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
     "작은 local 동시성 동작 확인이며 production load benchmark가 아니다.",
     "database retrieval concurrency가 보이도록 측정 구간 전에 embedding을 미리 계산한다.",
+    "",
+    "## 읽는 법",
+    "",
+    "- production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.",
     "",
     "| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |",
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -872,24 +895,21 @@ function metricRow(label: string, metric: RateMetric): string {
   return `| ${label} | ${metric.passed}/${metric.total} | ${formatPercent(metric.rate)} |`;
 }
 
-function providerLiveSmokeRow(provider: ProviderComparisonItem): string {
-  if (provider.liveSmoke.status !== "pass") {
-    return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${formatProviderLiveSmokeStatus(provider.liveSmoke.status)} | - | - | - | - | ${provider.liveSmoke.reason} |`;
-  }
-
-  return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${formatProviderLiveSmokeStatus(provider.liveSmoke.status)} | ${provider.liveSmoke.model} | ${provider.liveSmoke.claimCount} | ${provider.liveSmoke.citationCount} | ${
-    provider.liveSmoke.tracePersisted ? "예" : "아니오"
-  } | - |`;
+function providerLiveVerificationRow(provider: ProviderComparisonItem): string {
+  const verification = provider.liveVerification;
+  return `| ${provider.provider} | ${provider.role} | ${provider.requestSurface} | ${provider.setup} | ${formatProviderLiveVerificationStatus(
+    verification.status
+  )} | ${verification.command} | ${"reason" in verification ? verification.reason : "-"} |`;
 }
 
-function formatProviderLiveSmokeStatus(status: ProviderLiveSmoke["status"]): string {
+function formatProviderLiveVerificationStatus(status: ProviderLiveVerification["status"]): string {
   switch (status) {
-    case "pass":
-      return "통과";
-    case "fail":
-      return "실패";
+    case "separate-command":
+      return "별도 실행 필요";
     case "not-run":
       return "미실행";
+    case "not-applicable":
+      return "해당 없음";
   }
 }
 

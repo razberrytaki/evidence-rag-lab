@@ -7,14 +7,18 @@ public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서
 작은 local 동시성 동작 확인이며 production load benchmark가 아니다.
 database retrieval concurrency가 보이도록 측정 구간 전에 embedding을 미리 계산한다.
 
+## 읽는 법
+
+- production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.
+
 | Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| lexical | 1 | 20 | 0.70 | 0.89 | 2.09 | 15.69 | 15.69 | 35.16 | 0 |
-| vector | 1 | 20 | 0.65 | 1.05 | 1.77 | 8.17 | 8.17 | 29.09 | 0 |
-| hybrid | 1 | 20 | 1.07 | 1.29 | 2.13 | 8.49 | 8.49 | 34.03 | 0 |
-| lexical | 4 | 20 | 0.59 | 0.93 | 9.26 | 10.49 | 10.49 | 53.46 | 0 |
-| vector | 4 | 20 | 0.99 | 1.83 | 8.65 | 9.69 | 9.69 | 60.31 | 0 |
-| hybrid | 4 | 20 | 1.43 | 2.39 | 11.84 | 11.90 | 11.90 | 90.38 | 0 |
+| lexical | 1 | 20 | 0.52 | 0.70 | 2.48 | 21.17 | 21.17 | 39.36 | 0 |
+| vector | 1 | 20 | 0.78 | 0.91 | 1.68 | 7.18 | 7.18 | 25.62 | 0 |
+| hybrid | 1 | 20 | 0.89 | 1.11 | 1.71 | 7.40 | 7.40 | 29.33 | 0 |
+| lexical | 4 | 20 | 0.53 | 0.89 | 8.20 | 8.60 | 8.60 | 46.62 | 0 |
+| vector | 4 | 20 | 0.90 | 1.42 | 7.43 | 7.65 | 7.65 | 51.97 | 0 |
+| hybrid | 4 | 20 | 1.68 | 3.68 | 8.90 | 9.07 | 9.07 | 90.97 | 0 |
 
 ## 메모
 

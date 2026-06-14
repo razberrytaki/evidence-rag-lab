@@ -3,6 +3,10 @@
 public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.
 production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.
 
+## 읽는 법
+
+- mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.
+
 | Mode | Recall | 비율 | Mean reciprocal rank |
 |---|---:|---:|---:|
 | lexical | 15/20 | 75% | 0.750 |

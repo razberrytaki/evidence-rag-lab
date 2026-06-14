@@ -7,12 +7,16 @@ Embedding model: `text-embedding-3-small` (1536 dimensions).
 public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.
 작은 지연 시간 동작 확인이며 production scale benchmark가 아니다.
 
+## 읽는 법
+
+- absolute latency보다 embedding cost와 database retrieval cost가 분리되어 보이는지 본다.
+
 | Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |
 |---|---:|---:|---:|---:|---:|---:|
-| embedding | 20 | 157.96 | 263.45 | 351.96 | 427.41 | 5422.50 |
-| lexical | 20 | 0.53 | 0.71 | 1.53 | 4.78 | 20.00 |
-| vector | 20 | 0.75 | 0.88 | 1.18 | 1.22 | 18.43 |
-| hybrid | 20 | 0.90 | 1.17 | 1.49 | 1.49 | 23.87 |
+| embedding | 20 | 114.06 | 251.80 | 299.77 | 344.47 | 4982.60 |
+| lexical | 20 | 0.85 | 2.13 | 4.12 | 8.54 | 51.05 |
+| vector | 20 | 0.79 | 0.98 | 1.51 | 2.67 | 22.30 |
+| hybrid | 20 | 0.91 | 1.14 | 1.65 | 1.72 | 25.52 |
 
 ## 메모
 

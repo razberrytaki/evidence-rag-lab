@@ -32,16 +32,16 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
 - `pnpm db:retrieval-latency-smoke`는 같은 20개 case에 대해 query당 OpenAI
   embedding call 1회와 PostgreSQL lexical, vector, hybrid SQL의 aggregate
   latency를 측정한다.
-- 현재 local latency 간이 검증 결과: embedding P50 `263.45ms`, P95 `351.96ms`;
-  lexical SQL P50 `0.71ms`; vector SQL P50 `0.88ms`; hybrid SQL P50 `1.17ms`.
+- 현재 local latency 간이 검증 결과: embedding P50 `251.80ms`, P95 `299.77ms`;
+  lexical SQL P50 `2.13ms`; vector SQL P50 `0.98ms`; hybrid SQL P50 `1.14ms`.
   유용한 signal은 boundary separation이다. SQL retrieval cost와 embedding cost가
   분리되어 보인다.
 - `pnpm db:retrieval-concurrency-smoke`는 query embedding을 미리 계산한 뒤
   concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
   실행한다.
-- 현재 local concurrency 간이 검증, concurrency `4`: lexical P50 `0.93ms`, P95
-  `9.26ms`, P99 `10.49ms`; vector P50 `1.83ms`, P95 `8.65ms`, P99 `9.69ms`;
-  hybrid P50 `2.39ms`, P95 `11.84ms`, P99 `11.90ms`; 모든 row error `0`.
+- 현재 local concurrency 간이 검증, concurrency `4`: lexical P50 `0.89ms`, P95
+  `8.20ms`, P99 `8.60ms`; vector P50 `1.42ms`, P95 `7.43ms`, P99 `7.65ms`;
+  hybrid P50 `3.68ms`, P95 `8.90ms`, P99 `9.07ms`; 모든 row error `0`.
   이는 가벼운 concurrent pressure에서 작은 local DB retrieval path만 확인한다.
 - `pnpm scale:report`는 `docs/scale-budget-report.md`를 쓴다. 현재 sizing math는
   `10,000,000` documents, document당 `8` chunks, `1536` float32 dimensions 기준

@@ -116,9 +116,13 @@ describe("eval runner", () => {
       ]
     );
 
-    expect(renderEvalReportMarkdown(report)).toContain("# 평가 리포트");
-    expect(renderEvalReportMarkdown(report)).toContain("요약: 1/1 fixture 통과.");
-    expect(renderEvalReportMarkdown(report)).toContain("| unsupported-claim rejection | 1/1 | 100% |");
+    const markdown = renderEvalReportMarkdown(report);
+
+    expect(markdown).toContain("# 평가 리포트");
+    expect(markdown).toContain("## 읽는 법");
+    expect(markdown).toContain("fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.");
+    expect(markdown).toContain("요약: 1/1 fixture 통과.");
+    expect(markdown).toContain("| unsupported-claim rejection | 1/1 | 100% |");
   });
 
   it("surfaces observation sources so runtime pipeline observations are visible in the report", () => {
@@ -261,9 +265,13 @@ describe("eval runner", () => {
       ]
     });
 
-    expect(renderRankedRetrievalReportMarkdown(report)).toContain("| recall@3 | 1/1 | 100% |");
-    expect(renderRankedRetrievalReportMarkdown(report)).toContain("| mean reciprocal rank | 1.000 |");
-    expect(renderRankedRetrievalReportMarkdown(report)).toContain(
+    const markdown = renderRankedRetrievalReportMarkdown(report);
+
+    expect(markdown).toContain("## 읽는 법");
+    expect(markdown).toContain("absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.");
+    expect(markdown).toContain("| recall@3 | 1/1 | 100% |");
+    expect(markdown).toContain("| mean reciprocal rank | 1.000 |");
+    expect(markdown).toContain(
       "| hybrid-retrieval | 통과 | hybrid-retrieval-note | 1.000 | 첫 relevant doc rank 1 |"
     );
   });
@@ -317,6 +325,8 @@ describe("eval runner", () => {
     });
 
     expect(markdown).toContain("# 검색 모드 비교 리포트");
+    expect(markdown).toContain("## 읽는 법");
+    expect(markdown).toContain("mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.");
     expect(markdown).toContain("| lexical | 1/1 | 100% | 1.000 |");
     expect(markdown).toContain("| vector | 1/1 | 100% | 0.500 |");
     expect(markdown).toContain("| exact-token | lexical | 1/1 | 100% | 1.000 |");
@@ -324,7 +334,7 @@ describe("eval runner", () => {
     expect(markdown).toContain("- Lexical은 exact terminology를 보호한다.");
   });
 
-  it("renders a provider comparison report that separates default live provider from comparison adapter", () => {
+  it("renders a provider comparison report without presenting deterministic rows as live validation", () => {
     const markdown = renderProviderComparisonReportMarkdown({
       generatedAt: "2026-06-11",
       providers: [
@@ -333,12 +343,9 @@ describe("eval runner", () => {
           role: "default-live",
           requestSurface: "POST /chat/completions",
           setup: "OPENAI_API_KEY",
-          liveSmoke: {
-            status: "pass",
-            model: "gpt-5.4-mini",
-            claimCount: 3,
-            citationCount: 3,
-            tracePersisted: true
+          liveVerification: {
+            command: "pnpm db:live-generation-smoke",
+            status: "separate-command"
           },
           deterministicChecks: [
             "request-shape",
@@ -353,7 +360,8 @@ describe("eval runner", () => {
           role: "comparison-adapter",
           requestSurface: "POST /messages",
           setup: "OPENAI_API_KEY + ANTHROPIC_API_KEY",
-          liveSmoke: {
+          liveVerification: {
+            command: "pnpm db:live-generation-smoke",
             status: "not-run",
             reason: "ANTHROPIC_API_KEY is not configured"
           },
@@ -370,9 +378,10 @@ describe("eval runner", () => {
           role: "test-double",
           requestSurface: "in-process",
           setup: "none",
-          liveSmoke: {
-            status: "fail",
-            reason: "FakeLLMProvider output contract changed"
+          liveVerification: {
+            command: "none",
+            status: "not-applicable",
+            reason: "FakeLLMProvider는 deterministic CI/test 전용"
           },
           deterministicChecks: ["citation-shape", "empty-context-rejection"],
           tradeOffs: ["stable eval output", "model-quality signal 아님"]
@@ -386,19 +395,25 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# Provider 비교 리포트");
     expect(markdown).toContain(
-      "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 통과 | gpt-5.4-mini | 3 | 3 | 예 | - |"
-    );
-    expect(markdown).toContain("| Provider | Role | Request surface | Setup | Live 동작 확인 | Model | Claims | Citations | Trace persisted | Reason |");
-    expect(markdown).toContain(
-      "| anthropic | comparison-adapter | POST /messages | OPENAI_API_KEY + ANTHROPIC_API_KEY | 미실행 | - | - | - | - | ANTHROPIC_API_KEY is not configured |"
+      "이 report는 provider adapter boundary를 정적으로 비교한다. live model call은 실행하지 않는다."
     );
     expect(markdown).toContain(
-      "| fake | test-double | in-process | none | 실패 | - | - | - | - | FakeLLMProvider output contract changed |"
+      "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |"
+    );
+    expect(markdown).toContain(
+      "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 별도 실행 필요 | pnpm db:live-generation-smoke | - |"
+    );
+    expect(markdown).toContain(
+      "| anthropic | comparison-adapter | POST /messages | OPENAI_API_KEY + ANTHROPIC_API_KEY | 미실행 | pnpm db:live-generation-smoke | ANTHROPIC_API_KEY is not configured |"
+    );
+    expect(markdown).toContain(
+      "| fake | test-double | in-process | none | 해당 없음 | none | FakeLLMProvider는 deterministic CI/test 전용 |"
     );
     expect(markdown).toContain(
       "| anthropic | request-shape, citation-validation, empty-context-rejection, malformed-json-redaction | explicit provider selection; no automatic fallback |"
     );
     expect(markdown).toContain("- Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다.");
+    expect(markdown).not.toContain("| 통과 | gpt-5.4-mini | 3 | 3 | 예 |");
   });
 
   it("renders a retrieval latency report without exposing queries or provider payloads", () => {
@@ -432,6 +447,8 @@ describe("eval runner", () => {
     });
 
     expect(markdown).toContain("# 검색 지연 시간 리포트");
+    expect(markdown).toContain("## 읽는 법");
+    expect(markdown).toContain("absolute latency보다 embedding cost와 database retrieval cost가 분리되어 보이는지 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
     expect(markdown).toContain("retrieval eval case 20개, top 3.");
     expect(markdown).toContain("Embedding model: `text-embedding-3-small` (1536 dimensions).");
@@ -473,6 +490,8 @@ describe("eval runner", () => {
     });
 
     expect(markdown).toContain("# 검색 동시성 리포트");
+    expect(markdown).toContain("## 읽는 법");
+    expect(markdown).toContain("production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
     expect(markdown).toContain("retrieval eval case 20개, top 3.");
     expect(markdown).toContain("| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |");

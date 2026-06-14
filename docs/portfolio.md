@@ -80,6 +80,8 @@ pressure를 계산한다.
 - lexical-only, vector-only, hybrid retrieval을 같은 case로 비교한다.
 - embedding latency와 PostgreSQL retrieval latency를 분리해 본다.
 - concurrency `1`과 `4`에서 작은 local DB retrieval 동작 확인을 실행한다.
+- web에서 `/query`를 실행하고 normalized Provider Response, claim/citation count,
+  selected chunk ids를 표시한다.
 - public repo scanner가 secret, raw trace, 과장 claim, publication gate 누락을 잡는다.
 
 자세한 수치는 generated report에 남긴다. README에는 결론만 두고, 증거는 report로

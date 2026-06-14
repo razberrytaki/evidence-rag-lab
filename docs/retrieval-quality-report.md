@@ -5,6 +5,10 @@ public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서
 
 요약: 20/20 ranked retrieval case 통과.
 
+## 읽는 법
+
+- absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.
+
 | Metric | 결과 | 비율 |
 |---|---:|---:|
 | recall@3 | 20/20 | 100% |
