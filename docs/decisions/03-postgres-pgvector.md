@@ -2,67 +2,66 @@
 
 ## 맥락
 
-MVP에는 metadata, chunk, vector, trace, evaluation output이 필요하다.
+MVP에는 메타데이터, 청크, 벡터, 추적 기록, 평가 결과가 필요하다.
 
 ## 권장 선택
 
-lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다.
+실행 환경에는 pgvector와 HNSW 색인을 포함한 PostgreSQL을 사용한다.
 
 ## 검토한 대안
 
 - Qdrant
-- OpenSearch vector search
-- 별도 vector database
+- OpenSearch 벡터 검색
+- 별도 벡터 데이터베이스
 
 ## 트레이드오프
 
-하나의 datastore를 사용하면 local reproduction이 단순해진다. `docker compose`로
-PostgreSQL 하나만 올리면 metadata, chunk, vector, sanitized trace를 같은 transaction
-boundary에서 확인할 수 있다. SQL로 retrieval row와 trace row를 함께 검사할 수 있어
-portfolio reviewer가 시스템을 따라가기 쉽다.
+하나의 데이터 저장소를 사용하면 로컬 재현이 단순해진다. `docker compose`로
+PostgreSQL 하나만 올리면 메타데이터, 청크, 벡터, 정리된 추적 기록을 같은 트랜잭션
+경계에서 확인할 수 있다. SQL로 검색 행과 추적 기록 행을 함께 검사할 수 있어
+포트폴리오 검토자가 시스템을 따라가기 쉽다.
 
-Qdrant 같은 전용 vector database는 vector search 운영에는 더 직접적일 수 있다. 하지만
-MVP 단계에서 metadata store, trace store, vector store를 나누면 장애 지점과 setup
-surface가 늘어난다. OpenSearch는 BM25와 vector를 한 컴포넌트에서 다룰 수 있지만,
-이 프로젝트의 현재 질문은 search product 운영이 아니라 RAG reliability boundary를
+Qdrant 같은 전용 벡터 데이터베이스는 벡터 검색 운영에는 더 직접적일 수 있다. 하지만
+MVP 단계에서 메타데이터 저장소, 추적 기록 저장소, 벡터 저장소를 나누면 장애 지점과
+설정 면적이 늘어난다. OpenSearch는 BM25와 벡터를 한 컴포넌트에서 다룰 수 있지만,
+이 프로젝트의 현재 질문은 검색 제품 운영이 아니라 RAG 신뢰성 경계를
 작게 검증하는 것이다.
 
-전용 vector database로 넘어갈 기준은 명확히 둔다. pgvector HNSW build memory,
-partitioning, vacuum/index maintenance, p99 latency, recall degradation이 local MVP의
-설명 가능성을 넘어서는 순간 별도 datastore를 검토한다.
+전용 벡터 데이터베이스로 넘어갈 기준은 명확히 둔다. pgvector HNSW 빌드 메모리,
+파티셔닝, vacuum/색인 유지보수, p99 지연 시간, recall 저하가 로컬 MVP의
+설명 가능성을 넘어서는 순간 별도 데이터 저장소를 검토한다.
 
 ## 평가 근거
 
-- [pgvector README](https://github.com/pgvector/pgvector)는 exact/approximate
-  nearest neighbor search, cosine distance, HNSW index를 문서화한다.
-- `pnpm db:quality-smoke`는 PostgreSQL + pgvector를 통해 저장된 sample-doc
-  embedding에 live OpenAI query embedding을 실행한다.
-- 현재 sample-doc 결과는 hybrid retrieval decision을 지지한다. PostgreSQL + pgvector
-  선택에는 "같은 datastore에서 vector, lexical, trace를 함께 검사할 수 있다"는 의미로
+- [pgvector README](https://github.com/pgvector/pgvector)는 정확/근사 최근접 이웃
+  검색, cosine distance, HNSW 색인을 문서화한다.
+- `pnpm db:quality-smoke`는 PostgreSQL + pgvector를 통해 저장된 샘플 문서
+  임베딩에 실제 OpenAI 질의 임베딩을 실행한다.
+- 현재 샘플 문서 결과는 hybrid 검색 결정을 지지한다. PostgreSQL + pgvector
+  선택에는 "같은 데이터 저장소에서 벡터, 키워드, 추적 기록을 함께 검사할 수 있다"는 의미로
   사용한다.
-- `pnpm db:retrieval-compare-smoke`는 lexical-only, hybrid와 함께 vector-only
-  retrieval도 측정한다. 현재 sample-doc vector-only 결과: recall@3 `20/20`,
+- `pnpm db:retrieval-compare-smoke`는 키워드 전용, hybrid와 함께 벡터 전용
+  검색도 측정한다. 현재 샘플 문서 벡터 전용 결과: recall@3 `20/20`,
   MRR `0.975`.
-- `pnpm db:retrieval-latency-smoke`는 같은 20개 case에 대해 query당 OpenAI
-  embedding call 1회와 PostgreSQL lexical, vector, hybrid SQL의 aggregate
-  latency를 측정한다. 결과는 `docs/retrieval-latency-report.md`에 둔다.
-- `pnpm db:retrieval-concurrency-smoke`는 query embedding을 미리 계산한 뒤
-  concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
+- `pnpm db:retrieval-latency-smoke`는 같은 20개 사례에 대해 질의당 OpenAI
+  임베딩 호출 1회와 PostgreSQL 키워드, 벡터, hybrid SQL의 집계
+  지연 시간을 측정한다. 결과는 `docs/retrieval-latency-report.md`에 둔다.
+- `pnpm db:retrieval-concurrency-smoke`는 질의 임베딩을 미리 계산한 뒤
+  동시성 `1`과 `4`에서 PostgreSQL 키워드, 벡터, hybrid 검색을
   실행한다. 결과는 `docs/retrieval-concurrency-report.md`에 둔다.
-- `pnpm scale:report`는 `docs/scale-budget-report.md`를 쓴다. 현재 sizing math는
-  문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.
+- `pnpm scale:report`는 `docs/scale-budget-report.md`를 쓴다. 현재 용량 계산은
+  문서 수, 평균 청크 수, 임베딩 차원 가정에서 저장 공간 압력을 계산한다.
 - `pnpm index:report`는 `docs/vector-index-budget-report.md`를 쓴다. 현재 HNSW
-  scenario는 `m=16`, layer multiplier `1.10`, neighbor당 graph bytes `8`,
-  build memory multiplier `2.00`을 가정한다. 추정치는 HNSW graph bytes
-  `11.26 GB`, vector + metadata + graph serving bytes `584.70 GB`, build
-  working set planning estimate `1169.41 GB`다.
-- 측정 범위: quality, latency, concurrency 결과는 public sample docs 기반
-  observation이고 scale report는 가정 기반 sizing math다. PostgreSQL 선택의 초기
+  가정은 `m=16`, 계층 배수 `1.10`, 이웃당 그래프 바이트 `8`,
+  빌드 메모리 배수 `2.00`이다. 추정치는 HNSW 그래프 바이트
+  `11.26 GB`, 벡터 + 메타데이터 + 그래프 제공 용량 `584.70 GB`, 빌드
+  작업 메모리 계획치 `1169.41 GB`다.
+- 측정 범위: 품질, 지연 시간, 동시성 결과는 공개 샘플 문서 기반 관측이고
+  확장성 보고서는 가정 기반 용량 계산이다. PostgreSQL 선택의 초기
   근거로만 사용한다.
 
 ## 확장 시 다시 볼 것
 
-1천만 문서는 pressure scenario이며 measured production benchmark가 아니다. 확장 시에는
-측정된 index memory, partitioning, backfill strategy, build memory, load 하의 p99
-latency, recall degradation, re-embedding cost를 다시 검토한다. 전용 vector DB 전환은
-운영 복잡도 증가보다 recall/latency/index maintenance 이득이 커질 때만 선택한다.
+확장 시에는 측정된 색인 메모리, 파티셔닝, 보정 전략, 빌드 메모리, 부하 하의 p99
+지연 시간, recall 저하, 재임베딩 비용을 다시 검토한다. 전용 벡터 DB 전환은
+운영 복잡도 증가보다 recall/지연 시간/색인 유지보수 이득이 커질 때만 선택한다.

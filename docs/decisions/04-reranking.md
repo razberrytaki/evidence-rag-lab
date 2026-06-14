@@ -1,49 +1,47 @@
-# 결정: Reranking
+# 결정: 재순위화
 
 ## 맥락
 
-approximate retrieval은 noisy candidate를 반환할 수 있다.
+근사 검색은 잡음이 섞인 후보를 반환할 수 있다.
 
 ## 권장 선택
 
-reranker interface를 정의하고, 가벼운 deterministic reranker로 시작한다.
+재순위화 인터페이스를 정의하고, 가벼운 결정적 재순위화기로 시작한다.
 
 ## 검토한 대안
 
-- cross-encoder reranker
+- cross-encoder 재순위화기
 - ColBERT late interaction
-- LLM reranking
+- LLM 재순위화
 
 ## 트레이드오프
 
-가벼운 reranker는 테스트하고 설명하기 쉽다. model-based reranker는 relevance를
-개선할 수 있지만 비용, latency, provider dependency를 추가한다.
+가벼운 재순위화기는 테스트하고 설명하기 쉽다. 모델 기반 재순위화기는 관련성을
+개선할 수 있지만 비용, 지연 시간, LLM 제공자 의존성을 추가한다.
 
-현재 구현은 deterministic query-token evidence coverage, 기존 calibrated
-retrieval prior, trust score를 사용한다. `rerankScore`와 `rerankRank`를 기록하되
-`retrievalScore`를 덮어쓰지 않는다. API selection gate는 generation 전에
-retrieval confidence, query-evidence rerank score, source trust threshold를 모두
+현재 구현은 결정적 질의 토큰 근거 범위, 기존 검색 사전 점수, 신뢰도 점수를 사용한다.
+`rerankScore`와 `rerankRank`를 기록하되 `retrievalScore`를 덮어쓰지 않는다.
+API 선택 절차는 생성 전에 검색 신뢰도, 질의-근거 재순위화 점수, 출처 신뢰도 기준을 모두
 적용한다.
 
-이 선택은 MVP를 과장하지 않게 한다. model-grade relevance를 암시하지 않고도
-reranking boundary와 trace shape를 증명한다. Cross-encoder, ColBERT, LLM
-reranker는 나중에 generation이나 trace storage contract를 바꾸지 않고 scoring
-function만 대체할 수 있다.
+이 선택은 MVP를 과장하지 않게 한다. 모델 수준 관련성을 암시하지 않고도
+재순위화 경계와 추적 기록 형태를 증명한다. Cross-encoder, ColBERT, LLM
+재순위화기는 나중에 생성 또는 추적 기록 저장 계약을 바꾸지 않고 점수 함수를 대체할 수 있다.
 
 ## 평가 근거
 
-- `rerankByQueryEvidence`는 original lexical/vector rank를 보존하면서 query
-  evidence 기준으로 candidate를 rerank한다.
-- `apps/api/src/postgres-rag.pipeline.ts`는 generation context를 선택하기 전에
-  PostgreSQL candidate를 rerank하고 low query-evidence candidate를 제외한다.
-- `apps/web/src/queryTrace.ts`는 persisted sanitized trace에 `rerankRank`와
+- `rerankByQueryEvidence`는 원래 키워드/벡터 순위를 보존하면서 질의
+  근거 기준으로 후보를 재순위화한다.
+- `apps/api/src/postgres-rag.pipeline.ts`는 생성 문맥을 선택하기 전에
+  PostgreSQL 후보를 재순위화하고 질의 근거가 낮은 후보를 제외한다.
+- `apps/web/src/queryTrace.ts`는 저장된 정리 추적 기록에 `rerankRank`와
   `rerankScore`가 있으면 이를 표시한다.
-- test는 generic vector-first candidate가 더 query-specific한 reranker latency
-  candidate 뒤로 내려가는 경우를 다룬다.
-- 현재 단계는 deterministic reranking 검증이다. model-quality 비교는 후속 과제다.
+- 테스트는 일반적인 벡터 우선 후보가 더 질의에 특화된 재순위화 지연 시간 후보 뒤로
+  내려가는 경우를 다룬다.
+- 현재 단계는 결정적 재순위화 검증이다. 모델 품질 비교는 후속 과제다.
 
 ## 확장 시 다시 볼 것
 
-reranking latency budget을 retrieval latency와 분리해 benchmark한다. 고정된
-candidate count와 timeout budget 아래에서 deterministic baseline을 cross-encoder,
-ColBERT late interaction, LLM reranking과 비교한다.
+재순위화 지연 시간 예산을 검색 지연 시간과 분리해 측정한다. 고정된 후보 수와
+제한 시간 아래에서 결정적 기준선을 cross-encoder, ColBERT late interaction,
+LLM 재순위화와 비교한다.

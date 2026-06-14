@@ -1,59 +1,58 @@
-# 결정: Trace Retention and Privacy
+# 결정: 추적 기록 보관과 개인정보
 
 ## 맥락
 
-RAG observability에는 trace가 필요하다. 하지만 trace는 실수로 prompt, context,
-provider output, personal data의 두 번째 저장소가 될 수 있다.
+RAG 관측에는 추적 기록이 필요하다. 하지만 추적 기록은 실수로 프롬프트, 문맥,
+LLM 출력, 개인정보의 두 번째 저장소가 될 수 있다.
 
 ## 권장 선택
 
-sanitized trace summary만 저장한다. trace persistence는 deterministic하게 sample한다.
-expired trace row는 hosting environment에서 schedule할 수 있는 retention cleanup
-command로 삭제한다.
+정리된 추적 기록 요약만 저장한다. 추적 기록 저장 여부는 결정적으로 샘플링한다.
+만료된 추적 기록 행은 실행 환경에서 예약할 수 있는 보관 정리 명령으로 삭제한다.
 
 기본값:
 
-- sanitized trace는 7일 보관
-- local lab mode sample rate `1`
-- 저장된 query는 redacted user query preview로 제한하고, query/rejection text에서
-  email address, API-key-like secret redact
-- raw chunk text, parent context text, citation quote, answer text, full provider prompt,
-  raw context bundle, raw provider response, token billing payload는 절대 저장하지 않음
+- 정리된 추적 기록은 7일 보관
+- 로컬 검증 모드 샘플 비율 `1`
+- 저장된 질의는 가린 사용자 질의 미리보기로 제한하고, 질의/거절 문구에서
+  이메일 주소와 API key 형태 비밀값을 가림
+- 청크 원문, 부모 문맥 원문, 인용 문구, 답변 문구, 전체 LLM 요청,
+  원문 문맥 묶음, LLM 응답 원문, 토큰 과금 값은 절대 저장하지 않음
 
 ## 검토한 대안
 
-- 더 쉬운 debugging을 위해 full raw trace 저장
-- per-query trace 없이 aggregate-only metric만 저장
-- write time random sampling
-- sanitized trace 무기한 보관
+- 더 쉬운 디버깅을 위해 전체 원문 추적 기록 저장
+- 질의별 추적 기록 없이 집계 지표만 저장
+- 기록 시점 무작위 샘플링
+- 정리된 추적 기록 무기한 보관
 
 ## 트레이드오프
 
-sanitized trace summary는 replay/debugging detail 일부를 잃는다. 하지만 public
-portfolio에 더 안전하고 production privacy boundary에 더 가깝다. trace id 기반
-deterministic sampling은 local test를 reproducible하게 만들고, failure가 randomness
-뒤에 숨는 것을 피한다. 짧은 retention은 stale observability data를 제한한다. 대신
-장기 trend analysis는 raw trace가 아니라 aggregate eval report에서 나와야 한다.
+정리된 추적 기록 요약은 재현/디버깅 세부 정보 일부를 잃는다. 하지만 공개
+포트폴리오에 더 안전하고 운영 개인정보 경계에 더 가깝다. 추적 기록 id 기반
+결정적 샘플링은 로컬 테스트를 재현 가능하게 만들고, 실패가 무작위성 뒤에 숨는 것을
+피한다. 짧은 보관 기간은 오래된 관측 데이터를 제한한다. 대신 장기 추세 분석은 원문
+추적 기록이 아니라 집계 평가 보고서에서 나와야 한다.
 
 ## 평가 근거
 
-- `sanitizeQueryTraceForStorage`는 query preview, normalized query preview,
-  rejected reason, rejected generation message에서 email address와 API-key-like secret을
-  redact한다.
-- `buildQueryTraceUpsertSql`는 sanitized payload만 저장한다.
-- `shouldPersistTraceSample`은 trace-id 기반 deterministic sampling decision을
+- `sanitizeQueryTraceForStorage`는 질의 미리보기, 정규화된 질의 미리보기,
+  거절 사유, 생성 거절 메시지에서 이메일 주소와 API key 형태 비밀값을
+  가린다.
+- `buildQueryTraceUpsertSql`는 정리된 값만 저장한다.
+- `shouldPersistTraceSample`은 추적 기록 id 기반 결정적 샘플링 판단을
   만든다.
-- `buildExpiredQueryTraceDeleteSql`는 cutoff보다 오래된 trace를 삭제하고 audit용
-  deleted id를 반환한다.
-- `runExpiredQueryTraceCleanup`은 delete SQL을 executor 뒤로 감싸고 aggregate audit
-  summary를 반환한다.
-- `pnpm db:trace-retention-smoke`는 expired trace가 삭제되고 fresh trace가 남는지
+- `buildExpiredQueryTraceDeleteSql`는 기준 시각보다 오래된 추적 기록을 삭제하고
+  감사용 삭제 id를 반환한다.
+- `runExpiredQueryTraceCleanup`은 delete SQL을 실행기 뒤로 감싸고 집계 감사
+  요약을 반환한다.
+- `pnpm db:trace-retention-smoke`는 만료된 추적 기록이 삭제되고 새 추적 기록이 남는지
   검증한다.
-- `pnpm db:trace-cleanup`은 cron, GitHub Actions, hosted scheduler용 idempotent
-  operations command다.
+- `pnpm db:trace-cleanup`은 cron, GitHub Actions, 호스팅 스케줄러용 멱등
+  운영 명령이다.
 
 ## 확장 시 다시 볼 것
 
-`pnpm db:trace-cleanup`을 production scheduler에 연결한다. 삭제 전 aggregate metric을
-export한다. trace가 private network boundary 밖으로 나가기 전에 더 엄격한 PII
-redaction pass를 추가한다.
+`pnpm db:trace-cleanup`을 운영 스케줄러에 연결한다. 삭제 전 집계 지표를
+내보낸다. 추적 기록이 사설 네트워크 경계 밖으로 나가기 전에 더 엄격한 개인정보
+가림 단계를 추가한다.

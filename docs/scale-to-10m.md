@@ -3,94 +3,87 @@
 ## 왜 10M을 가정했나
 
 이 프로젝트의 출발 질문은 “문서 수가 1천만 단위로 커지면 RAG에서 무엇이 먼저
-깨지는가”였다. 이 숫자는 구현 완료 기준이 아니라 pressure scenario다. 검색 품질,
-index memory, trace 보존, load, 운영 경계를 같은 기준에서 보기 위해 큰 숫자를 하나
-고정했다.
+깨지는가”였다. 이 숫자는 구현 완료 기준이 아니라 병목을 드러내기 위한 가정이다.
+검색 품질, 색인 메모리, 추적 기록 보존, 부하, 운영 경계를 같은 기준에서 보기 위해
+큰 숫자를 하나 고정했다.
 
-1천만 문서와 document당 평균 8 chunks를 함께 두면 `80,000,000` chunks가 된다. 이
-지점부터 raw vector payload, HNSW build working set, trace retention, re-embedding
-backfill이 단일-node MVP 감각을 넘어선다. 그래서 이 숫자는 "크다"는 인상보다 어떤
-설계 압력이 먼저 드러나는지 보기 위한 기준선이다.
+1천만 문서와 문서당 평균 8개 청크를 함께 두면 `80,000,000`개 청크가 된다. 이
+지점부터 원본 벡터 용량, HNSW 빌드 작업 메모리, 추적 기록 보존, 재임베딩 보정 작업이
+단일 노드 MVP 감각을 넘어선다. 그래서 이 숫자는 "크다"는 인상보다 어떤 설계 압력이
+먼저 드러나는지 보기 위한 기준선이다.
 
-이 문서는 그 scale scenario에서 중요해질 reliability boundary와 bottleneck을 정리한다.
-`docs/scale-budget-report.md`는 명시적 assumption에서 생성한 sizing estimate다.
-`docs/vector-index-budget-report.md`는 그 수학에 explicit HNSW memory-pressure scenario
-하나를 더한 것이다. 둘 다 measured PostgreSQL 또는 pgvector index size는 아니다.
+이 문서는 그 확장성 검토 기준에서 중요해질 신뢰성 경계와 병목을 정리한다.
+`docs/scale-budget-report.md`는 명시한 가정에서 생성한 용량 추정치다.
+`docs/vector-index-budget-report.md`는 그 계산에 HNSW 메모리 압력 가정 하나를 더한
+것이다. 둘 다 PostgreSQL 또는 pgvector 색인을 실측한 크기는 아니다.
 
 ## 문서/청크 가정
 
-MVP는 작은 public document set을 사용한다. scale analysis는 document당 평균 chunk
-수, vector storage, metadata storage, trace volume을 추정해야 한다. 현재 sizing
-report는 `10,000,000` documents와 document당 `8` chunks를 가정해 `80,000,000`
-chunks를 산출한다.
+MVP는 작은 공개 문서 세트를 사용한다. 확장성 분석에서는 문서당 평균 청크 수, 벡터
+저장량, 메타데이터 저장량, 추적 기록량을 추정해야 한다. 현재 용량 보고서는
+`10,000,000`개 문서와 문서당 `8`개 청크를 가정해 `80,000,000`개 청크를 산출한다.
 
-## Ingestion bottleneck
+## 수집 병목
 
-normalization throughput, dedup cost, version history, embedding API throughput,
-retry behavior를 추적한다.
+정규화 처리량, 중복 제거 비용, 버전 이력, 임베딩 API 처리량, 재시도 동작을 추적한다.
 
-## Chunking과 versioning strategy
+## 청킹과 버전 관리 전략
 
-document update 이후에도 citation이 안정적으로 유지되도록 chunk id에 version을
-포함한다.
+문서가 갱신된 뒤에도 인용이 안정적으로 유지되도록 청크 id에 버전을 포함한다.
 
-## Lexical retrieval: PostgreSQL FTS vs OpenSearch BM25
+## 키워드 검색: PostgreSQL FTS vs OpenSearch BM25
 
-PostgreSQL FTS는 MVP lexical baseline이다. OpenSearch BM25는 lexical quality와
-운영 비용이 추가 component를 정당화할 때의 scale alternative다.
+PostgreSQL FTS는 MVP의 키워드 검색 기준선이다. OpenSearch BM25는 키워드 검색 품질과
+운영 비용이 추가 구성 요소를 정당화할 때 검토할 확장 대안이다.
 
-## Vector retrieval: pgvector HNSW vs IVF-PQ vs dedicated vector DB
+## 벡터 검색: pgvector HNSW vs IVF-PQ vs 전용 벡터 DB
 
-pgvector HNSW는 MVP를 local하고 inspectable하게 유지한다. memory와 latency가
-지배적이 되면 IVF-PQ와 dedicated vector database가 검토 대상이 된다.
+pgvector HNSW는 MVP를 로컬에서 살펴보기 쉽게 유지한다. 메모리와 지연 시간이
+지배적인 문제가 되면 IVF-PQ와 전용 벡터 데이터베이스가 검토 대상이 된다.
 
-`1536` float32 dimensions 기준 현재 sizing report는 HNSW graph overhead, WAL,
-replica, backup, vacuum bloat를 제외하고 raw vector payload를 `491.52 GB`로
+`1536` float32 차원 기준 현재 용량 보고서는 HNSW 그래프 부가 비용, WAL, 복제본,
+백업, vacuum 팽창을 제외하고 원본 벡터 용량을 `491.52 GB`로
 추정한다.
 
-vector index budget report는 explicit HNSW graph scenario를 추가한다: `m=16`, layer
-multiplier `1.10`, neighbor당 graph bytes `8`, build memory multiplier `2.00`.
-이 assumption 아래 `80,000,000` chunks는 HNSW graph estimate `11.26 GB`, vector +
-metadata + graph estimate `584.70 GB`, build working set planning estimate
-`1169.41 GB`를 만든다. 이 숫자는 memory-pressure discussion을 위한 planning input이며
-observed index size가 아니다.
+벡터 색인 예산 보고서는 HNSW 그래프 가정을 추가한다: `m=16`, 계층 배수 `1.10`,
+이웃당 그래프 바이트 `8`, 빌드 메모리 배수 `2.00`. 이 가정 아래 `80,000,000`개
+청크는 HNSW 그래프 추정치 `11.26 GB`, 벡터 + 메타데이터 + 그래프 추정치
+`584.70 GB`, 빌드 작업 메모리 계획치 `1169.41 GB`를 만든다. 이 숫자는 메모리 압력
+검토를 위한 입력값이며, 관측된 색인 크기가 아니다.
 
-## Reranking latency budget
+## 재순위화 지연 시간 예산
 
-reranking은 candidate retrieval 이후 별도 stage로 측정해야 한다. MVP는 deterministic
-query-evidence reranker를 사용하므로 API, trace schema, viewer에 이미 rerank boundary가
-있다. scale 단계에서는 고정된 candidate count, timeout budget, fallback behavior 아래
-이 baseline을 cross-encoder, ColBERT late interaction, LLM reranking과 비교한다.
+재순위화는 후보 검색 이후 별도 단계로 측정해야 한다. MVP는 결정적 질의-근거
+재순위화기를 사용하므로 API, 추적 기록 스키마, 화면에 이미 재순위화 경계가 있다.
+확장 단계에서는 고정된 후보 수, 제한 시간, 대체 동작 아래 이 기준선을 cross-encoder,
+ColBERT late interaction, LLM 재순위화와 비교한다.
 
-## Retrieval concurrency budget
+## 검색 동시성 예산
 
-`docs/retrieval-concurrency-report.md`는 query embedding을 미리 계산한 뒤 public
-sample docs 위에서 concurrency `1`과 `4`로 PostgreSQL lexical, vector, hybrid
-retrieval 구간만 측정한다. production load test에는 larger index, representative
-query mix, warm/cold cache split, connection pool limit, HNSW parameter sweep,
-sample P99를 넘어서는 explicit error-budget reporting이 필요하다.
+`docs/retrieval-concurrency-report.md`는 질의 임베딩을 미리 계산한 뒤 공개 샘플 문서
+위에서 동시성 `1`과 `4`로 PostgreSQL 키워드, 벡터, hybrid 검색 구간만 측정한다.
+운영 부하 시험에는 더 큰 색인, 대표 질의 조합, warm/cold 캐시 분리, 연결 풀 제한,
+HNSW 매개변수 탐색, 샘플 P99를 넘어서는 명시적 오류 예산 보고가 필요하다.
 
-## Source trust와 freshness at scale
+## 출처 신뢰도와 최신성
 
-trust scoring에는 version freshness, source type, duplicate penalty, retrieval
-agreement를 포함해야 한다.
+신뢰도 점수에는 버전 최신성, 출처 유형, 중복 페널티, 검색 신호 일치도를 포함해야 한다.
 
-## Cache와 invalidation strategy
+## 캐시와 무효화 전략
 
-final answer를 cache하기 전에 retrieval path, embedding result, rerank result를 먼저
-cache한다. invalidation은 document version과 chunk hash 기준으로 수행한다.
+최종 답변을 캐시하기 전에 검색 경로, 임베딩 결과, 재순위화 결과를 먼저 캐시한다.
+무효화는 문서 버전과 청크 해시 기준으로 수행한다.
 
-## Observability와 failure tracing
+## 관측 가능성과 실패 추적
 
-score breakdown과 rejection reason을 포함한 sanitized trace를 기록한다. raw provider
-response log는 피한다. full provider prompt나 provider response를 replay하지 않고도
-ranking change를 debug할 수 있도록 fusion rank와 rerank rank/score를 포함한다.
+점수 분해와 거절 사유를 포함한 정리된 추적 기록을 남긴다. LLM 응답 원문 로그는
+피한다. 전체 LLM 요청이나 응답을 재생하지 않고도 순위 변화를 디버깅할 수 있도록
+결합 순위와 재순위화 순위/점수를 포함한다.
 
-daily queries `50,000`, sanitized trace당 `4096` bytes, retention `7` days 기준 현재
-sizing report는 database overhead 전 retained sanitized trace payload를 `1.43 GB`로
-추정한다.
+일일 질의 `50,000`, 정리된 추적 기록당 `4096`바이트, 보관 기간 `7`일 기준 현재 용량
+보고서는 데이터베이스 부가 비용을 제외한 추적 기록 보관량을 `1.43 GB`로 추정한다.
 
-## Production 전 바뀌어야 할 것
+## 운영 전 바뀌어야 할 것
 
-access control, privacy review, document set governance, load testing, index rebuild
-strategy, trace retention policy, incident response를 추가한다.
+접근 제어, 개인정보 검토, 문서 세트 관리 기준, 부하 시험, 색인 재생성 전략,
+추적 기록 보관 정책, 장애 대응을 추가한다.
