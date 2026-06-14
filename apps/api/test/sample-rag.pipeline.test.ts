@@ -6,7 +6,7 @@ const repoRoot = join(__dirname, "..", "..", "..");
 const sampleDocsDir = join(repoRoot, "sample-docs");
 
 describe("sample RAG pipeline", () => {
-  it("connects sample docs through retrieval, scoring, generation, and sanitized trace", async () => {
+  it("connects sample docs through retrieval, scoring, generation, and a runtime trace", async () => {
     const result = await runSampleRagPipeline({
       question: "Why not rely only on semantic vectors?",
       sampleDocsDir
@@ -14,7 +14,7 @@ describe("sample RAG pipeline", () => {
 
     expect(result.generation.status).toBe("answered");
     expect(result.selectedContext[0]?.chunk.documentId).toBe("hybrid-retrieval-note");
-    expect(result.trace.sanitized).toBe(true);
+    expect("sanitized" in result.trace).toBe(false);
     expect(result.trace.candidates.length).toBeGreaterThan(0);
     expect(result.trace.selectedChunkIds).toContain(result.selectedContext[0]?.chunk.id);
   });

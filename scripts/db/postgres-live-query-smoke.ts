@@ -62,9 +62,6 @@ async function main(): Promise<void> {
     if (!queryResult.selectedContext.some((result) => result.chunk.documentId === "hybrid-retrieval-note")) {
       throw new Error("hybrid-retrieval-note was not selected by live PostgreSQL query smoke");
     }
-    if (!queryResult.trace.sanitized) {
-      throw new Error("live PostgreSQL query smoke returned an unsanitized trace");
-    }
     if (!tracePersisted) {
       throw new Error("live PostgreSQL query smoke did not persist the sanitized query trace");
     }

@@ -113,8 +113,7 @@ export async function runPostgresRagPipeline(
     candidates,
     selectedChunkIds: selectedContext.map((item) => item.chunk.id),
     rejected,
-    generation,
-    sanitized: true
+    generation
   };
 
   if (input.persistTrace && shouldPersistTraceSample(trace.id, input.traceSampleRate ?? 1)) {

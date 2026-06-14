@@ -83,7 +83,6 @@ function toEvalObservation(fixture: EvalFixture, result: SampleRuntimeResult): E
     finalStatus: result.generation.status,
     unsupportedClaimRejected: result.generation.status === "rejected" || rejectedDocIds.length > 0,
     traceComplete:
-      result.trace.sanitized &&
       Array.isArray(result.trace.candidates) &&
       Array.isArray(result.trace.selectedChunkIds) &&
       Array.isArray(result.trace.rejected),

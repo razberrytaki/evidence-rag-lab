@@ -61,7 +61,7 @@ describe("PostgreSQL RAG pipeline", () => {
     expect(result.selectedContext[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
     expect(result.selectedContext[0]?.score.retrievalScore).toBe(0.99);
     expect(result.selectedContext[0]?.score.rerankScore).toBeGreaterThanOrEqual(0.5);
-    expect(result.trace.sanitized).toBe(true);
+    expect("sanitized" in result.trace).toBe(false);
     expect(result.trace.candidates[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
   });
 

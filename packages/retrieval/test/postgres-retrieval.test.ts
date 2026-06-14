@@ -334,8 +334,7 @@ describe("PostgreSQL query trace persistence", () => {
             ]
           }
         ]
-      },
-      sanitized: true
+      }
     };
 
     const sql = buildQueryTraceUpsertSql(trace);
@@ -399,8 +398,7 @@ describe("PostgreSQL query trace persistence", () => {
         status: "rejected",
         reason: "citation_validation_failed",
         message: "provider debug contained sk-provider-secret and toby@example.com"
-      },
-      sanitized: false
+      }
     };
 
     const sanitized = sanitizeQueryTraceForStorage(trace);

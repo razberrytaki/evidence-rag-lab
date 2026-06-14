@@ -104,8 +104,7 @@ export async function runSampleRagPipeline(input: RunSampleRagPipelineInput): Pr
     candidates,
     selectedChunkIds: selectedContext.map((result) => result.chunk.id),
     rejected,
-    generation,
-    sanitized: true
+    generation
   };
 
   return {

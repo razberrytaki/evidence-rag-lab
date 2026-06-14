@@ -95,7 +95,6 @@ export interface QueryTrace {
     reason: string;
   }>;
   generation: GenerationResult;
-  sanitized: boolean;
 }
 
 export function isGenerationRejected(result: GenerationResult): result is GenerationRejected {
