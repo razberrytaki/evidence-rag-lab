@@ -22,6 +22,6 @@ deterministic trust scoring은 검사 가능하고 CI 친화적이다. model jud
 
 `duplicate-doc-penalty`, `stale-source-demotion`, `low-trust-source`를 사용한다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 source ownership, update frequency, per-document lineage를 추가한다.

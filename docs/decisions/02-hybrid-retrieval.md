@@ -65,7 +65,7 @@ production 적용 전 재평가가 필요하다.
 - 측정 범위: 위 결과는 public sample docs 기반 local observation이다. production
   benchmark나 scoring claim이 아니라 선택 근거를 남기기 위한 evidence다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 PostgreSQL full-text search와 OpenSearch BM25를 비교하고 recall, latency,
 운영 비용을 측정한다.

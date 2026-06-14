@@ -31,6 +31,6 @@ prompt injection fixture를 사용한다.
 - malformed provider JSON은 raw provider content를 노출하지 않고 sanitized
   `citation_validation_failed` rejection이 된다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 rejection reason과 false reject를 first-class metric으로 추적한다.

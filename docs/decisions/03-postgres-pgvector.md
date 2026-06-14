@@ -36,8 +36,7 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
   concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
   실행한다. 결과는 `docs/retrieval-concurrency-report.md`에 둔다.
 - `pnpm scale:report`는 `docs/scale-budget-report.md`를 쓴다. 현재 sizing math는
-  `10,000,000` documents, document당 `8` chunks, `1536` float32 dimensions 기준
-  `80,000,000` chunks와 `491.52 GB` raw vector payload를 추정한다.
+  문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.
 - `pnpm index:report`는 `docs/vector-index-budget-report.md`를 쓴다. 현재 HNSW
   scenario는 `m=16`, layer multiplier `1.10`, neighbor당 graph bytes `8`,
   build memory multiplier `2.00`을 가정한다. 추정치는 HNSW graph bytes
@@ -47,7 +46,7 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
   observation이고 scale report는 가정 기반 sizing math다. PostgreSQL 선택의 초기
   근거로만 사용한다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 측정된 index memory, partitioning, backfill strategy, build memory, load 하의
 p99 latency, re-embedding cost를 다시 검토한다.

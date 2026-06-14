@@ -60,6 +60,6 @@ Messages API call shape 하나만 필요하고 injected `fetch`로 test determin
 - CI와 eval은 여전히 `FakeLLMProvider`를 사용한다. live generation은 명시적인
   local 검증 경로로 남긴다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 provider latency, cost, citation adherence를 분리 측정한다.

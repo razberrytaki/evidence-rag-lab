@@ -42,7 +42,7 @@ function만 대체할 수 있다.
   candidate 뒤로 내려가는 경우를 다룬다.
 - 현재 단계는 deterministic reranking 검증이다. model-quality 비교는 후속 과제다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 reranking latency budget을 retrieval latency와 분리해 benchmark한다. 고정된
 candidate count와 timeout budget 아래에서 deterministic baseline을 cross-encoder,

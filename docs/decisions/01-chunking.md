@@ -23,6 +23,6 @@ MVP에서는 제목 구조를 인식하는 재귀적 청킹을 사용한다.
 
 `parent-child-context` fixture와 청크 미리보기 trace를 사용한다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 청크 수 증가, 인덱스 갱신 비용, parent context 조회 지연 시간을 측정한다.

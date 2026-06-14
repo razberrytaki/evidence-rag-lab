@@ -1,15 +1,18 @@
-# 10M 규모 확장 추론 노트
+# 확장성 추론 노트
 
-## 범위와 non-claim
+## 왜 10M을 가정했나
 
-이 프로젝트는 production에서 10M document를 처리한다고 주장하지 않는다. 이 문서는
-그 규모에서 중요해질 reliability boundary와 bottleneck을 정리한다.
-`docs/scale-budget-report.md`는 명시적 assumption에서 생성한 sizing estimate이며
-load test가 아니다. `docs/vector-index-budget-report.md`는 그 수학에 explicit HNSW
-memory-pressure scenario 하나를 더한 것이다. measured PostgreSQL 또는 pgvector index
-size가 아니다.
+이 프로젝트의 출발 질문은 “문서 수가 1천만 단위로 커지면 RAG에서 무엇이 먼저
+깨지는가”였다. 이 숫자는 구현 완료 기준이 아니라 pressure scenario다. 검색 품질,
+index memory, trace 보존, load, 운영 경계를 같은 기준에서 보기 위해 큰 숫자를 하나
+고정했다.
 
-## 가정한 document/chunk volume
+이 문서는 그 scale scenario에서 중요해질 reliability boundary와 bottleneck을 정리한다.
+`docs/scale-budget-report.md`는 명시적 assumption에서 생성한 sizing estimate다.
+`docs/vector-index-budget-report.md`는 그 수학에 explicit HNSW memory-pressure scenario
+하나를 더한 것이다. 둘 다 measured PostgreSQL 또는 pgvector index size는 아니다.
+
+## 문서/청크 가정
 
 MVP는 작은 public document set을 사용한다. scale analysis는 document당 평균 chunk
 수, vector storage, metadata storage, trace volume을 추정해야 한다. 현재 sizing

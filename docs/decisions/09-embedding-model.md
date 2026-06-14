@@ -33,6 +33,6 @@ small model은 비용과 저장 공간을 낮추면서 MVP의 초점을 reliabil
   `20/20`, MRR `0.975`를 보여준다. MVP에는 충분히 강한 signal이지만, 더 큰
   embedding model 비교를 대체하지 않는다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 re-embedding run당 cost, index memory, quality delta를 평가한다.

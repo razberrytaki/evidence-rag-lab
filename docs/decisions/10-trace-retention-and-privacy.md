@@ -52,7 +52,7 @@ deterministic sampling은 local test를 reproducible하게 만들고, failure가
 - `pnpm db:trace-cleanup`은 cron, GitHub Actions, hosted scheduler용 idempotent
   operations command다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 `pnpm db:trace-cleanup`을 production scheduler에 연결한다. 삭제 전 aggregate metric을
 export한다. trace가 private network boundary 밖으로 나가기 전에 더 엄격한 PII

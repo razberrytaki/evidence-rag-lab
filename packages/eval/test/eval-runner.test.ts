@@ -502,7 +502,7 @@ describe("eval runner", () => {
     expect(markdown).not.toContain("Authorization");
   });
 
-  it("estimates 10M-document scale budgets from explicit assumptions", () => {
+  it("estimates scale scenario budgets from explicit assumptions", () => {
     const estimate = estimateScaleBudget({
       documentCount: 10_000_000,
       averageChunksPerDocument: 8,
@@ -537,18 +537,18 @@ describe("eval runner", () => {
         dailyQueryCount: 50_000,
         traceRetentionDays: 7
       },
-      notes: ["Sizing math only. 10M-document load는 실행하지 않았다."]
+      notes: ["문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다."]
     });
 
     expect(markdown).toContain("# Scale Budget 리포트");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("10M-document load를 실행하지 않고 explicit assumption으로 계산한 sizing math다.");
+    expect(markdown).toContain("Scale scenario를 explicit assumption으로 계산한 sizing math다.");
     expect(markdown).toContain("| documents | 10,000,000 |");
     expect(markdown).toContain("| chunks | 80,000,000 |");
     expect(markdown).toContain("| vector storage | 491.52 GB |");
     expect(markdown).toContain("| vector + chunk metadata | 573.44 GB |");
     expect(markdown).toContain("| retained sanitized traces | 1.43 GB |");
-    expect(markdown).toContain("- Sizing math only. 10M-document load는 실행하지 않았다.");
+    expect(markdown).toContain("- 문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.");
   });
 
   it("estimates vector index budget from explicit HNSW assumptions", () => {

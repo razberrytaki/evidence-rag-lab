@@ -47,7 +47,7 @@ full provider prompt, context, provider response를 노출한다.
 - `pnpm db:trace-retention-smoke`는 expired sanitized trace를 삭제하되 fresh trace는
   삭제하지 않는지 검증한다.
 
-## 10M 규모 확장 시 후속 작업
+## 확장 시 다시 볼 것
 
 trace cleanup을 scheduled job으로 옮기고, trace row 삭제 전에 aggregate metric을
 export한다.
