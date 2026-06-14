@@ -1,24 +1,35 @@
-import { AlertTriangle, CheckCircle2, Search, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { AlertTriangle, CheckCircle2, Loader2, Search, Send, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   buildTraceRows,
   fetchLatestTraceDeduped,
   getConfiguredApiBaseUrl,
+  runQuery,
   sampleTrace,
   summarizeTrace,
-  type LoadedTrace
+  type LoadedTrace,
+  type QueryRunSummary
 } from "./queryTrace";
 
+type QueryRunState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; summary: QueryRunSummary }
+  | { status: "error"; message: string };
+
 export function App() {
+  const apiBaseUrl = useMemo(() => getConfiguredApiBaseUrl(), []);
   const [loadedTrace, setLoadedTrace] = useState<LoadedTrace>({
     source: "sample",
     trace: sampleTrace
   });
+  const [question, setQuestion] = useState(sampleTrace.query);
+  const [queryRun, setQueryRun] = useState<QueryRunState>({ status: "idle" });
 
   useEffect(() => {
     let active = true;
 
-    void fetchLatestTraceDeduped(getConfiguredApiBaseUrl()).then((result) => {
+    void fetchLatestTraceDeduped(apiBaseUrl).then((result) => {
       if (active) {
         setLoadedTrace(result);
       }
@@ -27,10 +38,30 @@ export function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [apiBaseUrl]);
 
   const traceRows = useMemo(() => buildTraceRows(loadedTrace.trace), [loadedTrace.trace]);
   const summary = useMemo(() => summarizeTrace(loadedTrace.trace), [loadedTrace.trace]);
+
+  async function handleQuerySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedQuestion = question.trim();
+    if (trimmedQuestion === "") {
+      return;
+    }
+
+    setQueryRun({ status: "loading" });
+    try {
+      const querySummary = await runQuery(apiBaseUrl, trimmedQuestion);
+      setQueryRun({ status: "success", summary: querySummary });
+      setLoadedTrace(await fetchLatestTraceDeduped(apiBaseUrl));
+    } catch (error) {
+      setQueryRun({
+        status: "error",
+        message: error instanceof Error ? error.message : "query request failed"
+      });
+    }
+  }
 
   return (
     <main className="shell">
@@ -45,14 +76,36 @@ export function App() {
         </div>
       </header>
 
-      <section className="queryPanel" aria-label="Query">
-        <div id="query-label" className="queryLabel">
-          Query
-        </div>
-        <div className="queryInput" aria-labelledby="query-label">
-          <Search size={18} aria-hidden="true" />
-          <div className="queryValue">{loadedTrace.trace.query}</div>
-        </div>
+      <section className="queryPanel" aria-label="Run query">
+        <form className="queryForm" onSubmit={handleQuerySubmit}>
+          <label htmlFor="query-input" className="queryLabel">
+            Question
+          </label>
+          <div className="queryComposer">
+            <Search size={18} aria-hidden="true" />
+            <textarea
+              id="query-input"
+              value={question}
+              rows={2}
+              maxLength={500}
+              onChange={(event) => setQuestion(event.target.value)}
+              disabled={queryRun.status === "loading"}
+            />
+            <button
+              className="runButton"
+              type="submit"
+              disabled={queryRun.status === "loading" || question.trim() === ""}
+            >
+              {queryRun.status === "loading" ? (
+                <Loader2 className="spin" size={16} aria-hidden="true" />
+              ) : (
+                <Send size={16} aria-hidden="true" />
+              )}
+              Run
+            </button>
+          </div>
+        </form>
+        <QueryResultPanel state={queryRun} />
       </section>
 
       <section className="summaryGrid" aria-label="Evaluation summary">
@@ -65,6 +118,10 @@ export function App() {
         <div className="sectionHeader">
           <h2>Query Trace</h2>
           <span>{formatTraceSource(loadedTrace)}</span>
+        </div>
+        <div className="traceQuery">
+          <span>Trace query</span>
+          <strong>{loadedTrace.trace.query}</strong>
         </div>
         <table>
           <thead>
@@ -92,6 +149,57 @@ export function App() {
         </table>
       </section>
     </main>
+  );
+}
+
+function QueryResultPanel(props: { state: QueryRunState }) {
+  if (props.state.status === "idle") {
+    return null;
+  }
+
+  if (props.state.status === "loading") {
+    return (
+      <div className="answerPanel muted" aria-live="polite">
+        <Loader2 className="spin" size={16} aria-hidden="true" />
+        Running retrieval and generation
+      </div>
+    );
+  }
+
+  if (props.state.status === "error") {
+    return (
+      <div className="answerPanel error" role="alert">
+        <strong>Query failed</strong>
+        <span>{props.state.message}</span>
+      </div>
+    );
+  }
+
+  const { summary } = props.state;
+  return (
+    <div className="answerPanel" aria-live="polite">
+      <div className="answerHeader">
+        <div>
+          <h2>Provider Response</h2>
+          <span className={`answerStatus ${summary.status}`}>{summary.status}</span>
+        </div>
+        <div className="answerMeta">
+          <span>{summary.claimCount} claims</span>
+          <span>{summary.citationCount} citations</span>
+        </div>
+      </div>
+      <p className="answerText">{summary.responseText}</p>
+      {summary.status === "rejected" ? (
+        <div className="rejectionReason">{summary.rejectionReason}</div>
+      ) : null}
+      <div className="chunkList" aria-label="Selected chunks">
+        {summary.selectedChunkIds.length === 0 ? (
+          <span>No selected chunks</span>
+        ) : (
+          summary.selectedChunkIds.map((chunkId) => <span key={chunkId}>{chunkId}</span>)
+        )}
+      </div>
+    </div>
   );
 }
 

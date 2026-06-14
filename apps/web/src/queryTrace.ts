@@ -60,12 +60,29 @@ export interface TraceSummary {
   traceSanitize: string;
 }
 
+export type QueryRunSummary =
+  | {
+      status: "answered" | "conflict";
+      responseText: string;
+      claimCount: number;
+      citationCount: number;
+      selectedChunkIds: string[];
+    }
+  | {
+      status: "rejected";
+      responseText: string;
+      rejectionReason: string;
+      claimCount: 0;
+      citationCount: 0;
+      selectedChunkIds: string[];
+    };
+
 export interface LoadedTrace {
   source: "api" | "sample";
   trace: PublicQueryTrace;
 }
 
-type TraceFetch = (input: string) => Promise<{
+type TraceFetch = (input: string, init?: RequestInit) => Promise<{
   ok: boolean;
   json(): Promise<unknown>;
 }>;
@@ -163,6 +180,33 @@ export async function fetchLatestTrace(
   } catch {
     return { source: "sample", trace: sampleTrace };
   }
+}
+
+export async function runQuery(
+  apiBaseUrl: string,
+  question: string,
+  fetcher: TraceFetch = globalThis.fetch
+): Promise<QueryRunSummary> {
+  const trimmedQuestion = question.trim();
+  if (trimmedQuestion === "") {
+    throw new Error("question is required");
+  }
+
+  const response = await fetcher(`${trimApiBaseUrl(apiBaseUrl)}/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question: trimmedQuestion })
+  });
+  if (!response.ok) {
+    throw new Error("query request failed");
+  }
+
+  const summary = toQueryRunSummary(await response.json());
+  if (!summary) {
+    throw new Error("query response had an invalid shape");
+  }
+
+  return summary;
 }
 
 export function fetchLatestTraceDeduped(
@@ -300,6 +344,62 @@ function isTraceGeneration(value: unknown): value is PublicQueryTrace["generatio
     return Array.isArray(value.claims);
   }
   return false;
+}
+
+function toQueryRunSummary(value: unknown): QueryRunSummary | null {
+  if (!isRecord(value) || !isRecord(value.generation)) {
+    return null;
+  }
+
+  const selectedChunkIds = readSelectedChunkIds(value);
+  const generation = value.generation;
+
+  if (generation.status === "rejected") {
+    if (typeof generation.reason !== "string" || typeof generation.message !== "string") {
+      return null;
+    }
+    return {
+      status: "rejected",
+      responseText: generation.message,
+      rejectionReason: generation.reason,
+      claimCount: 0,
+      citationCount: 0,
+      selectedChunkIds
+    };
+  }
+
+  if ((generation.status === "answered" || generation.status === "conflict") && typeof generation.answer === "string" && Array.isArray(generation.claims)) {
+    return {
+      status: generation.status,
+      responseText: generation.answer,
+      claimCount: generation.claims.length,
+      citationCount: generation.claims.reduce((count, claim) => count + citationCountForClaim(claim), 0),
+      selectedChunkIds
+    };
+  }
+
+  return null;
+}
+
+function readSelectedChunkIds(value: Record<string, unknown>): string[] {
+  if (isRecord(value.trace) && isStringArray(value.trace.selectedChunkIds)) {
+    return value.trace.selectedChunkIds;
+  }
+
+  if (!Array.isArray(value.selectedContext)) {
+    return [];
+  }
+
+  return value.selectedContext
+    .map((context) => (isRecord(context) && isRecord(context.chunk) && typeof context.chunk.id === "string" ? context.chunk.id : null))
+    .filter((chunkId): chunkId is string => chunkId !== null);
+}
+
+function citationCountForClaim(value: unknown): number {
+  if (!isRecord(value) || !Array.isArray(value.citations)) {
+    return 0;
+  }
+  return value.citations.length;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -3,6 +3,7 @@ import {
   buildTraceRows,
   fetchLatestTrace,
   fetchLatestTraceDeduped,
+  runQuery,
   summarizeTrace,
   type PublicQueryTrace
 } from "./queryTrace";
@@ -110,6 +111,92 @@ describe("query trace view model", () => {
 
     expect(loaded.source).toBe("sample");
     expect(loaded.trace.id).toBe("sample-trace");
+  });
+
+  it("posts a query and summarizes the generated answer without exposing raw context", async () => {
+    const calls: Array<{ input: string; init?: RequestInit }> = [];
+    const fetcher = async (input: string, init?: RequestInit) => {
+      calls.push({ input, init });
+      return {
+        ok: true,
+        json: async () => ({
+          query: "Why not rely only on semantic vectors?",
+          selectedContext: [
+            {
+              chunk: {
+                id: "hybrid-retrieval-note#chunk-001",
+                text: "raw chunk text must not be rendered"
+              }
+            }
+          ],
+          generation: {
+            status: "answered",
+            answer: "Hybrid retrieval keeps exact terms and semantic similarity visible.",
+            claims: [
+              {
+                id: "claim-1",
+                citations: [
+                  {
+                    documentId: "hybrid-retrieval-note",
+                    chunkId: "hybrid-retrieval-note#chunk-001",
+                    quote: "raw citation quote must not be rendered"
+                  }
+                ]
+              }
+            ]
+          },
+          trace: {
+            selectedChunkIds: ["hybrid-retrieval-note#chunk-001"]
+          }
+        })
+      };
+    };
+
+    const summary = await runQuery("http://127.0.0.1:3000/", "  Why not rely only on semantic vectors?  ", fetcher);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({
+      input: "http://127.0.0.1:3000/query",
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: "Why not rely only on semantic vectors?" })
+      }
+    });
+    expect(summary).toEqual({
+      status: "answered",
+      responseText: "Hybrid retrieval keeps exact terms and semantic similarity visible.",
+      claimCount: 1,
+      citationCount: 1,
+      selectedChunkIds: ["hybrid-retrieval-note#chunk-001"]
+    });
+    expect(JSON.stringify(summary)).not.toContain("raw chunk text");
+    expect(JSON.stringify(summary)).not.toContain("raw citation quote");
+  });
+
+  it("summarizes rejected query responses", async () => {
+    const summary = await runQuery("http://127.0.0.1:3000", "Unknown internal incident", async () => ({
+      ok: true,
+      json: async () => ({
+        generation: {
+          status: "rejected",
+          reason: "insufficient_evidence",
+          message: "No selected context was available."
+        },
+        trace: {
+          selectedChunkIds: []
+        }
+      })
+    }));
+
+    expect(summary).toEqual({
+      status: "rejected",
+      responseText: "No selected context was available.",
+      rejectionReason: "insufficient_evidence",
+      claimCount: 0,
+      citationCount: 0,
+      selectedChunkIds: []
+    });
   });
 
   it("deduplicates concurrent latest trace requests for the same API base URL", async () => {
