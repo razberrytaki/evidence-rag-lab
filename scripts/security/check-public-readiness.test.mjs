@@ -65,6 +65,24 @@ describe("public readiness scanner", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it("requires eval report generation to rebuild the API runtime module first", () => {
+    const root = makeTempRepo();
+    writeMinimalReadinessFiles(root, {
+      includeLicense: true,
+      ciCommand: "pnpm security:public",
+      evalReportScript: "pnpm --filter @evidencerag/eval eval:report"
+    });
+
+    const result = scanPublicReadiness(root);
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.failures, [
+      { path: "package.json", reason: "eval-report-must-build-api-before-report" }
+    ]);
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
   it("requires public check commands to be executable segments, not echoed text", () => {
     const root = makeTempRepo();
     writeMinimalReadinessFiles(root, {
@@ -102,6 +120,27 @@ describe("public readiness scanner", () => {
     assert.equal(result.ok, false);
     assert.deepEqual(result.failures, [
       { path: "infra/postgres/init/001_schema.sql", reason: "required-file-is-gitignored" }
+    ]);
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("requires the supply-chain workflow to run on main push", () => {
+    const root = makeTempRepo();
+    writeMinimalReadinessFiles(root, {
+      includeLicense: true,
+      ciCommand: "pnpm security:public",
+      supplyChainWorkflow: "name: Supply Chain Security\non:\n  pull_request:\n  workflow_dispatch:\n"
+    });
+
+    const result = scanPublicReadiness(root);
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.failures, [
+      {
+        path: ".github/workflows/supply-chain-security.yml",
+        reason: "missing-supply-chain-main-push-trigger"
+      }
     ]);
 
     rmSync(root, { recursive: true, force: true });
@@ -151,6 +190,9 @@ function writeMinimalReadinessFiles(root, input) {
       {
         license: "MIT",
         scripts: {
+          "eval:report":
+            input.evalReportScript ??
+            "pnpm --filter @evidencerag/api build && pnpm --filter @evidencerag/eval eval:report",
           "public:check":
             input.publicCheckScript ??
             "pnpm build && pnpm test && pnpm typecheck && pnpm eval:report && pnpm provider:report && pnpm scale:report && pnpm index:report && pnpm security:public"
@@ -163,6 +205,17 @@ function writeMinimalReadinessFiles(root, input) {
   writeFileSync(
     join(root, ".github", "workflows", "ci.yml"),
     `name: CI\njobs:\n  test:\n    steps:\n      - run: pnpm build\n      - run: pnpm test\n      - run: pnpm typecheck\n      - run: ${input.ciCommand}\n`
+  );
+  writeFileSync(
+    join(root, ".github", "workflows", "supply-chain-security.yml"),
+    input.supplyChainWorkflow ??
+      `name: Supply Chain Security
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+`
   );
   if (input.includeLicense) {
     writeFileSync(

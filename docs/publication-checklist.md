@@ -14,7 +14,7 @@ pnpm public:check
 - `pnpm build`
 - `pnpm test`
 - `pnpm typecheck`
-- `pnpm eval:report`
+- `pnpm eval:report` (API runtime build 후 report 생성)
 - `pnpm provider:report`
 - `pnpm scale:report`
 - `pnpm index:report`
@@ -32,8 +32,8 @@ security gate는 deterministic report generation 이후 실행된다. publicatio
   claim safety check. adjacent-line claim도 포함
 - unexpected root entry, secret, raw trace, provider response, dump, `.npmrc` auth
   token, embedding/vector cache를 찾는 publishable tree scan
-- `LICENSE`, CI gate alignment, local `public:check` script를 확인하는 public
-  readiness check
+- `LICENSE`, CI gate alignment, local `public:check` script, `eval:report` API
+  build freshness, supply-chain main push trigger를 확인하는 public readiness check
 - 필요한 publish file이 `.gitignore` rule에 숨겨지면 안 됨
 
 첫 commit 이후 `pnpm security:gitleaks`를 실행한다. 첫 commit 전에는 gitleaks가
@@ -51,8 +51,8 @@ GitHub Actions CI는 다음을 실행해야 한다:
 readiness scanner는 `run:` command를 executable step으로 확인한다. echoed text 안에
 command name이 들어 있는 것은 gate를 만족하지 않는다.
 
-별도 supply-chain workflow는 Socket Firewall을 `sfw pnpm install --frozen-lockfile`로
-실행한다.
+별도 supply-chain workflow는 main push, pull request, manual dispatch에서 Socket
+Firewall을 `sfw pnpm install --frozen-lockfile`로 실행한다.
 
 ## 수동 검토
 

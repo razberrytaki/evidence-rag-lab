@@ -4,6 +4,7 @@ import { join } from "node:path";
 const REQUIRED_FILES = [
   ".env.example",
   ".github/workflows/ci.yml",
+  ".github/workflows/supply-chain-security.yml",
   ".gitignore",
   ".gitleaks.toml",
   "LICENSE",
@@ -33,6 +34,9 @@ const PUBLIC_CHECK_REPORT_COMMANDS = [
   "pnpm index:report"
 ];
 
+const EVAL_REPORT_API_BUILD_COMMAND = "pnpm --filter @evidencerag/api build";
+const EVAL_REPORT_WRITE_COMMAND = "pnpm --filter @evidencerag/eval eval:report";
+
 const CI_COMMANDS = ["pnpm build", "pnpm test", "pnpm typecheck", "pnpm security:public"];
 
 export function scanPublicReadiness(root = process.cwd()) {
@@ -51,6 +55,13 @@ export function scanPublicReadiness(root = process.cwd()) {
     if (packageJson.license === "MIT") {
       checkMitLicense(root, failures);
     }
+    const evalReportScript = packageJson.scripts?.["eval:report"];
+    if (typeof evalReportScript !== "string") {
+      failures.push({ path: "package.json", reason: "missing-script: eval:report" });
+    } else if (!evalReportBuildsApiBeforeReport(parsePackageScriptCommands(evalReportScript))) {
+      failures.push({ path: "package.json", reason: "eval-report-must-build-api-before-report" });
+    }
+
     const publicCheckScript = packageJson.scripts?.["public:check"];
     if (typeof publicCheckScript !== "string") {
       failures.push({ path: "package.json", reason: "missing-script: public:check" });
@@ -79,6 +90,18 @@ export function scanPublicReadiness(root = process.cwd()) {
       if (!ciRunCommands.includes(command)) {
         failures.push({ path: ciPath, reason: `missing-ci-command: ${command}` });
       }
+    }
+  }
+
+  const supplyChainPath = ".github/workflows/supply-chain-security.yml";
+  const absoluteSupplyChainPath = join(root, supplyChainPath);
+  if (existsSync(absoluteSupplyChainPath)) {
+    const supplyChainWorkflow = readFileSync(absoluteSupplyChainPath, "utf8");
+    if (!hasMainPushTrigger(supplyChainWorkflow)) {
+      failures.push({
+        path: supplyChainPath,
+        reason: "missing-supply-chain-main-push-trigger"
+      });
     }
   }
 
@@ -156,6 +179,13 @@ function matchesGlobSegment(value, pattern) {
   return new RegExp(`^${escaped}$`).test(value);
 }
 
+function hasMainPushTrigger(workflowText) {
+  return (
+    /^\s*push:\s*$/m.test(workflowText) &&
+    /branches:\s*\[\s*main\s*\]|^\s*-\s*main\s*$/m.test(workflowText)
+  );
+}
+
 function parsePackageScriptCommands(script) {
   return script
     .split("&&")
@@ -176,6 +206,12 @@ function stripYamlQuotes(value) {
     return value.slice(1, -1);
   }
   return value;
+}
+
+function evalReportBuildsApiBeforeReport(commands) {
+  const apiBuildIndex = commands.indexOf(EVAL_REPORT_API_BUILD_COMMAND);
+  const evalReportIndex = commands.indexOf(EVAL_REPORT_WRITE_COMMAND);
+  return apiBuildIndex !== -1 && evalReportIndex !== -1 && apiBuildIndex < evalReportIndex;
 }
 
 function securityRunsAfterReportGeneration(publicCheckCommands) {

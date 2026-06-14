@@ -52,10 +52,11 @@ secret pattern이 있으면 fail한다.
 
 `security:readiness`는 root publication metadata, package metadata와 일치하는
 `LICENSE`, CI의 `pnpm security:public` 실행, local `public:check` script의 expected
-publication gate 포함 여부를 확인한다. loose string match가 아니라 executable command
-segment를 검증하므로 echoed command text는 gate를 만족하지 않는다. 또한
-`infra/postgres/init/001_schema.sql` 같은 publish-critical file이 `.gitignore` rule에
-숨겨져 있지 않은지도 확인한다.
+publication gate 포함 여부를 확인한다. `pnpm eval:report`가 API runtime module을 먼저
+build하는지와 supply-chain workflow가 main push에서 실행되는지도 확인한다. loose
+string match가 아니라 executable command segment를 검증하므로 echoed command text는
+gate를 만족하지 않는다. 또한 `infra/postgres/init/001_schema.sql` 같은
+publish-critical file이 `.gitignore` rule에 숨겨져 있지 않은지도 확인한다.
 
 `security:public`은 모든 check를 실행한다.
 
