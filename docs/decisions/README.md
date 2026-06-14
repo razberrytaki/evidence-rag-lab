@@ -14,6 +14,15 @@
 작은 구현에서 확인한 선택이 큰 scale scenario로 갈 때 어디서 다시 검증되어야 하는지
 기록한다.
 
+## 대표 trade-off
+
+- vector-only 검색은 포기했다. sample set에서는 강하게 동작했지만, exact token,
+  acronym, config key, runbook ID가 중요해질 때 lexical signal을 trace에 남겨야 한다.
+- raw trace 저장은 포기했다. debugging에는 편하지만 공개 repo와 production privacy
+  boundary 모두에서 위험하므로 sanitized score, rank, rejection reason만 남긴다.
+- 모호한 답변은 포기했다. citation coverage나 trust threshold가 부족하면 유용한 답변을
+  일부 놓치더라도 reject를 선택한다.
+
 ## 먼저 읽을 문서
 
 1. [하이브리드 검색](02-hybrid-retrieval.md)

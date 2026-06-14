@@ -20,7 +20,7 @@ const report: ScaleBudgetReportInput = {
     "문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.",
     "Vector storage는 float32 embedding을 가정하며 HNSW graph overhead, WAL, replica, backup, vacuum bloat를 제외한다.",
     "Trace volume은 full provider prompt, raw context bundle, provider response가 아니라 sanitized aggregate trace payload를 가정한다.",
-    "포트폴리오에서 중요한 signal은 assumption을 명시하고, pressure point를 계산하고, production 전에 무엇을 측정해야 하는지 이름 붙이는 능력이다."
+    "이 계산은 assumptions, pressure points, production validation targets를 산출한다."
   ]
 };
 

@@ -18,7 +18,7 @@ const report: VectorIndexBudgetReportInput = {
     hnswBuildMemoryMultiplier: 2
   },
   notes: [
-    "HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.",
+    "HNSW graph math는 explicit planning scenario다.",
     "graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.",
     "build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.",
     "Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다."

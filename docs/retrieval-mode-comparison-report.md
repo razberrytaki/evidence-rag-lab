@@ -7,6 +7,12 @@
 
 - mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.
 
+## 주요 결과
+
+- lexical은 recall@3 15/20, MRR 0.750로 exact-token signal을 확인한다.
+- vector는 recall@3 20/20, MRR 0.975로 semantic baseline을 확인한다.
+- hybrid는 recall@3 20/20, MRR 1.000로 rank fusion 결과를 확인한다.
+
 | Mode | Recall | 비율 | Mean reciprocal rank |
 |---|---:|---:|---:|
 | lexical | 15/20 | 75% | 0.750 |
@@ -99,6 +105,7 @@
 
 ## 메모
 
+- Run context: pnpm db:retrieval-compare-smoke, public sample docs, 20 retrieval cases, local PostgreSQL connection.
 - Identifier-aware lexical retrieval은 이제 exact-token stress category를 통과한다.
 - Vector-only는 모든 expected document를 찾지만 trace-observability category에서 rank position 하나를 잃는다.
 - Hybrid는 이 20-document 동작 확인에서 vector-only와 같은 recall을 유지하면서 MRR을 1.000으로 복구한다.

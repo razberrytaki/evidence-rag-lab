@@ -16,8 +16,20 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
 
 ## 트레이드오프
 
-하나의 datastore를 사용하면 local reproduction이 단순해진다. 전용 vector database는
-더 큰 규모에서 나을 수 있지만, MVP의 초점을 흐릴 수 있다.
+하나의 datastore를 사용하면 local reproduction이 단순해진다. `docker compose`로
+PostgreSQL 하나만 올리면 metadata, chunk, vector, sanitized trace를 같은 transaction
+boundary에서 확인할 수 있다. SQL로 retrieval row와 trace row를 함께 검사할 수 있어
+portfolio reviewer가 시스템을 따라가기 쉽다.
+
+Qdrant 같은 전용 vector database는 vector search 운영에는 더 직접적일 수 있다. 하지만
+MVP 단계에서 metadata store, trace store, vector store를 나누면 장애 지점과 setup
+surface가 늘어난다. OpenSearch는 BM25와 vector를 한 컴포넌트에서 다룰 수 있지만,
+이 프로젝트의 현재 질문은 search product 운영이 아니라 RAG reliability boundary를
+작게 검증하는 것이다.
+
+전용 vector database로 넘어갈 기준은 명확히 둔다. pgvector HNSW build memory,
+partitioning, vacuum/index maintenance, p99 latency, recall degradation이 local MVP의
+설명 가능성을 넘어서는 순간 별도 datastore를 검토한다.
 
 ## 평가 근거
 
@@ -25,7 +37,9 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
   nearest neighbor search, cosine distance, HNSW index를 문서화한다.
 - `pnpm db:quality-smoke`는 PostgreSQL + pgvector를 통해 저장된 sample-doc
   embedding에 live OpenAI query embedding을 실행한다.
-- 현재 sample-doc 결과: recall@3 `20/20`, MRR `1.000`.
+- 현재 sample-doc 결과는 hybrid retrieval decision을 지지한다. PostgreSQL + pgvector
+  선택에는 "같은 datastore에서 vector, lexical, trace를 함께 검사할 수 있다"는 의미로
+  사용한다.
 - `pnpm db:retrieval-compare-smoke`는 lexical-only, hybrid와 함께 vector-only
   retrieval도 측정한다. 현재 sample-doc vector-only 결과: recall@3 `20/20`,
   MRR `0.975`.
@@ -48,5 +62,7 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
 
 ## 확장 시 다시 볼 것
 
-측정된 index memory, partitioning, backfill strategy, build memory, load 하의
-p99 latency, re-embedding cost를 다시 검토한다.
+1천만 문서는 pressure scenario이며 measured production benchmark가 아니다. 확장 시에는
+측정된 index memory, partitioning, backfill strategy, build memory, load 하의 p99
+latency, recall degradation, re-embedding cost를 다시 검토한다. 전용 vector DB 전환은
+운영 복잡도 증가보다 recall/latency/index maintenance 이득이 커질 때만 선택한다.

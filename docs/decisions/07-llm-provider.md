@@ -11,7 +11,7 @@ adapter로 둔다. deterministic CI에는 `FakeLLMProvider`를 사용한다.
 
 live OpenAI-compatible adapter는 newer OpenAI-only Responses API 대신
 `POST /chat/completions`를 사용한다. 이 boundary의 목적이 compatibility이기
-때문이다. OpenAI-first application에서는 현재 OpenAI가 Responses API를 권장하지만,
+때문이다. OpenAI-first application에서는 2026-06-14 기준 OpenAI가 Responses API를 권장하지만,
 많은 OpenAI-compatible provider는 여전히 Chat Completions contract를 노출한다.
 참고:
 [Chat Completions API](https://developers.openai.com/api/reference/resources/chat),

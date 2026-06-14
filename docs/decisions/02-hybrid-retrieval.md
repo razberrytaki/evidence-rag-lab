@@ -44,16 +44,16 @@ production 적용 전 재평가가 필요하다.
   lexical SQL, vector SQL, hybrid SQL의 aggregate timing을 분리해
   `docs/retrieval-latency-report.md`에 쓴다. sanitized report만으로 품질과
   latency trade-off를 볼 수 있게 한다.
-- 현재 latency 결과: embedding P50 `251.80ms`, P95 `299.77ms`;
-  lexical SQL P50 `2.13ms`; vector SQL P50 `0.98ms`; hybrid SQL P50 `1.14ms`.
+- 현재 latency 결과: embedding P50 `273.99ms`, P95 `416.82ms`;
+  lexical SQL P50 `1.97ms`; vector SQL P50 `0.81ms`; hybrid SQL P50 `3.80ms`.
   현재 실행에서는 embedding이 지배 비용이며, SQL retrieval cost와 embedding cost가
   분리되어 보인다.
 - `pnpm db:retrieval-concurrency-smoke`는 embedding을 미리 계산한 뒤,
   concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
   측정하고 `docs/retrieval-concurrency-report.md`를 쓴다.
-- 현재 concurrency 결과, concurrency `4`: lexical P50 `0.89ms`, P95
-  `8.20ms`, P99 `8.60ms`; vector P50 `1.42ms`, P95 `7.43ms`, P99 `7.65ms`;
-  hybrid P50 `3.68ms`, P95 `8.90ms`, P99 `9.07ms`; 모든 row error `0`.
+- 현재 concurrency 결과, concurrency `4`: lexical P50 `0.93ms`, P95
+  `7.94ms`, P99 `8.89ms`; vector P50 `2.06ms`, P95 `9.29ms`, P99 `9.88ms`;
+  hybrid P50 `2.48ms`, P95 `10.53ms`, P99 `12.99ms`; 모든 row error `0`.
 - 해석: 식별자 인식 lexical retrieval은 exact-token category `5/5`를 통과한다.
   하지만 answer-guard, retrieval-design, version-conflict 일부는 여전히 놓친다.
   Hybrid는 vector 수준의 recall을 유지하면서 놓친 vector rank position을 회복한다.

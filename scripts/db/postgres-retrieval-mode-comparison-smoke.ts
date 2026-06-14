@@ -65,6 +65,7 @@ async function main(): Promise<void> {
         k: TOP_K,
         modes: modeReports.map(({ mode, report }) => ({ mode, report })),
         notes: [
+          "Run context: pnpm db:retrieval-compare-smoke, public sample docs, 20 retrieval cases, local PostgreSQL connection.",
           "Identifier-aware lexical retrieval은 이제 exact-token stress category를 통과한다.",
           "Vector-only는 모든 expected document를 찾지만 trace-observability category에서 rank position 하나를 잃는다.",
           "Hybrid는 이 20-document 동작 확인에서 vector-only와 같은 recall을 유지하면서 MRR을 1.000으로 복구한다."

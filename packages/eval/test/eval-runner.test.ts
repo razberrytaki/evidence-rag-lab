@@ -121,7 +121,7 @@ describe("eval runner", () => {
     expect(markdown).toContain("# 평가 리포트");
     expect(markdown).toContain("## 읽는 법");
     expect(markdown).toContain("fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.");
-    expect(markdown).toContain("요약: 1/1 fixture 통과.");
+    expect(markdown).toContain("요약: 1/1 fixture 통과. sample-runtime observation 0건, static fixture 1건.");
     expect(markdown).toContain("| unsupported-claim rejection | 1/1 | 100% |");
   });
 
@@ -359,7 +359,7 @@ describe("eval runner", () => {
           provider: "anthropic",
           role: "comparison-adapter",
           requestSurface: "POST /messages",
-          setup: "OPENAI_API_KEY + ANTHROPIC_API_KEY",
+          setup: "ANTHROPIC_API_KEY",
           liveVerification: {
             command: "pnpm db:live-generation-smoke",
             status: "not-run",
@@ -395,17 +395,17 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# Provider 비교 리포트");
     expect(markdown).toContain(
-      "이 report는 provider adapter boundary를 정적으로 비교한다. live model call은 실행하지 않는다."
+      "검증 범위: deterministic adapter contract. Live generation smoke는 별도 command 결과로 추적한다."
     );
     expect(markdown).toContain("- adapter contract와 live 검증 경계를 분리해서 본다.");
     expect(markdown).toContain(
-      "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |"
+      "| Provider | Role | Request surface | Generation env | Live 검증 | Command | Reason |"
     );
     expect(markdown).toContain(
       "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 별도 실행 필요 | pnpm db:live-generation-smoke | - |"
     );
     expect(markdown).toContain(
-      "| anthropic | comparison-adapter | POST /messages | OPENAI_API_KEY + ANTHROPIC_API_KEY | 미실행 | pnpm db:live-generation-smoke | ANTHROPIC_API_KEY is not configured |"
+      "| anthropic | comparison-adapter | POST /messages | ANTHROPIC_API_KEY | 미실행 | pnpm db:live-generation-smoke | ANTHROPIC_API_KEY is not configured |"
     );
     expect(markdown).toContain(
       "| fake | test-double | in-process | none | 해당 없음 | none | FakeLLMProvider는 deterministic CI/test 전용 |"
@@ -595,7 +595,10 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# Vector Index Budget 리포트");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("이는 sizing math이며 measured PostgreSQL 또는 pgvector index size가 아니다.");
+    expect(markdown).toContain(
+      "요약: 10,000,000 docs / 80,000,000 chunks 기준 serving set 584.70 GB, build working set 1169.41 GB 추정."
+    );
+    expect(markdown).toContain("Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.");
     expect(markdown).toContain("| HNSW m | 16 |");
     expect(markdown).toContain("| HNSW graph estimate | 11.26 GB |");
     expect(markdown).toContain("| vector + metadata + HNSW graph | 584.70 GB |");

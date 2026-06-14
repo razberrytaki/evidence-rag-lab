@@ -1,7 +1,7 @@
 # EvidenceRAG Lab
 
-EvidenceRAG Lab은 RAG 시스템에서 “답을 만들 수 있는가”보다 “근거를 확인할 수
-있는가”를 먼저 보는 포트폴리오 프로젝트다.
+EvidenceRAG Lab은 RAG 답변이 검색 근거와 인용으로 검증되지 않으면 답하지 않는
+reliability lab이다.
 
 작은 공개 문서 세트와 합성 실패 사례를 사용해 검색, 재순위화, 출처 신뢰도,
 인용 검증, 실패 처리, 추적 가능성을 한 흐름으로 검증한다. 출발 질문은 “문서 수가
@@ -40,13 +40,25 @@ RAG 시스템을 설계할 때 어떤 질문을 먼저 던져야 하는지, 그 
 아직 운영 검증 단계는 아니다. 큰 데이터셋, 접근 제어, privacy review, index rebuild
 strategy, 장애 대응, 실제 부하 테스트는 별도 단계로 남아 있다.
 
+## Evidence snapshot
+
+- eval fixture: `15/15` 통과. 이 중 sample-runtime observation은 `2`건이다.
+- retrieval quality: public sample docs `20`개 case 기준 hybrid recall@3 `20/20`, MRR `1.000`.
+- retrieval concurrency: precomputed embedding 이후 concurrency `1`, `4`에서 DB retrieval 구간 측정.
+- scale scenario: `10,000,000` docs, `80,000,000` chunks 기준 raw vector payload `491.52 GB` 추정.
+
 ## 빠른 실행
 
 ```bash
 pnpm install
+pnpm public:check
+```
+
+개발 중 빠른 확인:
+
+```bash
 pnpm build
 pnpm test
-pnpm public:check
 ```
 
 PostgreSQL 동작 확인 경로:
@@ -126,6 +138,7 @@ pnpm db:retrieval-concurrency-smoke
 
 - 회사 문서, 고객 데이터, 개인 데이터
 - `.env`, API key, token, provider secret
+- license 또는 usage review 없이 복사한 큰 public docs
 - full provider prompt, raw context bundle, provider raw response
 - database dump, embedding cache
 

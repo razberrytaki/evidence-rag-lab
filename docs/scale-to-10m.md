@@ -7,6 +7,11 @@
 index memory, trace 보존, load, 운영 경계를 같은 기준에서 보기 위해 큰 숫자를 하나
 고정했다.
 
+1천만 문서와 document당 평균 8 chunks를 함께 두면 `80,000,000` chunks가 된다. 이
+지점부터 raw vector payload, HNSW build working set, trace retention, re-embedding
+backfill이 단일-node MVP 감각을 넘어선다. 그래서 이 숫자는 "크다"는 인상보다 어떤
+설계 압력이 먼저 드러나는지 보기 위한 기준선이다.
+
 이 문서는 그 scale scenario에서 중요해질 reliability boundary와 bottleneck을 정리한다.
 `docs/scale-budget-report.md`는 명시적 assumption에서 생성한 sizing estimate다.
 `docs/vector-index-budget-report.md`는 그 수학에 explicit HNSW memory-pressure scenario

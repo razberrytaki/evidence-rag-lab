@@ -81,7 +81,8 @@ async function main(): Promise<void> {
         observations,
         notes: [
           "PostgreSQL retrieval concurrency만 분리하기 위해 timing 전에 embedding을 의도적으로 미리 계산한다.",
-          "각 concurrency level은 같은 retrieval eval case를 실행한다."
+          "각 concurrency level은 같은 retrieval eval case를 실행한다.",
+          "Warm/cold cache split은 하지 않는다. concurrency 1/4에서 DB retrieval 구간만 비교한다."
         ]
       }),
       "utf8"

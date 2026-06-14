@@ -1,8 +1,8 @@
 # Vector Index Budget 리포트
 
 생성일: 2026-06-12.
-이는 sizing math이며 measured PostgreSQL 또는 pgvector index size가 아니다.
-이 report를 위해 large index build를 실행하지 않았다.
+요약: 10,000,000 docs / 80,000,000 chunks 기준 serving set 584.70 GB, build working set 1169.41 GB 추정.
+Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.
 
 | Assumption | 값 |
 |---|---:|
@@ -28,7 +28,7 @@
 
 ## 메모
 
-- HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.
+- HNSW graph math는 explicit planning scenario다.
 - graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.
 - build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.
 - Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다.

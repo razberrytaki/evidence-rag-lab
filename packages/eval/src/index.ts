@@ -27,6 +27,7 @@ export interface EvalObservation {
 
 export interface EvalReportItem {
   id: string;
+  source: NonNullable<EvalObservation["observationSource"]> | "missing";
   passed: boolean;
   notes: string[];
 }
@@ -264,13 +265,17 @@ export function evaluateFixtures(fixtures: EvalFixture[], observations: EvalObse
 }
 
 export function renderEvalReportMarkdown(report: EvalReport): string {
+  const sampleRuntimeCount =
+    report.observationSources.find((item) => item.source === "sample-runtime")?.count ?? 0;
+  const staticFixtureCount =
+    report.observationSources.find((item) => item.source === "static-fixture")?.count ?? 0;
   const lines = [
     "# 평가 리포트",
     "",
-    "deterministic eval fixture와 sample-runtime pipeline observation에서 생성된다.",
+    "정적 eval fixture와 sample-runtime observation을 합쳐 생성한다.",
     "현재 runtime observation은 insufficient-evidence 계열 negative guard를 우선 검증한다.",
     "",
-    `요약: ${report.summary.passed}/${report.summary.total} fixture 통과.`,
+    `요약: ${report.summary.passed}/${report.summary.total} fixture 통과. sample-runtime observation ${sampleRuntimeCount}건, static fixture ${staticFixtureCount}건.`,
     "",
     "## 읽는 법",
     "",
@@ -287,9 +292,11 @@ export function renderEvalReportMarkdown(report: EvalReport): string {
     "|---|---:|",
     ...report.observationSources.map((item) => `| ${item.source} | ${item.count} |`),
     "",
-    "| Fixture | 상태 | 메모 |",
-    "|---|---|---|",
-    ...report.items.map((item) => `| ${item.id} | ${formatPassFail(item.passed)} | ${item.notes.join("; ")} |`),
+    "| Fixture | Observation source | 상태 | 메모 |",
+    "|---|---|---|---|",
+    ...report.items.map(
+      (item) => `| ${item.id} | ${item.source} | ${formatPassFail(item.passed)} | ${item.notes.join("; ")} |`
+    ),
     ""
   ];
 
@@ -347,6 +354,11 @@ export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalRepor
     "",
     `요약: ${report.summary.passed}/${report.summary.total} ranked retrieval case 통과.`,
     "",
+    "## 주요 결과",
+    "",
+    `- hybrid retrieval recall@3 ${report.metrics.recallAtK.passed}/${report.metrics.recallAtK.total}, MRR ${report.metrics.meanReciprocalRank.toFixed(3)}.`,
+    "- case table은 통과 여부보다 어떤 document가 몇 번째 rank에 들어왔는지 확인하는 evidence다.",
+    "",
     "## 읽는 법",
     "",
     "- absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.",
@@ -373,6 +385,7 @@ export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalRepor
 export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalModeComparisonReportInput): string {
   const k = requirePositiveInteger(input.k, "k");
   const categoryRows = buildRetrievalModeCategoryRows(input.modes);
+  const notableOutcomes = buildRetrievalModeNotableOutcomes(input.modes);
   const lines = [
     "# 검색 모드 비교 리포트",
     "",
@@ -383,6 +396,7 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
     "",
     "- mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.",
     "",
+    ...(notableOutcomes.length > 0 ? ["## 주요 결과", "", ...notableOutcomes.map((note) => `- ${note}`), ""] : []),
     "| Mode | Recall | 비율 | Mean reciprocal rank |",
     "|---|---:|---:|---:|",
     ...input.modes.map(
@@ -428,15 +442,13 @@ export function renderProviderComparisonReportMarkdown(input: ProviderComparison
     "",
     `생성일: ${input.generatedAt}.`,
     "",
-    "public portfolio를 위해 generation provider boundary를 비교한다.",
-    "이 report는 provider adapter boundary를 정적으로 비교한다. live model call은 실행하지 않는다.",
-    "live generation 검증은 `pnpm db:live-generation-smoke` 같은 별도 command에서 수행한다.",
+    "검증 범위: deterministic adapter contract. Live generation smoke는 별도 command 결과로 추적한다.",
     "",
     "## 읽는 법",
     "",
     "- adapter contract와 live 검증 경계를 분리해서 본다.",
     "",
-    "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |",
+    "| Provider | Role | Request surface | Generation env | Live 검증 | Command | Reason |",
     "|---|---|---|---|---|---|---|",
     ...input.providers.map(providerLiveVerificationRow),
     "",
@@ -472,6 +484,7 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     `Embedding model: \`${input.embeddingModel}\` (${input.embeddingDimensions} dimensions).`,
     "",
     "대상: public sample docs. 측정: embedding call과 PostgreSQL retrieval latency.",
+    "Run context: `pnpm db:retrieval-latency-smoke`, public sample docs, 20 retrieval cases, local PostgreSQL connection, warm/cold cache split 없음.",
     "",
     "## 읽는 법",
     "",
@@ -513,6 +526,7 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     "",
     "대상: public sample docs. 측정: precomputed embedding 이후 PostgreSQL retrieval concurrency.",
     "embedding을 미리 계산한 뒤 database retrieval 구간만 측정한다.",
+    "Run context: `pnpm db:retrieval-concurrency-smoke`, public sample docs, 20 retrieval cases, local PostgreSQL connection, concurrency 1/4.",
     "",
     "## 읽는 법",
     "",
@@ -674,8 +688,10 @@ export function renderVectorIndexBudgetReportMarkdown(input: VectorIndexBudgetRe
     "# Vector Index Budget 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    "이는 sizing math이며 measured PostgreSQL 또는 pgvector index size가 아니다.",
-    "이 report를 위해 large index build를 실행하지 않았다.",
+    `요약: ${formatInteger(estimate.documentCount)} docs / ${formatInteger(estimate.chunkCount)} chunks 기준 serving set ${formatBytesAsGb(
+      estimate.hnswServingBytes
+    )}, build working set ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} 추정.`,
+    "Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.",
     "",
     "| Assumption | 값 |",
     "|---|---:|",
@@ -717,6 +733,7 @@ function evaluateFixture(fixture: EvalFixture, observation: EvalObservation | un
   if (!observation) {
     return {
       id: fixture.id,
+      source: "missing",
       passed: false,
       notes: ["관측값 없음"]
     };
@@ -731,6 +748,7 @@ function evaluateFixture(fixture: EvalFixture, observation: EvalObservation | un
 
   return {
     id: fixture.id,
+    source: observation.observationSource ?? "static-fixture",
     passed: checks.length === 0,
     notes: checks.length === 0 ? ["정상"] : checks
   };
@@ -798,6 +816,38 @@ function buildRetrievalModeCategoryRows(modes: RetrievalModeReport[]): string[] 
         return `| ${category} | ${mode} | ${passed}/${total} | ${formatPercent(rate)} | ${mrr.toFixed(3)} |`;
       });
   });
+}
+
+function buildRetrievalModeNotableOutcomes(modes: RetrievalModeReport[]): string[] {
+  const byMode = new Map(modes.map((item) => [item.mode, item.report]));
+  const lexical = byMode.get("lexical");
+  const vector = byMode.get("vector");
+  const hybrid = byMode.get("hybrid");
+  const outcomes: string[] = [];
+
+  if (lexical) {
+    outcomes.push(
+      `lexical은 recall@3 ${lexical.metrics.recallAtK.passed}/${lexical.metrics.recallAtK.total}, MRR ${lexical.metrics.meanReciprocalRank.toFixed(
+        3
+      )}로 exact-token signal을 확인한다.`
+    );
+  }
+  if (vector) {
+    outcomes.push(
+      `vector는 recall@3 ${vector.metrics.recallAtK.passed}/${vector.metrics.recallAtK.total}, MRR ${vector.metrics.meanReciprocalRank.toFixed(
+        3
+      )}로 semantic baseline을 확인한다.`
+    );
+  }
+  if (hybrid) {
+    outcomes.push(
+      `hybrid는 recall@3 ${hybrid.metrics.recallAtK.passed}/${hybrid.metrics.recallAtK.total}, MRR ${hybrid.metrics.meanReciprocalRank.toFixed(
+        3
+      )}로 rank fusion 결과를 확인한다.`
+    );
+  }
+
+  return outcomes;
 }
 
 function checkExpectedRelevantDocs(fixture: EvalFixture, observation: EvalObservation): string | undefined {

@@ -4,6 +4,11 @@
 
 요약: 20/20 ranked retrieval case 통과.
 
+## 주요 결과
+
+- hybrid retrieval recall@3 20/20, MRR 1.000.
+- case table은 통과 여부보다 어떤 document가 몇 번째 rank에 들어왔는지 확인하는 evidence다.
+
 ## 읽는 법
 
 - absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.

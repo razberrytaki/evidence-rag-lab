@@ -28,15 +28,13 @@
 - stored generation은 answer text와 citation quote를 생략한다.
 - full provider prompt, provider response, token billing, unsanitized trace는 계속 금지한다.
 
-## Gate 목록
+## Local publication gate
 
 - `pnpm security:fixtures`
 - `pnpm security:tree`
 - `pnpm security:readiness`
 - `pnpm security:public`
 - `pnpm public:check`
-- `gitleaks git --redact --verbose .`
-- `sfw pnpm install --frozen-lockfile`
 
 `security:fixtures`는 public sample docs와 eval fixture를 확인한다.
 `security:tree`는 publishable tree allowlist를 확인하고 `.env`, `.git`,
@@ -52,13 +50,21 @@ string match가 아니라 executable command segment를 검증하므로 echoed c
 gate를 만족하지 않는다. 또한 `infra/postgres/init/001_schema.sql` 같은
 publish-critical file이 `.gitignore` rule에 숨겨져 있지 않은지도 확인한다.
 
-`security:public`은 모든 check를 실행한다.
+`security:public`은 local public tree/readiness check를 실행한다. commit history
+secret scan과 supply-chain scan은 별도 gate다.
 
 `pnpm public:check`는 local pre-publication command다. build, test, typecheck,
 eval/provider comparison/scale budget/vector index budget artifact의 deterministic
 report generation을 실행하고, 그 뒤 public security/readiness check를 실행한다. generated
 artifact가 scanner를 우회하지 못하게 final security pass는 report generation 이후에
 실행되어야 한다.
+
+## CI와 manual gate
+
+- `gitleaks git --redact --verbose .`: commit history secret scan. GitHub Actions
+  `secrets.yml`에서 실행한다.
+- `sfw pnpm install --frozen-lockfile`: supply-chain install gate. GitHub Actions
+  `supply-chain-security.yml`에서 pull request와 main push에 실행한다.
 
 commit-history scanning을 위해 gitleaks는 gate에 유지한다. commit이 없는 brand-new
 public repo에서는 gitleaks가 `0 commits scanned`를 보고할 수 있다. 그 gap은
