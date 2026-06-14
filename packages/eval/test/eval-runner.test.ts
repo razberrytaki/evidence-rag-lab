@@ -120,9 +120,9 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# 평가 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.");
-    expect(markdown).toContain("요약: 1/1 fixture 통과. sample-runtime observation 0건, static fixture 1건.");
-    expect(markdown).toContain("| unsupported-claim rejection | 1/1 | 100% |");
+    expect(markdown).toContain("통과 수보다 어떤 보호 장치가 샘플 실행 관측으로 확인됐는지 먼저 본다.");
+    expect(markdown).toContain("요약: 1/1 평가 사례 통과. 샘플 실행 관측 0건, 정적 평가 사례 1건.");
+    expect(markdown).toContain("| 지원되지 않는 주장 거절 | 1/1 | 100% |");
   });
 
   it("surfaces observation sources so runtime pipeline observations are visible in the report", () => {
@@ -228,21 +228,21 @@ describe("eval runner", () => {
         passed: true,
         reciprocalRank: 1,
         matchedDocId: "hybrid-retrieval-note",
-        notes: ["첫 relevant doc rank 1"]
+        notes: ["첫 관련 문서 순위 1"]
       },
       {
         id: "pgvector-index",
         passed: true,
         reciprocalRank: 0.5,
         matchedDocId: "pgvector-indexing-note",
-        notes: ["첫 relevant doc rank 2"]
+        notes: ["첫 관련 문서 순위 2"]
       },
       {
         id: "deployment-policy",
         passed: true,
         reciprocalRank: 0.5,
         matchedDocId: "deployment-policy-v2",
-        notes: ["첫 relevant doc rank 2"]
+        notes: ["첫 관련 문서 순위 2"]
       }
     ]);
   });
@@ -268,11 +268,11 @@ describe("eval runner", () => {
     const markdown = renderRankedRetrievalReportMarkdown(report);
 
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.");
+    expect(markdown).toContain("절대 점수보다 기대 문서가 top 3 안에 들어왔는지와 순위 위치를 본다.");
     expect(markdown).toContain("| recall@3 | 1/1 | 100% |");
-    expect(markdown).toContain("| mean reciprocal rank | 1.000 |");
+    expect(markdown).toContain("| MRR | 1.000 |");
     expect(markdown).toContain(
-      "| hybrid-retrieval | 통과 | hybrid-retrieval-note | 1.000 | 첫 relevant doc rank 1 |"
+      "| hybrid-retrieval | 통과 | hybrid-retrieval-note | 1.000 | 첫 관련 문서 순위 1 |"
     );
   });
 
@@ -319,19 +319,19 @@ describe("eval runner", () => {
         { mode: "vector", report: vector }
       ],
       notes: [
-        "Lexical은 exact terminology를 보호한다.",
-        "Vector retrieval은 semantic paraphrase를 처리한다."
+        "키워드 검색은 정확한 용어를 보호한다.",
+        "벡터 검색은 의미적 바꿔 쓰기를 처리한다."
       ]
     });
 
     expect(markdown).toContain("# 검색 모드 비교 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.");
+    expect(markdown).toContain("모드별 승패보다 키워드, 벡터, hybrid가 어느 범주에서 차이 나는지 본다.");
     expect(markdown).toContain("| lexical | 1/1 | 100% | 1.000 |");
     expect(markdown).toContain("| vector | 1/1 | 100% | 0.500 |");
     expect(markdown).toContain("| exact-token | lexical | 1/1 | 100% | 1.000 |");
     expect(markdown).toContain("| exact-term | lexical | exact-token | 통과 | pgvector-indexing-note | 1.000 |");
-    expect(markdown).toContain("- Lexical은 exact terminology를 보호한다.");
+    expect(markdown).toContain("- 키워드 검색은 정확한 용어를 보호한다.");
   });
 
   it("renders a provider comparison report without presenting deterministic rows as live validation", () => {
@@ -353,7 +353,7 @@ describe("eval runner", () => {
             "empty-context-rejection",
             "malformed-json-redaction"
           ],
-          tradeOffs: ["portable across OpenAI-compatible providers", "less OpenAI-native than Responses API"]
+          tradeOffs: ["OpenAI 호환 LLM 제공자 전반에 옮겨 쓰기 쉬움", "Responses API보다 OpenAI 전용 성격은 약함"]
         },
         {
           provider: "anthropic",
@@ -363,7 +363,7 @@ describe("eval runner", () => {
           liveVerification: {
             command: "pnpm db:live-generation-smoke",
             status: "not-run",
-            reason: "ANTHROPIC_API_KEY is not configured"
+            reason: "ANTHROPIC_API_KEY가 설정되지 않음"
           },
           deterministicChecks: [
             "request-shape",
@@ -371,7 +371,7 @@ describe("eval runner", () => {
             "empty-context-rejection",
             "malformed-json-redaction"
           ],
-          tradeOffs: ["explicit provider selection", "no automatic fallback"]
+          tradeOffs: ["명시적 LLM 제공자 선택", "자동 대체 없음"]
         },
         {
           provider: "fake",
@@ -381,39 +381,39 @@ describe("eval runner", () => {
           liveVerification: {
             command: "none",
             status: "not-applicable",
-            reason: "FakeLLMProvider는 deterministic CI/test 전용"
+            reason: "FakeLLMProvider는 결정적 CI/test 전용"
           },
           deterministicChecks: ["citation-shape", "empty-context-rejection"],
-          tradeOffs: ["stable eval output", "model-quality signal 아님"]
+          tradeOffs: ["안정적인 평가 출력", "모델 품질 신호 아님"]
         }
       ],
       notes: [
-        "embedding에는 OpenAI가 계속 필요하다.",
-        "Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다."
+        "임베딩에는 OpenAI가 계속 필요하다.",
+        "LLM 제공자 비교는 명시적이므로 설정 오류가 자동 대체 뒤에 숨지 않는다."
       ]
     });
 
-    expect(markdown).toContain("# Provider 비교 리포트");
+    expect(markdown).toContain("# LLM 제공자 비교 리포트");
     expect(markdown).toContain(
-      "검증 범위: deterministic adapter contract. Live generation smoke는 별도 command 결과로 추적한다."
+      "검증 범위: 결정적 어댑터 계약. 실제 생성 확인은 별도 명령 결과로 추적한다."
     );
-    expect(markdown).toContain("- adapter contract와 live 검증 경계를 분리해서 본다.");
+    expect(markdown).toContain("- 어댑터 계약과 실제 검증 경계를 분리해서 본다.");
     expect(markdown).toContain(
-      "| Provider | Role | Request surface | Generation env | Live 검증 | Command | Reason |"
+      "| LLM 제공자 | 역할 | 요청 경로 | 생성 환경값 | 실제 검증 | 명령 | 이유 |"
     );
     expect(markdown).toContain(
       "| openai-compatible | default-live | POST /chat/completions | OPENAI_API_KEY | 별도 실행 필요 | pnpm db:live-generation-smoke | - |"
     );
     expect(markdown).toContain(
-      "| anthropic | comparison-adapter | POST /messages | ANTHROPIC_API_KEY | 미실행 | pnpm db:live-generation-smoke | ANTHROPIC_API_KEY is not configured |"
+      "| anthropic | comparison-adapter | POST /messages | ANTHROPIC_API_KEY | 미실행 | pnpm db:live-generation-smoke | ANTHROPIC_API_KEY가 설정되지 않음 |"
     );
     expect(markdown).toContain(
-      "| fake | test-double | in-process | none | 해당 없음 | none | FakeLLMProvider는 deterministic CI/test 전용 |"
+      "| fake | test-double | in-process | none | 해당 없음 | none | FakeLLMProvider는 결정적 CI/test 전용 |"
     );
     expect(markdown).toContain(
-      "| anthropic | request-shape, citation-validation, empty-context-rejection, malformed-json-redaction | explicit provider selection; no automatic fallback |"
+      "| anthropic | request-shape, citation-validation, empty-context-rejection, malformed-json-redaction | 명시적 LLM 제공자 선택; 자동 대체 없음 |"
     );
-    expect(markdown).toContain("- Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다.");
+    expect(markdown).toContain("- LLM 제공자 비교는 명시적이므로 설정 오류가 자동 대체 뒤에 숨지 않는다.");
     expect(markdown).not.toContain("| 통과 | gpt-5.4-mini | 3 | 3 | 예 |");
   });
 
@@ -444,18 +444,18 @@ describe("eval runner", () => {
           totalMs: 144.8
         }
       ],
-      notes: ["현재 실행 환경의 latency 변화 비교에 사용한다."]
+      notes: ["현재 실행 환경의 지연 시간 변화 비교에 사용한다."]
     });
 
     expect(markdown).toContain("# 검색 지연 시간 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("embedding cost와 database retrieval cost가 분리되어 보이는지 본다.");
+    expect(markdown).toContain("임베딩 비용과 데이터베이스 검색 비용이 분리되어 보이는지 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("retrieval eval case 20개, top 3.");
-    expect(markdown).toContain("Embedding model: `text-embedding-3-small` (1536 dimensions).");
+    expect(markdown).toContain("검색 평가 사례 20개, top 3.");
+    expect(markdown).toContain("임베딩 모델: `text-embedding-3-small` (1536차원).");
     expect(markdown).toContain("| embedding | 20 | 41.21 | 58.78 | 104.49 | 120.90 | 1190.40 |");
     expect(markdown).toContain("| hybrid | 20 | 3.11 | 7.24 | 12.89 | 15.20 | 144.80 |");
-    expect(markdown).toContain("- 현재 실행 환경의 latency 변화 비교에 사용한다.");
+    expect(markdown).toContain("- 현재 실행 환경의 지연 시간 변화 비교에 사용한다.");
     expect(markdown).not.toContain("Why not rely only on semantic vectors?");
     expect(markdown).not.toContain("Authorization");
   });
@@ -487,17 +487,17 @@ describe("eval runner", () => {
           errorCount: 0
         }
       ],
-      notes: ["Embedding은 미리 계산되어 PostgreSQL retrieval concurrency만 분리한다."]
+      notes: ["임베딩은 미리 계산되어 PostgreSQL 검색 동시성만 분리한다."]
     });
 
     expect(markdown).toContain("# 검색 동시성 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("precomputed embedding 이후 database retrieval path의 pressure를 본다.");
+    expect(markdown).toContain("미리 계산한 임베딩 이후 데이터베이스 검색 경로의 압력을 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("retrieval eval case 20개, top 3.");
-    expect(markdown).toContain("| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |");
+    expect(markdown).toContain("검색 평가 사례 20개, top 3.");
+    expect(markdown).toContain("| 모드 | 동시성 | 질의 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | 오류 수 |");
     expect(markdown).toContain("| hybrid | 4 | 20 | 2.11 | 7.24 | 14.89 | 17.75 | 18.20 | 62.80 | 0 |");
-    expect(markdown).toContain("- Embedding은 미리 계산되어 PostgreSQL retrieval concurrency만 분리한다.");
+    expect(markdown).toContain("- 임베딩은 미리 계산되어 PostgreSQL 검색 동시성만 분리한다.");
     expect(markdown).not.toContain("Why not rely only on semantic vectors?");
     expect(markdown).not.toContain("Authorization");
   });
@@ -537,18 +537,18 @@ describe("eval runner", () => {
         dailyQueryCount: 50_000,
         traceRetentionDays: 7
       },
-      notes: ["문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다."]
+      notes: ["문서 수, 평균 청크 수, 임베딩 차원 가정에서 저장 공간 압력을 계산한다."]
     });
 
-    expect(markdown).toContain("# Scale Budget 리포트");
+    expect(markdown).toContain("# 확장성 예산 리포트");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("Scale scenario를 explicit assumption으로 계산한 sizing math다.");
-    expect(markdown).toContain("| documents | 10,000,000 |");
-    expect(markdown).toContain("| chunks | 80,000,000 |");
-    expect(markdown).toContain("| vector storage | 491.52 GB |");
-    expect(markdown).toContain("| vector + chunk metadata | 573.44 GB |");
-    expect(markdown).toContain("| retained sanitized traces | 1.43 GB |");
-    expect(markdown).toContain("- 문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.");
+    expect(markdown).toContain("확장성 검토 기준을 명시한 가정으로 계산한 용량 추정이다.");
+    expect(markdown).toContain("| 문서 수 | 10,000,000 |");
+    expect(markdown).toContain("| 청크 수 | 80,000,000 |");
+    expect(markdown).toContain("| 벡터 저장량 | 491.52 GB |");
+    expect(markdown).toContain("| 벡터 + 청크 메타데이터 | 573.44 GB |");
+    expect(markdown).toContain("| 보관되는 정리 추적 기록 | 1.43 GB |");
+    expect(markdown).toContain("- 문서 수, 평균 청크 수, 임베딩 차원 가정에서 저장 공간 압력을 계산한다.");
   });
 
   it("estimates vector index budget from explicit HNSW assumptions", () => {
@@ -590,20 +590,20 @@ describe("eval runner", () => {
         hnswGraphBytesPerNeighbor: 8,
         hnswBuildMemoryMultiplier: 2
       },
-      notes: ["HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다."]
+      notes: ["HNSW 그래프 계산은 명시적 가정이며 pgvector 색인을 실측한 크기가 아니다."]
     });
 
-    expect(markdown).toContain("# Vector Index Budget 리포트");
+    expect(markdown).toContain("# 벡터 색인 예산 리포트");
     expect(markdown).toContain("생성일: 2026-06-11.");
     expect(markdown).toContain(
-      "요약: 10,000,000 docs / 80,000,000 chunks 기준 serving set 584.70 GB, build working set 1169.41 GB 추정."
+      "요약: 문서 10,000,000개 / 청크 80,000,000개 기준 제공 세트 584.70 GB, 빌드 작업 메모리 1169.41 GB 추정."
     );
-    expect(markdown).toContain("Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.");
+    expect(markdown).toContain("범위: 용량 추정이다. PostgreSQL 또는 pgvector 색인을 실측한 크기가 아니며 큰 색인 빌드는 실행하지 않았다.");
     expect(markdown).toContain("| HNSW m | 16 |");
-    expect(markdown).toContain("| HNSW graph estimate | 11.26 GB |");
-    expect(markdown).toContain("| vector + metadata + HNSW graph | 584.70 GB |");
-    expect(markdown).toContain("| HNSW build working set estimate | 1169.41 GB |");
-    expect(markdown).toContain("| graph overhead vs vector payload | 2.3% |");
-    expect(markdown).toContain("- HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.");
+    expect(markdown).toContain("| HNSW 그래프 추정치 | 11.26 GB |");
+    expect(markdown).toContain("| 벡터 + 메타데이터 + HNSW 그래프 | 584.70 GB |");
+    expect(markdown).toContain("| HNSW 빌드 작업 메모리 추정치 | 1169.41 GB |");
+    expect(markdown).toContain("| 벡터 용량 대비 그래프 부가 비용 | 2.3% |");
+    expect(markdown).toContain("- HNSW 그래프 계산은 명시적 가정이며 pgvector 색인을 실측한 크기가 아니다.");
   });
 });

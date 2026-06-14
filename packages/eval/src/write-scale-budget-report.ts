@@ -17,10 +17,10 @@ const report: ScaleBudgetReportInput = {
     traceRetentionDays: 7
   },
   notes: [
-    "문서 수, 평균 chunk 수, embedding dimension 가정에서 storage pressure를 계산한다.",
-    "Vector storage는 float32 embedding을 가정하며 HNSW graph overhead, WAL, replica, backup, vacuum bloat를 제외한다.",
-    "Trace volume은 full provider prompt, raw context bundle, provider response가 아니라 sanitized aggregate trace payload를 가정한다.",
-    "이 계산은 assumptions, pressure points, production validation targets를 산출한다."
+    "문서 수, 평균 청크 수, 임베딩 차원 가정에서 저장 공간 압력을 계산한다.",
+    "벡터 저장량은 float32 임베딩을 가정하며 HNSW 그래프 부가 비용, WAL, 복제본, 백업, vacuum 팽창을 제외한다.",
+    "추적 기록량은 전체 LLM 요청, 원문 문맥 묶음, LLM 응답 원문이 아니라 정리된 집계 추적 기록을 가정한다.",
+    "이 계산은 가정, 압력 지점, 운영 전 검증 대상을 산출한다."
   ]
 };
 

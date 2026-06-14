@@ -1,27 +1,27 @@
 # 평가 리포트
 
-정적 eval fixture와 sample-runtime observation을 합쳐 생성한다.
-현재 runtime observation은 insufficient-evidence 계열 negative guard를 우선 검증한다.
+정적 평가 사례와 샘플 실행 관측을 합쳐 생성한다.
+현재 샘플 실행 관측은 근거 부족 계열의 거절 동작을 우선 검증한다.
 
-요약: 15/15 fixture 통과. sample-runtime observation 2건, static fixture 13건.
+요약: 15/15 평가 사례 통과. 샘플 실행 관측 2건, 정적 평가 사례 13건.
 
 ## 읽는 법
 
-- fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.
+- 통과 수보다 어떤 보호 장치가 샘플 실행 관측으로 확인됐는지 먼저 본다.
 
-| Metric | 결과 | 비율 |
+| 지표 | 결과 | 비율 |
 |---|---:|---:|
 | recall@k | 12/12 | 100% |
-| citation coverage | 12/12 | 100% |
-| unsupported-claim rejection | 4/4 | 100% |
-| trace completeness | 15/15 | 100% |
+| 인용 범위 | 12/12 | 100% |
+| 지원되지 않는 주장 거절 | 4/4 | 100% |
+| 추적 기록 완성도 | 15/15 | 100% |
 
-| Observation source | Count |
+| 관측 출처 | 개수 |
 |---|---:|
 | static-fixture | 13 |
 | sample-runtime | 2 |
 
-| Fixture | Observation source | 상태 | 메모 |
+| 평가 사례 | 관측 출처 | 상태 | 메모 |
 |---|---|---|---|
 | exact-term-retrieval | static-fixture | 통과 | 정상 |
 | semantic-paraphrase | static-fixture | 통과 | 정상 |

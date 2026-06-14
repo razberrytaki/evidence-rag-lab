@@ -22,7 +22,7 @@ const report: ProviderComparisonReportInput = {
         "empty-context-rejection",
         "malformed-json-redaction"
       ],
-      tradeOffs: ["OpenAI-compatible provider 전반에 portable", "Responses API보다 OpenAI-native 성격은 약함"]
+      tradeOffs: ["OpenAI 호환 LLM 제공자 전반에 옮겨 쓰기 쉬움", "Responses API보다 OpenAI 전용 성격은 약함"]
     },
     {
       provider: "anthropic",
@@ -41,7 +41,7 @@ const report: ProviderComparisonReportInput = {
         "malformed-json-redaction",
         "env-config-loading"
       ],
-      tradeOffs: ["명시적 provider selection", "automatic fallback 없음"]
+      tradeOffs: ["명시적 LLM 제공자 선택", "자동 대체 없음"]
     },
     {
       provider: "fake",
@@ -51,16 +51,16 @@ const report: ProviderComparisonReportInput = {
       liveVerification: {
         status: "not-applicable",
         command: "none",
-        reason: "FakeLLMProvider는 deterministic CI/test 전용"
+        reason: "FakeLLMProvider는 결정적 CI/test 전용"
       },
       deterministicChecks: ["citation-shape", "empty-context-rejection"],
-      tradeOffs: ["stable eval output", "model-quality signal 아님"]
+      tradeOffs: ["안정적인 평가 출력", "모델 품질 신호 아님"]
     }
   ],
   notes: [
-    "Generation env와 embedding env는 분리해서 읽는다. retrieval query embedding이 text-embedding-3-small을 사용하므로 DB-backed smoke에는 OPENAI_API_KEY가 계속 필요하다.",
-    "Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다.",
-    "Live generation은 pnpm db:live-generation-smoke로 별도 확인한다."
+    "생성 환경값과 임베딩 환경값은 분리해서 읽는다. 검색 질의 임베딩이 text-embedding-3-small을 사용하므로 DB 기반 동작 확인에는 OPENAI_API_KEY가 계속 필요하다.",
+    "LLM 제공자 비교는 명시적이므로 설정 오류가 자동 대체 뒤에 숨지 않는다.",
+    "실제 생성은 pnpm db:live-generation-smoke로 별도 확인한다."
   ]
 };
 

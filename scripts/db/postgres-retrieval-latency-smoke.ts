@@ -76,9 +76,9 @@ async function main(): Promise<void> {
         embeddingDimensions: embeddingConfig.dimensions,
         observations,
         notes: [
-          "Embedding latency는 eval query당 OpenAI embeddings call 1회로 측정한다.",
-          "Database retrieval latency는 embedding time을 제외해 lexical, vector, hybrid SQL trade-off가 보이게 한다.",
-          "Warm/cold cache split은 하지 않는다. 같은 실행 안에서 mode 간 비용 분리만 본다."
+          "임베딩 지연 시간은 평가 질의당 OpenAI embeddings 호출 1회로 측정한다.",
+          "데이터베이스 검색 지연 시간은 임베딩 시간을 제외해 키워드, 벡터, hybrid SQL 절충이 보이게 한다.",
+          "Warm/cold 캐시 분리는 하지 않는다. 같은 실행 안에서 모드 간 비용 분리만 본다."
         ]
       }),
       "utf8"

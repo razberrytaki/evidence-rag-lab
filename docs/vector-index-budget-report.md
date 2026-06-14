@@ -1,34 +1,34 @@
-# Vector Index Budget 리포트
+# 벡터 색인 예산 리포트
 
 생성일: 2026-06-12.
-요약: 10,000,000 docs / 80,000,000 chunks 기준 serving set 584.70 GB, build working set 1169.41 GB 추정.
-Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.
+요약: 문서 10,000,000개 / 청크 80,000,000개 기준 제공 세트 584.70 GB, 빌드 작업 메모리 1169.41 GB 추정.
+범위: 용량 추정이다. PostgreSQL 또는 pgvector 색인을 실측한 크기가 아니며 큰 색인 빌드는 실행하지 않았다.
 
-| Assumption | 값 |
+| 가정 | 값 |
 |---|---:|
-| documents | 10,000,000 |
-| average chunks per document | 8 |
-| embedding dimensions | 1,536 |
-| embedding bytes per dimension | 4 |
-| metadata bytes per chunk | 1,024 |
+| 문서 수 | 10,000,000 |
+| 문서당 평균 청크 수 | 8 |
+| 임베딩 차원 | 1,536 |
+| 임베딩 차원당 바이트 | 4 |
+| 청크 메타데이터 바이트 | 1,024 |
 | HNSW m | 16 |
-| HNSW layer multiplier | 1.10 |
-| HNSW graph bytes per neighbor | 8 |
-| HNSW build memory multiplier | 2.00 |
+| HNSW 계층 배수 | 1.10 |
+| HNSW 이웃당 그래프 바이트 | 8 |
+| HNSW 빌드 메모리 배수 | 2.00 |
 
-| Estimate | 값 |
+| 추정 | 값 |
 |---|---:|
-| chunks | 80,000,000 |
-| raw vector payload | 491.52 GB |
-| chunk metadata | 81.92 GB |
-| HNSW graph estimate | 11.26 GB |
-| vector + metadata + HNSW graph | 584.70 GB |
-| HNSW build working set estimate | 1169.41 GB |
-| graph overhead vs vector payload | 2.3% |
+| 청크 수 | 80,000,000 |
+| 원본 벡터 용량 | 491.52 GB |
+| 청크 메타데이터 | 81.92 GB |
+| HNSW 그래프 추정치 | 11.26 GB |
+| 벡터 + 메타데이터 + HNSW 그래프 | 584.70 GB |
+| HNSW 빌드 작업 메모리 추정치 | 1169.41 GB |
+| 벡터 용량 대비 그래프 부가 비용 | 2.3% |
 
 ## 메모
 
-- HNSW graph math는 explicit planning scenario다.
-- graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.
-- build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.
-- Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다.
+- HNSW 그래프 계산은 명시적 계획 가정이다.
+- 그래프 추정치는 PostgreSQL page 부가 비용, 색인 tuple 부가 비용, WAL, 복제본, 백업, vacuum 팽창, 캐시 효과를 제외한다.
+- 빌드 작업 메모리 추정치는 메모리 압력 논의용 계획치이며 관측된 maintenance_work_mem 요구량이 아니다.
+- 운영 전 검증에는 여전히 더 큰 색인, warm/cold 캐시 분리, p99 지연 시간, recall 확인, 실패율 보고가 필요하다.

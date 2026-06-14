@@ -18,10 +18,10 @@ const report: VectorIndexBudgetReportInput = {
     hnswBuildMemoryMultiplier: 2
   },
   notes: [
-    "HNSW graph math는 explicit planning scenario다.",
-    "graph estimate는 PostgreSQL page overhead, index tuple overhead, WAL, replica, backup, vacuum bloat, cache effect를 제외한다.",
-    "build working set estimate는 memory pressure 논의용 planning estimate이며 observed maintenance_work_mem requirement가 아니다.",
-    "Production validation에는 여전히 larger index, warm/cold cache split, p99 latency, recall check, failure-rate reporting이 필요하다."
+    "HNSW 그래프 계산은 명시적 계획 가정이다.",
+    "그래프 추정치는 PostgreSQL page 부가 비용, 색인 tuple 부가 비용, WAL, 복제본, 백업, vacuum 팽창, 캐시 효과를 제외한다.",
+    "빌드 작업 메모리 추정치는 메모리 압력 논의용 계획치이며 관측된 maintenance_work_mem 요구량이 아니다.",
+    "운영 전 검증에는 여전히 더 큰 색인, warm/cold 캐시 분리, p99 지연 시간, recall 확인, 실패율 보고가 필요하다."
   ]
 };
 

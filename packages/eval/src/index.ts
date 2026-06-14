@@ -272,27 +272,27 @@ export function renderEvalReportMarkdown(report: EvalReport): string {
   const lines = [
     "# 평가 리포트",
     "",
-    "정적 eval fixture와 sample-runtime observation을 합쳐 생성한다.",
-    "현재 runtime observation은 insufficient-evidence 계열 negative guard를 우선 검증한다.",
+    "정적 평가 사례와 샘플 실행 관측을 합쳐 생성한다.",
+    "현재 샘플 실행 관측은 근거 부족 계열의 거절 동작을 우선 검증한다.",
     "",
-    `요약: ${report.summary.passed}/${report.summary.total} fixture 통과. sample-runtime observation ${sampleRuntimeCount}건, static fixture ${staticFixtureCount}건.`,
+    `요약: ${report.summary.passed}/${report.summary.total} 평가 사례 통과. 샘플 실행 관측 ${sampleRuntimeCount}건, 정적 평가 사례 ${staticFixtureCount}건.`,
     "",
     "## 읽는 법",
     "",
-    "- fixture 통과 수보다 어떤 guard가 runtime observation으로 확인됐는지 먼저 본다.",
+    "- 통과 수보다 어떤 보호 장치가 샘플 실행 관측으로 확인됐는지 먼저 본다.",
     "",
-    "| Metric | 결과 | 비율 |",
+    "| 지표 | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@k", report.metrics.recallAtK),
-    metricRow("citation coverage", report.metrics.citationCoverage),
-    metricRow("unsupported-claim rejection", report.metrics.unsupportedClaimRejection),
-    metricRow("trace completeness", report.metrics.traceCompleteness),
+    metricRow("인용 범위", report.metrics.citationCoverage),
+    metricRow("지원되지 않는 주장 거절", report.metrics.unsupportedClaimRejection),
+    metricRow("추적 기록 완성도", report.metrics.traceCompleteness),
     "",
-    "| Observation source | Count |",
+    "| 관측 출처 | 개수 |",
     "|---|---:|",
     ...report.observationSources.map((item) => `| ${item.source} | ${item.count} |`),
     "",
-    "| Fixture | Observation source | 상태 | 메모 |",
+    "| 평가 사례 | 관측 출처 | 상태 | 메모 |",
     "|---|---|---|---|",
     ...report.items.map(
       (item) => `| ${item.id} | ${item.source} | ${formatPassFail(item.passed)} | ${item.notes.join("; ")} |`
@@ -350,25 +350,25 @@ export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalRepor
   const lines = [
     "# 검색 품질 리포트",
     "",
-    "대상: public sample docs. 경로: live PostgreSQL + pgvector ranked retrieval.",
+    "대상: 공개 샘플 문서. 경로: 실제 PostgreSQL + pgvector 순위 검색.",
     "",
-    `요약: ${report.summary.passed}/${report.summary.total} ranked retrieval case 통과.`,
+    `요약: ${report.summary.passed}/${report.summary.total} 순위 검색 사례 통과.`,
     "",
     "## 주요 결과",
     "",
-    `- hybrid retrieval recall@3 ${report.metrics.recallAtK.passed}/${report.metrics.recallAtK.total}, MRR ${report.metrics.meanReciprocalRank.toFixed(3)}.`,
-    "- case table은 통과 여부보다 어떤 document가 몇 번째 rank에 들어왔는지 확인하는 evidence다.",
+    `- hybrid 검색 recall@3 ${report.metrics.recallAtK.passed}/${report.metrics.recallAtK.total}, MRR ${report.metrics.meanReciprocalRank.toFixed(3)}.`,
+    "- 사례 표는 통과 여부보다 어떤 문서가 몇 번째 순위에 들어왔는지 확인하는 근거다.",
     "",
     "## 읽는 법",
     "",
-    "- absolute score보다 expected document가 top 3 안에 들어왔는지와 rank position을 본다.",
+    "- 절대 점수보다 기대 문서가 top 3 안에 들어왔는지와 순위 위치를 본다.",
     "",
-    "| Metric | 결과 | 비율 |",
+    "| 지표 | 결과 | 비율 |",
     "|---|---:|---:|",
     metricRow("recall@3", report.metrics.recallAtK),
-    `| mean reciprocal rank | ${report.metrics.meanReciprocalRank.toFixed(3)} | |`,
+    `| MRR | ${report.metrics.meanReciprocalRank.toFixed(3)} | |`,
     "",
-    "| Case | 상태 | Matched doc | Reciprocal rank | 메모 |",
+    "| 사례 | 상태 | 매칭 문서 | 역순위 | 메모 |",
     "|---|---|---|---:|---|",
     ...report.items.map(
       (item) =>
@@ -389,15 +389,15 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
   const lines = [
     "# 검색 모드 비교 리포트",
     "",
-    "대상: public sample docs. 경로: live PostgreSQL retrieval mode comparison.",
-    "목적: lexical, vector, hybrid retrieval mode의 trade-off 확인.",
+    "대상: 공개 샘플 문서. 경로: 실제 PostgreSQL 검색 모드 비교.",
+    "목적: 키워드, 벡터, hybrid 검색 모드의 절충 확인.",
     "",
     "## 읽는 법",
     "",
-    "- mode별 승패보다 lexical, vector, hybrid가 어느 category에서 차이 나는지 본다.",
+    "- 모드별 승패보다 키워드, 벡터, hybrid가 어느 범주에서 차이 나는지 본다.",
     "",
     ...(notableOutcomes.length > 0 ? ["## 주요 결과", "", ...notableOutcomes.map((note) => `- ${note}`), ""] : []),
-    "| Mode | Recall | 비율 | Mean reciprocal rank |",
+    "| 모드 | Recall | 비율 | MRR |",
     "|---|---:|---:|---:|",
     ...input.modes.map(
       ({ mode, report }) =>
@@ -408,13 +408,13 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
     "",
     ...(categoryRows.length > 0
       ? [
-          "| Category | Mode | Recall | 비율 | Mean reciprocal rank |",
+          "| 범주 | 모드 | Recall | 비율 | MRR |",
           "|---|---|---:|---:|---:|",
           ...categoryRows,
           ""
         ]
       : []),
-    "| Case | Mode | Category | 상태 | Matched doc | Reciprocal rank | 메모 |",
+    "| 사례 | 모드 | 범주 | 상태 | 매칭 문서 | 역순위 | 메모 |",
     "|---|---|---|---|---|---:|---|",
     ...input.modes.flatMap(({ mode, report }) =>
       report.items.map(
@@ -429,7 +429,7 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
-      : [`- Recall은 top ${k} 기준으로 측정한다.`, "- Hybrid는 측정된 retrieval behavior로 계속 정당화되어야 한다."]),
+      : [`- Recall은 top ${k} 기준으로 측정한다.`, "- Hybrid는 측정된 검색 동작으로 계속 정당화되어야 한다."]),
     ""
   ];
 
@@ -438,21 +438,21 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
 
 export function renderProviderComparisonReportMarkdown(input: ProviderComparisonReportInput): string {
   const lines = [
-    "# Provider 비교 리포트",
+    "# LLM 제공자 비교 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
     "",
-    "검증 범위: deterministic adapter contract. Live generation smoke는 별도 command 결과로 추적한다.",
+    "검증 범위: 결정적 어댑터 계약. 실제 생성 확인은 별도 명령 결과로 추적한다.",
     "",
     "## 읽는 법",
     "",
-    "- adapter contract와 live 검증 경계를 분리해서 본다.",
+    "- 어댑터 계약과 실제 검증 경계를 분리해서 본다.",
     "",
-    "| Provider | Role | Request surface | Generation env | Live 검증 | Command | Reason |",
+    "| LLM 제공자 | 역할 | 요청 경로 | 생성 환경값 | 실제 검증 | 명령 | 이유 |",
     "|---|---|---|---|---|---|---|",
     ...input.providers.map(providerLiveVerificationRow),
     "",
-    "| Provider | Deterministic checks | Trade-offs |",
+    "| LLM 제공자 | 결정적 확인 | 절충 |",
     "|---|---|---|",
     ...input.providers.map(
       (provider) =>
@@ -465,7 +465,7 @@ export function renderProviderComparisonReportMarkdown(input: ProviderComparison
       ? input.notes.map((note) => `- ${note}`)
       : [
           "- embedding에는 OpenAI가 계속 필요하다.",
-          "- Provider comparison은 explicit하므로 setup error가 fallback 뒤에 숨지 않는다."
+          "- LLM 제공자 비교는 명시적이므로 설정 오류가 자동 대체 뒤에 숨지 않는다."
         ]),
     ""
   ];
@@ -480,17 +480,17 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     "# 검색 지연 시간 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    `retrieval eval case ${caseCount}개, top ${topK}.`,
-    `Embedding model: \`${input.embeddingModel}\` (${input.embeddingDimensions} dimensions).`,
+    `검색 평가 사례 ${caseCount}개, top ${topK}.`,
+    `임베딩 모델: \`${input.embeddingModel}\` (${input.embeddingDimensions}차원).`,
     "",
-    "대상: public sample docs. 측정: embedding call과 PostgreSQL retrieval latency.",
-    "Run context: `pnpm db:retrieval-latency-smoke`, public sample docs, 20 retrieval cases, local PostgreSQL connection, warm/cold cache split 없음.",
+    "대상: 공개 샘플 문서. 측정: 임베딩 호출과 PostgreSQL 검색 지연 시간.",
+    "실행 맥락: `pnpm db:retrieval-latency-smoke`, 공개 샘플 문서, 20개 검색 사례, 로컬 PostgreSQL 연결, warm/cold 캐시 분리 없음.",
     "",
     "## 읽는 법",
     "",
-    "- embedding cost와 database retrieval cost가 분리되어 보이는지 본다.",
+    "- 임베딩 비용과 데이터베이스 검색 비용이 분리되어 보이는지 본다.",
     "",
-    "| Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |",
+    "| 모드 | 샘플 | Min ms | P50 ms | P95 ms | Max ms | Total ms |",
     "|---|---:|---:|---:|---:|---:|---:|",
     ...input.observations.map(
       (observation) =>
@@ -506,7 +506,7 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- 원문 입력은 latency table에 포함하지 않는다.",
+          "- 원문 입력은 지연 시간 표에 포함하지 않는다.",
           "- 현재 실행 환경의 변화 비교용 결과로 사용한다."
         ]),
     ""
@@ -522,17 +522,17 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     "# 검색 동시성 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    `retrieval eval case ${caseCount}개, top ${topK}.`,
+    `검색 평가 사례 ${caseCount}개, top ${topK}.`,
     "",
-    "대상: public sample docs. 측정: precomputed embedding 이후 PostgreSQL retrieval concurrency.",
-    "embedding을 미리 계산한 뒤 database retrieval 구간만 측정한다.",
-    "Run context: `pnpm db:retrieval-concurrency-smoke`, public sample docs, 20 retrieval cases, local PostgreSQL connection, concurrency 1/4.",
+    "대상: 공개 샘플 문서. 측정: 미리 계산한 임베딩 이후 PostgreSQL 검색 동시성.",
+    "임베딩을 미리 계산한 뒤 데이터베이스 검색 구간만 측정한다.",
+    "실행 맥락: `pnpm db:retrieval-concurrency-smoke`, 공개 샘플 문서, 20개 검색 사례, 로컬 PostgreSQL 연결, 동시성 1/4.",
     "",
     "## 읽는 법",
     "",
-    "- precomputed embedding 이후 database retrieval path의 pressure를 본다.",
+    "- 미리 계산한 임베딩 이후 데이터베이스 검색 경로의 압력을 본다.",
     "",
-    "| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |",
+    "| 모드 | 동시성 | 질의 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | 오류 수 |",
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ...input.observations.map(
       (observation) =>
@@ -550,7 +550,7 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- 원문 입력은 concurrency table에 포함하지 않는다.",
+          "- 원문 입력은 동시성 표에 포함하지 않는다.",
           "- 현재 실행 환경의 변화 비교용 결과로 사용한다."
         ]),
     ""
@@ -603,38 +603,38 @@ export function estimateScaleBudget(assumptions: ScaleBudgetAssumptions): ScaleB
 export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): string {
   const estimate = estimateScaleBudget(input.assumptions);
   const lines = [
-    "# Scale Budget 리포트",
+    "# 확장성 예산 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    "Scale scenario를 explicit assumption으로 계산한 sizing math다.",
+    "확장성 검토 기준을 명시한 가정으로 계산한 용량 추정이다.",
     "",
-    "| Assumption | 값 |",
+    "| 가정 | 값 |",
     "|---|---:|",
-    `| documents | ${formatInteger(input.assumptions.documentCount)} |`,
-    `| average chunks per document | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
-    `| embedding dimensions | ${formatInteger(input.assumptions.embeddingDimensions)} |`,
-    `| embedding bytes per dimension | ${formatInteger(input.assumptions.embeddingBytesPerDimension)} |`,
-    `| metadata bytes per chunk | ${formatInteger(input.assumptions.metadataBytesPerChunk)} |`,
-    `| average sanitized trace bytes | ${formatInteger(input.assumptions.averageTraceBytes)} |`,
-    `| daily queries | ${formatInteger(input.assumptions.dailyQueryCount)} |`,
-    `| trace retention days | ${formatInteger(input.assumptions.traceRetentionDays)} |`,
+    `| 문서 수 | ${formatInteger(input.assumptions.documentCount)} |`,
+    `| 문서당 평균 청크 수 | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
+    `| 임베딩 차원 | ${formatInteger(input.assumptions.embeddingDimensions)} |`,
+    `| 임베딩 차원당 바이트 | ${formatInteger(input.assumptions.embeddingBytesPerDimension)} |`,
+    `| 청크 메타데이터 바이트 | ${formatInteger(input.assumptions.metadataBytesPerChunk)} |`,
+    `| 정리된 추적 기록 평균 바이트 | ${formatInteger(input.assumptions.averageTraceBytes)} |`,
+    `| 일일 질의 수 | ${formatInteger(input.assumptions.dailyQueryCount)} |`,
+    `| 추적 기록 보관 일수 | ${formatInteger(input.assumptions.traceRetentionDays)} |`,
     "",
-    "| Estimate | 값 |",
+    "| 추정 | 값 |",
     "|---|---:|",
-    `| documents | ${formatInteger(estimate.documentCount)} |`,
-    `| chunks | ${formatInteger(estimate.chunkCount)} |`,
-    `| vector storage | ${formatBytesAsGb(estimate.vectorBytes)} |`,
-    `| chunk metadata | ${formatBytesAsGb(estimate.metadataBytes)} |`,
-    `| vector + chunk metadata | ${formatBytesAsGb(estimate.vectorAndMetadataBytes)} |`,
-    `| retained sanitized traces | ${formatBytesAsGb(estimate.retainedTraceBytes)} |`,
+    `| 문서 수 | ${formatInteger(estimate.documentCount)} |`,
+    `| 청크 수 | ${formatInteger(estimate.chunkCount)} |`,
+    `| 벡터 저장량 | ${formatBytesAsGb(estimate.vectorBytes)} |`,
+    `| 청크 메타데이터 | ${formatBytesAsGb(estimate.metadataBytes)} |`,
+    `| 벡터 + 청크 메타데이터 | ${formatBytesAsGb(estimate.vectorAndMetadataBytes)} |`,
+    `| 보관되는 정리 추적 기록 | ${formatBytesAsGb(estimate.retainedTraceBytes)} |`,
     "",
     "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- 이 추정치는 decimal GB이며 index overhead, WAL, replica, backup, vacuum bloat를 제외한다.",
-          "- bottleneck 논의와 후속 측정 범위를 정하기 위한 값이다."
+          "- 이 추정치는 decimal GB이며 색인 부가 비용, WAL, 복제본, 백업, vacuum 팽창을 제외한다.",
+          "- 병목 논의와 후속 측정 범위를 정하기 위한 값이다."
         ]),
     ""
   ];
@@ -685,43 +685,43 @@ export function estimateVectorIndexBudget(assumptions: VectorIndexBudgetAssumpti
 export function renderVectorIndexBudgetReportMarkdown(input: VectorIndexBudgetReportInput): string {
   const estimate = estimateVectorIndexBudget(input.assumptions);
   const lines = [
-    "# Vector Index Budget 리포트",
+    "# 벡터 색인 예산 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    `요약: ${formatInteger(estimate.documentCount)} docs / ${formatInteger(estimate.chunkCount)} chunks 기준 serving set ${formatBytesAsGb(
+    `요약: 문서 ${formatInteger(estimate.documentCount)}개 / 청크 ${formatInteger(estimate.chunkCount)}개 기준 제공 세트 ${formatBytesAsGb(
       estimate.hnswServingBytes
-    )}, build working set ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} 추정.`,
-    "Scope: sizing math다. measured PostgreSQL 또는 pgvector index size가 아니며 large index build는 실행하지 않았다.",
+    )}, 빌드 작업 메모리 ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} 추정.`,
+    "범위: 용량 추정이다. PostgreSQL 또는 pgvector 색인을 실측한 크기가 아니며 큰 색인 빌드는 실행하지 않았다.",
     "",
-    "| Assumption | 값 |",
+    "| 가정 | 값 |",
     "|---|---:|",
-    `| documents | ${formatInteger(input.assumptions.documentCount)} |`,
-    `| average chunks per document | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
-    `| embedding dimensions | ${formatInteger(input.assumptions.embeddingDimensions)} |`,
-    `| embedding bytes per dimension | ${formatInteger(input.assumptions.embeddingBytesPerDimension)} |`,
-    `| metadata bytes per chunk | ${formatInteger(input.assumptions.metadataBytesPerChunk)} |`,
+    `| 문서 수 | ${formatInteger(input.assumptions.documentCount)} |`,
+    `| 문서당 평균 청크 수 | ${formatInteger(input.assumptions.averageChunksPerDocument)} |`,
+    `| 임베딩 차원 | ${formatInteger(input.assumptions.embeddingDimensions)} |`,
+    `| 임베딩 차원당 바이트 | ${formatInteger(input.assumptions.embeddingBytesPerDimension)} |`,
+    `| 청크 메타데이터 바이트 | ${formatInteger(input.assumptions.metadataBytesPerChunk)} |`,
     `| HNSW m | ${formatInteger(input.assumptions.hnswM)} |`,
-    `| HNSW layer multiplier | ${input.assumptions.hnswLayerMultiplier.toFixed(2)} |`,
-    `| HNSW graph bytes per neighbor | ${formatInteger(input.assumptions.hnswGraphBytesPerNeighbor)} |`,
-    `| HNSW build memory multiplier | ${input.assumptions.hnswBuildMemoryMultiplier.toFixed(2)} |`,
+    `| HNSW 계층 배수 | ${input.assumptions.hnswLayerMultiplier.toFixed(2)} |`,
+    `| HNSW 이웃당 그래프 바이트 | ${formatInteger(input.assumptions.hnswGraphBytesPerNeighbor)} |`,
+    `| HNSW 빌드 메모리 배수 | ${input.assumptions.hnswBuildMemoryMultiplier.toFixed(2)} |`,
     "",
-    "| Estimate | 값 |",
+    "| 추정 | 값 |",
     "|---|---:|",
-    `| chunks | ${formatInteger(estimate.chunkCount)} |`,
-    `| raw vector payload | ${formatBytesAsGb(estimate.vectorBytes)} |`,
-    `| chunk metadata | ${formatBytesAsGb(estimate.metadataBytes)} |`,
-    `| HNSW graph estimate | ${formatBytesAsGb(estimate.hnswGraphBytes)} |`,
-    `| vector + metadata + HNSW graph | ${formatBytesAsGb(estimate.hnswServingBytes)} |`,
-    `| HNSW build working set estimate | ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} |`,
-    `| graph overhead vs vector payload | ${formatRatioPercent(estimate.graphOverVectorRate)} |`,
+    `| 청크 수 | ${formatInteger(estimate.chunkCount)} |`,
+    `| 원본 벡터 용량 | ${formatBytesAsGb(estimate.vectorBytes)} |`,
+    `| 청크 메타데이터 | ${formatBytesAsGb(estimate.metadataBytes)} |`,
+    `| HNSW 그래프 추정치 | ${formatBytesAsGb(estimate.hnswGraphBytes)} |`,
+    `| 벡터 + 메타데이터 + HNSW 그래프 | ${formatBytesAsGb(estimate.hnswServingBytes)} |`,
+    `| HNSW 빌드 작업 메모리 추정치 | ${formatBytesAsGb(estimate.hnswBuildWorkingSetBytes)} |`,
+    `| 벡터 용량 대비 그래프 부가 비용 | ${formatRatioPercent(estimate.graphOverVectorRate)} |`,
     "",
     "## 메모",
     "",
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- HNSW graph math는 explicit scenario이며 measured pgvector index size가 아니다.",
-          "- 이 report는 memory pressure와 필요한 production load testing 논의용이다."
+          "- HNSW 그래프 계산은 명시적 가정이며 pgvector 색인을 실측한 크기가 아니다.",
+          "- 이 보고서는 메모리 압력과 필요한 운영 부하 시험 논의용이다."
         ]),
     ""
   ];
@@ -778,7 +778,7 @@ function evaluateRankedRetrievalCase(
       passed: false,
       reciprocalRank: 0,
       ...(testCase.category ? { category: testCase.category } : {}),
-      notes: [`top ${k} 안에 relevant doc 없음: ${testCase.expectedRelevantDocIds.join(", ")}`]
+      notes: [`top ${k} 안에 관련 문서 없음: ${testCase.expectedRelevantDocIds.join(", ")}`]
     };
   }
 
@@ -790,7 +790,7 @@ function evaluateRankedRetrievalCase(
     reciprocalRank: roundRate(1 / rank),
     ...(testCase.category ? { category: testCase.category } : {}),
     matchedDocId,
-    notes: [`첫 relevant doc rank ${rank}`]
+    notes: [`첫 관련 문서 순위 ${rank}`]
   };
 }
 
@@ -827,23 +827,23 @@ function buildRetrievalModeNotableOutcomes(modes: RetrievalModeReport[]): string
 
   if (lexical) {
     outcomes.push(
-      `lexical은 recall@3 ${lexical.metrics.recallAtK.passed}/${lexical.metrics.recallAtK.total}, MRR ${lexical.metrics.meanReciprocalRank.toFixed(
+      `키워드 검색은 recall@3 ${lexical.metrics.recallAtK.passed}/${lexical.metrics.recallAtK.total}, MRR ${lexical.metrics.meanReciprocalRank.toFixed(
         3
-      )}로 exact-token signal을 확인한다.`
+      )}로 정확 토큰 신호를 확인한다.`
     );
   }
   if (vector) {
     outcomes.push(
-      `vector는 recall@3 ${vector.metrics.recallAtK.passed}/${vector.metrics.recallAtK.total}, MRR ${vector.metrics.meanReciprocalRank.toFixed(
+      `벡터 검색은 recall@3 ${vector.metrics.recallAtK.passed}/${vector.metrics.recallAtK.total}, MRR ${vector.metrics.meanReciprocalRank.toFixed(
         3
-      )}로 semantic baseline을 확인한다.`
+      )}로 의미 검색 기준선을 확인한다.`
     );
   }
   if (hybrid) {
     outcomes.push(
       `hybrid는 recall@3 ${hybrid.metrics.recallAtK.passed}/${hybrid.metrics.recallAtK.total}, MRR ${hybrid.metrics.meanReciprocalRank.toFixed(
         3
-      )}로 rank fusion 결과를 확인한다.`
+      )}로 순위 결합 결과를 확인한다.`
     );
   }
 
@@ -852,35 +852,35 @@ function buildRetrievalModeNotableOutcomes(modes: RetrievalModeReport[]): string
 
 function checkExpectedRelevantDocs(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.expectedRelevantDocs.filter((docId) => !observation.retrievedDocIds.includes(docId));
-  return missing.length > 0 ? `relevant doc 누락: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `관련 문서 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkExpectedRejectedDocs(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.expectedRejectedDocs.filter((docId) => !observation.rejectedDocIds.includes(docId));
-  return missing.length > 0 ? `rejected doc 누락: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `거절 문서 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkRequiredCitations(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   const missing = fixture.requiredCitations.filter((chunkId) => !observation.citationChunkIds.includes(chunkId));
-  return missing.length > 0 ? `citation 누락: ${missing.join(", ")}` : undefined;
+  return missing.length > 0 ? `인용 누락: ${missing.join(", ")}` : undefined;
 }
 
 function checkExpectedBehavior(fixture: EvalFixture, observation: EvalObservation): string | undefined {
   switch (fixture.expectedBehavior) {
     case "conflict":
-      return observation.finalStatus === "conflict" ? undefined : "conflict status 필요";
+      return observation.finalStatus === "conflict" ? undefined : "conflict 상태 필요";
     case "reject":
-      return observation.finalStatus === "rejected" ? undefined : "rejected status 필요";
+      return observation.finalStatus === "rejected" ? undefined : "rejected 상태 필요";
     case "trace":
-      return observation.traceComplete ? undefined : "complete trace 필요";
+      return observation.traceComplete ? undefined : "완전한 추적 기록 필요";
     case "validate":
       return observation.unsupportedClaimRejected || fixture.expectedRejectedDocs.length === 0
         ? undefined
-        : "unsupported claim rejection 필요";
+        : "지원되지 않는 주장 거절 필요";
     case "cite":
       return fixture.requiredCitations.length === 0 || observation.citationChunkIds.length > 0
         ? undefined
-        : "citation coverage 필요";
+        : "인용 범위 필요";
     case "demote":
     case "retrieve":
       return undefined;
