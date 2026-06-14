@@ -1,7 +1,6 @@
 # 검색 품질 리포트
 
-public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.
-작은 품질 동작 확인이며 scale benchmark가 아니다.
+대상: public sample docs. 경로: live PostgreSQL + pgvector ranked retrieval.
 
 요약: 20/20 ranked retrieval case 통과.
 

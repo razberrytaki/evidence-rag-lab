@@ -1,7 +1,7 @@
 # 검색 모드 비교 리포트
 
-public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.
-production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.
+대상: public sample docs. 경로: live PostgreSQL retrieval mode comparison.
+목적: lexical, vector, hybrid retrieval mode의 trade-off 확인.
 
 ## 읽는 법
 

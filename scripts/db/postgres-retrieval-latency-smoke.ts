@@ -76,10 +76,8 @@ async function main(): Promise<void> {
         embeddingDimensions: embeddingConfig.dimensions,
         observations,
         notes: [
-          "public sample docs 위의 작은 sample 동작 확인이며 10M-document benchmark가 아니다.",
           "Embedding latency는 eval query당 OpenAI embeddings call 1회로 측정한다.",
-          "Database retrieval latency는 embedding time을 제외해 lexical, vector, hybrid SQL trade-off가 보이게 한다.",
-          "Query text, provider payload, credential은 이 report에서 의도적으로 제외한다."
+          "Database retrieval latency는 embedding time을 제외해 lexical, vector, hybrid SQL trade-off가 보이게 한다."
         ]
       }),
       "utf8"

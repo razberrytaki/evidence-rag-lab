@@ -67,10 +67,10 @@ pass/fail을 만들지만, 검색과 생성의 품질 경계를 검증한다는 
 
 ## 동작 확인
 
-완전한 benchmark가 아니라 특정 경로가 실제로 동작하는지 확인하는 작은 검증이다.
-이 프로젝트의 live DB 동작 확인은 production 성능 claim이 아니다.
+특정 경로가 실제로 동작하는지 확인하는 제한된 측정이다. 대표 데이터, 반복 측정,
+cache 조건까지 포함한 성능 평가는 별도 benchmark로 다룬다.
 
 ## Benchmark
 
 대표 데이터, 충분한 규모, 반복 측정, error budget, cache 조건 등을 갖춘 성능 평가다.
-현재 report들은 benchmark가 아니라 작은 동작 확인 또는 sizing math다.
+현재 report들은 live observation과 sizing math로 나뉜다.

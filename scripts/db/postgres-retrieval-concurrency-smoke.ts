@@ -81,9 +81,7 @@ async function main(): Promise<void> {
         observations,
         notes: [
           "PostgreSQL retrieval concurrency만 분리하기 위해 timing 전에 embedding을 의도적으로 미리 계산한다.",
-          "public sample query 위의 작은 local 동작 확인이며 production load benchmark가 아니다.",
-          "각 concurrency level은 같은 retrieval eval case를 실행한다.",
-          "Query text, provider payload, credential은 이 report에서 의도적으로 제외한다."
+          "각 concurrency level은 같은 retrieval eval case를 실행한다."
         ]
       }),
       "utf8"

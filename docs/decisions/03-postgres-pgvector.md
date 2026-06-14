@@ -31,18 +31,10 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
   MRR `0.975`.
 - `pnpm db:retrieval-latency-smoke`는 같은 20개 case에 대해 query당 OpenAI
   embedding call 1회와 PostgreSQL lexical, vector, hybrid SQL의 aggregate
-  latency를 측정한다.
-- 현재 local latency 간이 검증 결과: embedding P50 `251.80ms`, P95 `299.77ms`;
-  lexical SQL P50 `2.13ms`; vector SQL P50 `0.98ms`; hybrid SQL P50 `1.14ms`.
-  유용한 signal은 boundary separation이다. SQL retrieval cost와 embedding cost가
-  분리되어 보인다.
+  latency를 측정한다. 결과는 `docs/retrieval-latency-report.md`에 둔다.
 - `pnpm db:retrieval-concurrency-smoke`는 query embedding을 미리 계산한 뒤
   concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
-  실행한다.
-- 현재 local concurrency 간이 검증, concurrency `4`: lexical P50 `0.89ms`, P95
-  `8.20ms`, P99 `8.60ms`; vector P50 `1.42ms`, P95 `7.43ms`, P99 `7.65ms`;
-  hybrid P50 `3.68ms`, P95 `8.90ms`, P99 `9.07ms`; 모든 row error `0`.
-  이는 가벼운 concurrent pressure에서 작은 local DB retrieval path만 확인한다.
+  실행한다. 결과는 `docs/retrieval-concurrency-report.md`에 둔다.
 - `pnpm scale:report`는 `docs/scale-budget-report.md`를 쓴다. 현재 sizing math는
   `10,000,000` documents, document당 `8` chunks, `1536` float32 dimensions 기준
   `80,000,000` chunks와 `491.52 GB` raw vector payload를 추정한다.
@@ -51,8 +43,9 @@ lab runtime에는 pgvector와 HNSW index를 포함한 PostgreSQL을 사용한다
   build memory multiplier `2.00`을 가정한다. 추정치는 HNSW graph bytes
   `11.26 GB`, vector + metadata + graph serving bytes `584.70 GB`, build
   working set planning estimate `1169.41 GB`다.
-- 이들은 작은 quality, latency, concurrency 간이 검증이며 production scale
-  benchmark가 아니다.
+- 측정 범위: quality, latency, concurrency 결과는 public sample docs 기반
+  observation이고 scale report는 가정 기반 sizing math다. PostgreSQL 선택의 초기
+  근거로만 사용한다.
 
 ## 10M 규모 확장 시 후속 작업
 

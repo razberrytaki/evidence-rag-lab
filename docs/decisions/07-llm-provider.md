@@ -58,7 +58,7 @@ Messages API call shape 하나만 필요하고 injected `fetch`로 test determin
 - `pnpm db:live-generation-smoke`는 DB-backed retrieval path에서 live
   provider-selected generation을 검증하고 sanitized trace를 저장한다.
 - CI와 eval은 여전히 `FakeLLMProvider`를 사용한다. live generation은 명시적인
-  local 간이 검증 경로로 남긴다.
+  local 검증 경로로 남긴다.
 
 ## 10M 규모 확장 시 후속 작업
 

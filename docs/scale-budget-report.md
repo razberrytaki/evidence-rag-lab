@@ -1,8 +1,7 @@
 # Scale Budget 리포트
 
 생성일: 2026-06-12.
-이는 sizing math이며 production benchmark가 아니다.
-이 report를 위해 10M-document load를 실행하지 않았다.
+10M-document load를 실행하지 않고 explicit assumption으로 계산한 sizing math다.
 
 | Assumption | 값 |
 |---|---:|

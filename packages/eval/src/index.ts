@@ -343,8 +343,7 @@ export function renderRankedRetrievalReportMarkdown(report: RankedRetrievalRepor
   const lines = [
     "# 검색 품질 리포트",
     "",
-    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
-    "작은 품질 동작 확인이며 scale benchmark가 아니다.",
+    "대상: public sample docs. 경로: live PostgreSQL + pgvector ranked retrieval.",
     "",
     `요약: ${report.summary.passed}/${report.summary.total} ranked retrieval case 통과.`,
     "",
@@ -377,8 +376,8 @@ export function renderRetrievalModeComparisonReportMarkdown(input: RetrievalMode
   const lines = [
     "# 검색 모드 비교 리포트",
     "",
-    "public sample docs 위의 live PostgreSQL retrieval observation에서 생성된다.",
-    "production scale이 아니라 portfolio trade-off 근거를 위해 retrieval mode를 비교한다.",
+    "대상: public sample docs. 경로: live PostgreSQL retrieval mode comparison.",
+    "목적: lexical, vector, hybrid retrieval mode의 trade-off 확인.",
     "",
     "## 읽는 법",
     "",
@@ -435,7 +434,7 @@ export function renderProviderComparisonReportMarkdown(input: ProviderComparison
     "",
     "## 읽는 법",
     "",
-    "- adapter contract와 live 검증 경계를 분리해서 본다. 이 report의 row는 live 품질 benchmark가 아니다.",
+    "- adapter contract와 live 검증 경계를 분리해서 본다.",
     "",
     "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |",
     "|---|---|---|---|---|---|---|",
@@ -472,12 +471,11 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     `retrieval eval case ${caseCount}개, top ${topK}.`,
     `Embedding model: \`${input.embeddingModel}\` (${input.embeddingDimensions} dimensions).`,
     "",
-    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
-    "작은 지연 시간 동작 확인이며 production scale benchmark가 아니다.",
+    "대상: public sample docs. 측정: embedding call과 PostgreSQL retrieval latency.",
     "",
     "## 읽는 법",
     "",
-    "- absolute latency보다 embedding cost와 database retrieval cost가 분리되어 보이는지 본다.",
+    "- embedding cost와 database retrieval cost가 분리되어 보이는지 본다.",
     "",
     "| Mode | Samples | Min ms | P50 ms | P95 ms | Max ms | Total ms |",
     "|---|---:|---:|---:|---:|---:|---:|",
@@ -495,8 +493,8 @@ export function renderRetrievalLatencyReportMarkdown(input: RetrievalLatencyRepo
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- Query text, provider payload, credential은 이 report에서 의도적으로 제외한다.",
-          "- 이 동작 확인은 local change 비교용이며 10M-document latency claim용이 아니다."
+          "- 원문 입력은 latency table에 포함하지 않는다.",
+          "- 현재 실행 환경의 변화 비교용 결과로 사용한다."
         ]),
     ""
   ];
@@ -513,13 +511,12 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     `생성일: ${input.generatedAt}.`,
     `retrieval eval case ${caseCount}개, top ${topK}.`,
     "",
-    "public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.",
-    "작은 local 동시성 동작 확인이며 production load benchmark가 아니다.",
-    "database retrieval concurrency가 보이도록 측정 구간 전에 embedding을 미리 계산한다.",
+    "대상: public sample docs. 측정: precomputed embedding 이후 PostgreSQL retrieval concurrency.",
+    "embedding을 미리 계산한 뒤 database retrieval 구간만 측정한다.",
     "",
     "## 읽는 법",
     "",
-    "- production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.",
+    "- precomputed embedding 이후 database retrieval path의 pressure를 본다.",
     "",
     "| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |",
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -539,8 +536,8 @@ export function renderRetrievalConcurrencyReportMarkdown(input: RetrievalConcurr
     ...(input.notes && input.notes.length > 0
       ? input.notes.map((note) => `- ${note}`)
       : [
-          "- Query text, provider payload, credential은 이 report에서 의도적으로 제외한다.",
-          "- 이 동작 확인은 local change 비교용이며 production throughput claim용이 아니다."
+          "- 원문 입력은 concurrency table에 포함하지 않는다.",
+          "- 현재 실행 환경의 변화 비교용 결과로 사용한다."
         ]),
     ""
   ];
@@ -595,8 +592,7 @@ export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): 
     "# Scale Budget 리포트",
     "",
     `생성일: ${input.generatedAt}.`,
-    "이는 sizing math이며 production benchmark가 아니다.",
-    "이 report를 위해 10M-document load를 실행하지 않았다.",
+    "10M-document load를 실행하지 않고 explicit assumption으로 계산한 sizing math다.",
     "",
     "| Assumption | 값 |",
     "|---|---:|",
@@ -624,7 +620,7 @@ export function renderScaleBudgetReportMarkdown(input: ScaleBudgetReportInput): 
       ? input.notes.map((note) => `- ${note}`)
       : [
           "- 이 추정치는 decimal GB이며 index overhead, WAL, replica, backup, vacuum bloat를 제외한다.",
-          "- 이 report는 bottleneck 논의용이며 production capacity claim용이 아니다."
+          "- bottleneck 논의와 후속 측정 범위를 정하기 위한 값이다."
         ]),
     ""
   ];

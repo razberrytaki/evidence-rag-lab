@@ -30,7 +30,7 @@ production 적용 전 재평가가 필요하다.
 - `apps/api/src/postgres-rag.pipeline.ts`는 `RAG_QUERY_MODE=postgres`일 때
   `/query`를 PostgreSQL retrieval 경로로 보낸다.
 - `pnpm db:live-smoke`는 sample chunk에 대해 OpenAI embedding + PostgreSQL
-  retrieval 경로를 검증한다. 단, 이는 quality benchmark가 아니라 간이 검증이다.
+  retrieval 경로를 검증한다.
 - `pnpm db:quality-smoke`는 저장된 sample-doc embedding 위에서 20개의 live
   ranked retrieval case를 실행하고 `docs/retrieval-quality-report.md`를 쓴다.
 - 현재 sample-doc 결과: recall@3 `20/20`, MRR `1.000`.
@@ -42,29 +42,28 @@ production 적용 전 재평가가 필요하다.
   `1.000`.
 - `pnpm db:retrieval-latency-smoke`는 같은 20개 case를 측정하고 embedding,
   lexical SQL, vector SQL, hybrid SQL의 aggregate timing을 분리해
-  `docs/retrieval-latency-report.md`에 쓴다. raw query나 provider payload를
-  기록하지 않고도 품질과 latency trade-off를 볼 수 있게 한다.
-- 현재 local latency 간이 검증 결과: embedding P50 `251.80ms`, P95 `299.77ms`;
+  `docs/retrieval-latency-report.md`에 쓴다. sanitized report만으로 품질과
+  latency trade-off를 볼 수 있게 한다.
+- 현재 latency 결과: embedding P50 `251.80ms`, P95 `299.77ms`;
   lexical SQL P50 `2.13ms`; vector SQL P50 `0.98ms`; hybrid SQL P50 `1.14ms`.
-  이는 현재의 작은 sample run에서 embedding이 지배적이라는 뜻이다. 더 큰 규모에서도
-  hybrid SQL이 가장 빠르게 유지된다는 의미는 아니다.
+  현재 실행에서는 embedding이 지배 비용이며, SQL retrieval cost와 embedding cost가
+  분리되어 보인다.
 - `pnpm db:retrieval-concurrency-smoke`는 embedding을 미리 계산한 뒤,
   concurrency `1`과 `4`에서 PostgreSQL lexical, vector, hybrid retrieval을
-  측정한다. query text, provider payload, prompt, credential 없이
-  `docs/retrieval-concurrency-report.md`를 쓴다.
-- 현재 local concurrency 간이 검증, concurrency `4`: lexical P50 `0.89ms`, P95
+  측정하고 `docs/retrieval-concurrency-report.md`를 쓴다.
+- 현재 concurrency 결과, concurrency `4`: lexical P50 `0.89ms`, P95
   `8.20ms`, P99 `8.60ms`; vector P50 `1.42ms`, P95 `7.43ms`, P99 `7.65ms`;
   hybrid P50 `3.68ms`, P95 `8.90ms`, P99 `9.07ms`; 모든 row error `0`.
-  이는 작은 local 간이 검증이며 load benchmark가 아니다.
 - 해석: 식별자 인식 lexical retrieval은 exact-token category `5/5`를 통과한다.
   하지만 answer-guard, retrieval-design, version-conflict 일부는 여전히 놓친다.
   Hybrid는 vector 수준의 recall을 유지하면서 놓친 vector rank position을 회복한다.
-  이것도 작은 간이 검증이며 production benchmark가 아니다. Hybrid를 기본값으로
-  유지하는 이유는 exact-term과 semantic rank signal이 같은 trace에 남아, acronym,
-  rare term, ID, embedding drift로 확장할 때 판단 근거가 보이기 때문이다.
+  Hybrid를 기본값으로 유지하는 이유는 exact-term과 semantic rank signal이 같은
+  trace에 남아, acronym, rare term, ID, embedding drift로 확장할 때 판단 근거가
+  보이기 때문이다.
 - PostgreSQL RRF는 작은 raw rank-fusion 값을 반환하므로 API 경로는 현재 단순한
-  rank 기반 0..1 answer confidence calibration을 적용한다. 이는 MVP gate이며
-  production scoring claim이 아니다.
+  rank 기반 0..1 answer confidence calibration을 적용한다.
+- 측정 범위: 위 결과는 public sample docs 기반 local observation이다. production
+  benchmark나 scoring claim이 아니라 선택 근거를 남기기 위한 evidence다.
 
 ## 10M 규모 확장 시 후속 작업
 

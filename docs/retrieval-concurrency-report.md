@@ -3,13 +3,12 @@
 생성일: 2026-06-14.
 retrieval eval case 20개, top 3.
 
-public sample docs 위의 live PostgreSQL + pgvector retrieval observation에서 생성된다.
-작은 local 동시성 동작 확인이며 production load benchmark가 아니다.
-database retrieval concurrency가 보이도록 측정 구간 전에 embedding을 미리 계산한다.
+대상: public sample docs. 측정: precomputed embedding 이후 PostgreSQL retrieval concurrency.
+embedding을 미리 계산한 뒤 database retrieval 구간만 측정한다.
 
 ## 읽는 법
 
-- production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.
+- precomputed embedding 이후 database retrieval path의 pressure를 본다.
 
 | Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -23,6 +22,4 @@ database retrieval concurrency가 보이도록 측정 구간 전에 embedding을
 ## 메모
 
 - PostgreSQL retrieval concurrency만 분리하기 위해 timing 전에 embedding을 의도적으로 미리 계산한다.
-- public sample query 위의 작은 local 동작 확인이며 production load benchmark가 아니다.
 - 각 concurrency level은 같은 retrieval eval case를 실행한다.
-- Query text, provider payload, credential은 이 report에서 의도적으로 제외한다.

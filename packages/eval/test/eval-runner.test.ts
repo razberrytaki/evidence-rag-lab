@@ -397,6 +397,7 @@ describe("eval runner", () => {
     expect(markdown).toContain(
       "이 report는 provider adapter boundary를 정적으로 비교한다. live model call은 실행하지 않는다."
     );
+    expect(markdown).toContain("- adapter contract와 live 검증 경계를 분리해서 본다.");
     expect(markdown).toContain(
       "| Provider | Role | Request surface | Setup | Live 검증 | Command | Reason |"
     );
@@ -443,18 +444,18 @@ describe("eval runner", () => {
           totalMs: 144.8
         }
       ],
-      notes: ["작은 sample 동작 확인. Scale benchmark가 아니다."]
+      notes: ["현재 실행 환경의 latency 변화 비교에 사용한다."]
     });
 
     expect(markdown).toContain("# 검색 지연 시간 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("absolute latency보다 embedding cost와 database retrieval cost가 분리되어 보이는지 본다.");
+    expect(markdown).toContain("embedding cost와 database retrieval cost가 분리되어 보이는지 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
     expect(markdown).toContain("retrieval eval case 20개, top 3.");
     expect(markdown).toContain("Embedding model: `text-embedding-3-small` (1536 dimensions).");
     expect(markdown).toContain("| embedding | 20 | 41.21 | 58.78 | 104.49 | 120.90 | 1190.40 |");
     expect(markdown).toContain("| hybrid | 20 | 3.11 | 7.24 | 12.89 | 15.20 | 144.80 |");
-    expect(markdown).toContain("- 작은 sample 동작 확인. Scale benchmark가 아니다.");
+    expect(markdown).toContain("- 현재 실행 환경의 latency 변화 비교에 사용한다.");
     expect(markdown).not.toContain("Why not rely only on semantic vectors?");
     expect(markdown).not.toContain("Authorization");
   });
@@ -491,7 +492,7 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# 검색 동시성 리포트");
     expect(markdown).toContain("## 읽는 법");
-    expect(markdown).toContain("production throughput이 아니라 precomputed embedding 이후 database retrieval path의 작은 local pressure를 본다.");
+    expect(markdown).toContain("precomputed embedding 이후 database retrieval path의 pressure를 본다.");
     expect(markdown).toContain("생성일: 2026-06-11.");
     expect(markdown).toContain("retrieval eval case 20개, top 3.");
     expect(markdown).toContain("| Mode | Concurrency | Query 수 | Min ms | P50 ms | P95 ms | P99 ms | Max ms | Total ms | Error 수 |");
@@ -541,7 +542,7 @@ describe("eval runner", () => {
 
     expect(markdown).toContain("# Scale Budget 리포트");
     expect(markdown).toContain("생성일: 2026-06-11.");
-    expect(markdown).toContain("이는 sizing math이며 production benchmark가 아니다.");
+    expect(markdown).toContain("10M-document load를 실행하지 않고 explicit assumption으로 계산한 sizing math다.");
     expect(markdown).toContain("| documents | 10,000,000 |");
     expect(markdown).toContain("| chunks | 80,000,000 |");
     expect(markdown).toContain("| vector storage | 491.52 GB |");

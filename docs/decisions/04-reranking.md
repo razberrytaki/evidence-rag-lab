@@ -40,7 +40,7 @@ function만 대체할 수 있다.
   `rerankScore`가 있으면 이를 표시한다.
 - test는 generic vector-first candidate가 더 query-specific한 reranker latency
   candidate 뒤로 내려가는 경우를 다룬다.
-- 이는 여전히 deterministic reranking이며 model-quality benchmark가 아니다.
+- 현재 단계는 deterministic reranking 검증이다. model-quality 비교는 후속 과제다.
 
 ## 10M 규모 확장 시 후속 작업
 

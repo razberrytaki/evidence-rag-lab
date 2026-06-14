@@ -56,12 +56,11 @@ query-evidence reranker를 사용하므로 API, trace schema, viewer에 이미 r
 
 ## Retrieval concurrency budget
 
-`docs/retrieval-concurrency-report.md`는 작은 local 동작 확인이다. query embedding을 미리
-계산한 뒤 public sample docs 위에서 concurrency `1`과 `4`로 PostgreSQL lexical,
-vector, hybrid retrieval을 측정한다. production throughput claim이 아니라 measurement
-boundary를 보여주기 위해 존재한다. production load test에는 larger index,
-representative query mix, warm/cold cache split, connection pool limit, HNSW parameter
-sweep, 이 small-sample P99를 넘어서는 explicit error-budget reporting이 필요하다.
+`docs/retrieval-concurrency-report.md`는 query embedding을 미리 계산한 뒤 public
+sample docs 위에서 concurrency `1`과 `4`로 PostgreSQL lexical, vector, hybrid
+retrieval 구간만 측정한다. production load test에는 larger index, representative
+query mix, warm/cold cache split, connection pool limit, HNSW parameter sweep,
+sample P99를 넘어서는 explicit error-budget reporting이 필요하다.
 
 ## Source trust와 freshness at scale
 
