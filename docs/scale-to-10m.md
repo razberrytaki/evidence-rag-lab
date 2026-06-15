@@ -13,8 +13,8 @@
 먼저 드러나는지 보기 위한 기준선이다.
 
 이 문서는 그 확장성 검토 기준에서 중요해질 신뢰성 경계와 병목을 정리한다.
-`docs/scale-budget-report.md`는 명시한 가정에서 생성한 용량 추정치다.
-`docs/vector-index-budget-report.md`는 그 계산에 HNSW 메모리 압력 가정 하나를 더한
+`docs/reports/scale-budget-report.md`는 명시한 가정에서 생성한 용량 추정치다.
+`docs/reports/vector-index-budget-report.md`는 그 계산에 HNSW 메모리 압력 가정 하나를 더한
 것이다. 둘 다 PostgreSQL 또는 pgvector 색인을 실측한 크기는 아니다.
 
 ## 문서/청크 가정
@@ -60,7 +60,7 @@ ColBERT late interaction, LLM 재순위화와 비교한다.
 
 ## 검색 동시성 예산
 
-`docs/retrieval-concurrency-report.md`는 질의 임베딩을 미리 계산한 뒤 공개 샘플 문서
+`docs/reports/retrieval-concurrency-report.md`는 질의 임베딩을 미리 계산한 뒤 공개 샘플 문서
 위에서 동시성 `1`과 `4`로 PostgreSQL 키워드, 벡터, hybrid 검색 구간만 측정한다.
 운영 부하 시험에는 더 큰 색인, 대표 질의 조합, warm/cold 캐시 분리, 연결 풀 제한,
 HNSW 매개변수 탐색, 샘플 P99를 넘어서는 명시적 오류 예산 보고가 필요하다.

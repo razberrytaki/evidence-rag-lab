@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Client } from "pg";
 import {
@@ -45,7 +45,9 @@ async function main(): Promise<void> {
       cases: sampleRetrievalQualityCases,
       observations
     });
-    const targetPath = join(repoRoot, "docs", "retrieval-quality-report.md");
+    const reportsDir = join(repoRoot, "docs", "reports");
+    const targetPath = join(reportsDir, "retrieval-quality-report.md");
+    await mkdir(reportsDir, { recursive: true });
     await writeFile(targetPath, renderRankedRetrievalReportMarkdown(report), "utf8");
 
     if (report.summary.failed > 0) {
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
           recallAtK: report.metrics.recallAtK,
           meanReciprocalRank: report.metrics.meanReciprocalRank,
           observations,
-          reportPath: "docs/retrieval-quality-report.md"
+          reportPath: "docs/reports/retrieval-quality-report.md"
         },
         null,
         2

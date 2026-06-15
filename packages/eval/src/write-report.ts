@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { GenerationResult, QueryTrace, RetrievalResult } from "@evidencerag/domain";
 import { evaluateFixtures, renderEvalReportMarkdown, type EvalFixture, type EvalObservation } from ".";
@@ -32,8 +32,10 @@ async function main(): Promise<void> {
   const runtimeObservations = await buildSampleRuntimeObservations(fixtures);
   const observations = mergeObservationOverrides(staticObservations, runtimeObservations);
   const report = evaluateFixtures(fixtures, observations);
-  const targetPath = join(repoRoot, "docs", "eval-report.md");
+  const reportsDir = join(repoRoot, "docs", "reports");
+  const targetPath = join(reportsDir, "eval-report.md");
 
+  mkdirSync(reportsDir, { recursive: true });
   writeFileSync(targetPath, renderEvalReportMarkdown(report), "utf8");
   console.log(`Wrote ${targetPath}`);
 }

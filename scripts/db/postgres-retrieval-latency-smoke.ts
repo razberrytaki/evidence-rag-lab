@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { Client } from "pg";
@@ -65,7 +65,9 @@ async function main(): Promise<void> {
     }
 
     const observations = [embeddingLatency.observation, ...dbLatencyObservations];
-    const targetPath = join(repoRoot, "docs", "retrieval-latency-report.md");
+    const reportsDir = join(repoRoot, "docs", "reports");
+    const targetPath = join(reportsDir, "retrieval-latency-report.md");
+    await mkdir(reportsDir, { recursive: true });
     await writeFile(
       targetPath,
       renderRetrievalLatencyReportMarkdown({
@@ -100,7 +102,7 @@ async function main(): Promise<void> {
             p95Ms: observation.p95Ms,
             totalMs: observation.totalMs
           })),
-          reportPath: "docs/retrieval-latency-report.md"
+          reportPath: "docs/reports/retrieval-latency-report.md"
         },
         null,
         2

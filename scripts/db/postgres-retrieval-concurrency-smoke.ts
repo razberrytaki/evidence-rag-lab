@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { Client, Pool } from "pg";
@@ -71,7 +71,9 @@ async function main(): Promise<void> {
       }
     }
 
-    const targetPath = join(repoRoot, "docs", "retrieval-concurrency-report.md");
+    const reportsDir = join(repoRoot, "docs", "reports");
+    const targetPath = join(reportsDir, "retrieval-concurrency-report.md");
+    await mkdir(reportsDir, { recursive: true });
     await writeFile(
       targetPath,
       renderRetrievalConcurrencyReportMarkdown({
@@ -108,7 +110,7 @@ async function main(): Promise<void> {
             totalMs: observation.totalMs,
             errors: observation.errorCount
           })),
-          reportPath: "docs/retrieval-concurrency-report.md"
+          reportPath: "docs/reports/retrieval-concurrency-report.md"
         },
         null,
         2

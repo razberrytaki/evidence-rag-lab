@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderProviderComparisonReportMarkdown, type ProviderComparisonReportInput } from ".";
 
@@ -64,6 +64,8 @@ const report: ProviderComparisonReportInput = {
   ]
 };
 
-const targetPath = join(repoRoot, "docs", "provider-comparison-report.md");
+const reportsDir = join(repoRoot, "docs", "reports");
+const targetPath = join(reportsDir, "provider-comparison-report.md");
+mkdirSync(reportsDir, { recursive: true });
 writeFileSync(targetPath, renderProviderComparisonReportMarkdown(report), "utf8");
 console.log(`Wrote ${targetPath}`);

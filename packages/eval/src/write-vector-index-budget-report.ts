@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderVectorIndexBudgetReportMarkdown, type VectorIndexBudgetReportInput } from ".";
 
@@ -25,6 +25,8 @@ const report: VectorIndexBudgetReportInput = {
   ]
 };
 
-const targetPath = join(repoRoot, "docs", "vector-index-budget-report.md");
+const reportsDir = join(repoRoot, "docs", "reports");
+const targetPath = join(reportsDir, "vector-index-budget-report.md");
+mkdirSync(reportsDir, { recursive: true });
 writeFileSync(targetPath, renderVectorIndexBudgetReportMarkdown(report), "utf8");
 console.log(`Wrote ${targetPath}`);

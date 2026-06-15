@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderScaleBudgetReportMarkdown, type ScaleBudgetReportInput } from ".";
 
@@ -24,6 +24,8 @@ const report: ScaleBudgetReportInput = {
   ]
 };
 
-const targetPath = join(repoRoot, "docs", "scale-budget-report.md");
+const reportsDir = join(repoRoot, "docs", "reports");
+const targetPath = join(reportsDir, "scale-budget-report.md");
+mkdirSync(reportsDir, { recursive: true });
 writeFileSync(targetPath, renderScaleBudgetReportMarkdown(report), "utf8");
 console.log(`Wrote ${targetPath}`);

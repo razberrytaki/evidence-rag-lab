@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Client } from "pg";
 import {
@@ -57,7 +57,9 @@ async function main(): Promise<void> {
       sampleRetrievalQualityCases.map((testCase) => testCase.query)
     );
     const modeReports = await runRetrievalModeReports(client, queryEmbeddings);
-    const targetPath = join(repoRoot, "docs", "retrieval-mode-comparison-report.md");
+    const reportsDir = join(repoRoot, "docs", "reports");
+    const targetPath = join(reportsDir, "retrieval-mode-comparison-report.md");
+    await mkdir(reportsDir, { recursive: true });
 
     await writeFile(
       targetPath,
@@ -100,7 +102,7 @@ async function main(): Promise<void> {
             recallAtK: report.metrics.recallAtK,
             meanReciprocalRank: report.metrics.meanReciprocalRank
           })),
-          reportPath: "docs/retrieval-mode-comparison-report.md"
+          reportPath: "docs/reports/retrieval-mode-comparison-report.md"
         },
         null,
         2

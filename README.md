@@ -57,7 +57,7 @@ EvidenceRAG Lab은 이 지점을 작은 공개 문서 세트에서 재현 가능
 
 평가 사례에는 근거 부족, 지원되지 않는 주장, 프롬프트 주입 같은 실패 사례를 포함했다.
 
-관련 리포트: [평가 리포트](docs/eval-report.md)
+관련 리포트: [평가 리포트](docs/reports/eval-report.md)
 
 ### 4. 추적 기록은 남기되 원문 데이터는 남기지 않는다
 
@@ -155,12 +155,12 @@ infra/
 sample-docs/           공개 샘플 문서와 합성 실패 사례
 docs/
   decisions/           절충 판단 기록
-  *-report.md          생성된 근거 보고서
+  reports/             생성된 근거 보고서
 ```
 
 ## 생성 리포트
 
-`docs/*-report.md` 파일은 직접 편집하지 않는다. 보고서 생성기나 동작 확인 스크립트를
+`docs/reports/*-report.md` 파일은 직접 편집하지 않는다. 보고서 생성기나 동작 확인 스크립트를
 수정한 뒤 명령으로 다시 생성한다.
 
 ```bash

@@ -91,7 +91,7 @@ describe("eval runner", () => {
     expect(report.items.map((item) => item.passed)).toEqual([true, true, true]);
   });
 
-  it("renders a markdown report that can replace docs/eval-report.md", () => {
+  it("renders a markdown report that can replace docs/reports/eval-report.md", () => {
     const report = evaluateFixtures(
       [
         {
