@@ -70,14 +70,16 @@ LLM 응답 원문을 그대로 저장하면 공개 저장소와 운영 개인정
 
 관련 문서: [추적 기록 보관과 개인정보 결정](docs/decisions/trace-retention-and-privacy.md)
 
-### 5. 확장성 주장이 아니라 확장성 질문을 계산한다
+### 5. 확장성 주장이 아니라 확장성 질문을 결정 문서에 남긴다
 
 확장성은 실제 부하 테스트 없이 주장할 수 없다. 대신 문서 수, 청크 수,
 임베딩 차원, 추적 기록 보존 같은 가정을 명시하고 저장 공간과 색인 병목을 계산한다.
 
 이 숫자는 성능 주장이 아니라 설계 대화를 위한 출발점이다.
 
-관련 문서: [확장성 추론 노트](docs/scale-to-10m.md)
+관련 문서: [설계 결정 문서](docs/decisions/README.md),
+[확장성 예산 리포트](docs/reports/scale-budget-report.md),
+[벡터 색인 예산 리포트](docs/reports/vector-index-budget-report.md)
 
 ## 구현 범위
 
@@ -202,8 +204,7 @@ pnpm db:retrieval-concurrency-smoke
 ## 더 읽을 문서
 
 - [설계 결정 문서](docs/decisions/README.md): 절충 판단 기록과 읽는 순서
-- [확장성 추론 노트](docs/scale-to-10m.md): 확장성 검토 기준과 지금 구현 사이의 간극
-- [공개 전 체크리스트](docs/publication-checklist.md): 공개 저장소로 유지하기 위한 검증 절차
+- [공개 전 체크리스트](docs/publication-checklist.md): 공개 저장소로 유지하기 전 실행할 검증 절차
 
 ## 다음 비교 과제
 

@@ -14,6 +14,13 @@
 작은 구현에서 확인한 선택이 큰 확장성 검토 기준으로 갈 때 어디서 다시 검증되어야 하는지
 기록한다.
 
+확장성 검토는 별도 주장 문서로 두지 않고 각 결정 문서에 흡수한다. 청크 수와 인용
+안정성은 [청킹](chunking.md), 검색 지연 시간과 검색 방식은
+[하이브리드 검색](hybrid-retrieval.md), 벡터 저장량과 색인 메모리는
+[PostgreSQL + pgvector](postgres-pgvector.md)와 [임베딩 모델](embedding-model.md),
+추적 기록 보존량은 [추적 기록 보관과 개인정보](trace-retention-and-privacy.md)에서
+확인한다. 생성된 수치 근거는 `docs/reports/*-report.md`에 둔다.
+
 ## 대표 절충 판단
 
 - 벡터 전용 검색은 샘플 문서에서는 강하게 동작했지만, 정확한 토큰,
