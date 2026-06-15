@@ -11,7 +11,7 @@
 정리된 질의 추적 기록으로 변환한다.
 
 보관, 가림 처리, 샘플링 세부 사항은
-`docs/decisions/10-trace-retention-and-privacy.md`에서 따로 추적한다.
+`docs/decisions/trace-retention-and-privacy.md`에서 따로 추적한다.
 
 ## 검토한 대안
 

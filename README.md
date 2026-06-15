@@ -38,7 +38,7 @@ EvidenceRAG Lab은 이 지점을 작은 공개 문서 세트에서 재현 가능
 그래서 PostgreSQL full-text search, 정확한 토큰 매칭, pgvector 검색을 함께
 사용하고 reciprocal rank fusion으로 결과를 합친다.
 
-관련 문서: [하이브리드 검색 결정](docs/decisions/02-hybrid-retrieval.md)
+관련 문서: [하이브리드 검색 결정](docs/decisions/hybrid-retrieval.md)
 
 ### 2. 생성은 검색 결과 안에 묶는다
 
@@ -48,7 +48,7 @@ EvidenceRAG Lab은 이 지점을 작은 공개 문서 세트에서 재현 가능
 이 방식은 유용한 답변을 일부 놓칠 수 있다. 하지만 이 프로젝트의 목적은 그럴듯한
 답변보다 검증 가능한 답변이다.
 
-관련 문서: [답변 보호 장치 결정](docs/decisions/06-answer-guard.md)
+관련 문서: [답변 보호 장치 결정](docs/decisions/answer-guard.md)
 
 ### 3. 실패를 제품 동작으로 취급한다
 
@@ -68,7 +68,7 @@ LLM 응답 원문을 그대로 저장하면 공개 저장소와 운영 개인정
 이 프로젝트는 정리된 추적 기록만 저장한다. 후보 점수, 선택 여부, 거절 이유,
 재순위화 결과, 가린 질의 미리보기는 남기고 원문 청크와 LLM 응답 원문은 남기지 않는다.
 
-관련 문서: [추적 기록 보관과 개인정보 결정](docs/decisions/10-trace-retention-and-privacy.md)
+관련 문서: [추적 기록 보관과 개인정보 결정](docs/decisions/trace-retention-and-privacy.md)
 
 ### 5. 확장성 주장이 아니라 확장성 질문을 계산한다
 
@@ -203,7 +203,6 @@ pnpm db:retrieval-concurrency-smoke
 
 - [설계 결정 문서](docs/decisions/README.md): 절충 판단 기록과 읽는 순서
 - [확장성 추론 노트](docs/scale-to-10m.md): 확장성 검토 기준과 지금 구현 사이의 간극
-- [용어표](docs/glossary.md): 반복되는 RAG 용어와 이 프로젝트에서의 의미
 - [공개 전 체크리스트](docs/publication-checklist.md): 공개 저장소로 유지하기 위한 검증 절차
 
 ## 다음 비교 과제

@@ -24,24 +24,24 @@
 
 ## 먼저 읽을 문서
 
-1. [하이브리드 검색](02-hybrid-retrieval.md)
-2. [답변 보호 장치](06-answer-guard.md)
-3. [관측 가능성](08-observability.md)
-4. [추적 기록 보관과 개인정보](10-trace-retention-and-privacy.md)
-5. [임베딩 모델](09-embedding-model.md)
+1. [하이브리드 검색](hybrid-retrieval.md)
+2. [답변 보호 장치](answer-guard.md)
+3. [관측 가능성](observability.md)
+4. [추적 기록 보관과 개인정보](trace-retention-and-privacy.md)
+5. [임베딩 모델](embedding-model.md)
 
 ## 전체 목록
 
-- [청킹](01-chunking.md)
-- [하이브리드 검색](02-hybrid-retrieval.md)
-- [PostgreSQL + pgvector](03-postgres-pgvector.md)
-- [재순위화](04-reranking.md)
-- [출처 신뢰도](05-source-trust.md)
-- [답변 보호 장치](06-answer-guard.md)
-- [LLM 제공자](07-llm-provider.md)
-- [관측 가능성](08-observability.md)
-- [임베딩 모델](09-embedding-model.md)
-- [추적 기록 보관과 개인정보](10-trace-retention-and-privacy.md)
+- [청킹](chunking.md)
+- [하이브리드 검색](hybrid-retrieval.md)
+- [PostgreSQL + pgvector](postgres-pgvector.md)
+- [재순위화](reranking.md)
+- [출처 신뢰도](source-trust.md)
+- [답변 보호 장치](answer-guard.md)
+- [LLM 제공자](llm-provider.md)
+- [관측 가능성](observability.md)
+- [임베딩 모델](embedding-model.md)
+- [추적 기록 보관과 개인정보](trace-retention-and-privacy.md)
 
 ## 읽는 방법
 
