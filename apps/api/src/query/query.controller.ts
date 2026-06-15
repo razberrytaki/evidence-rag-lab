@@ -8,6 +8,7 @@ export class QueryController {
   constructor(@Inject(QueryService) private readonly queryService: QueryService) {}
 
   @Post()
+  // Pin the DTO type so body validation does not depend on emitted parameter metadata.
   query(@Body(createRequestValidationPipe(QueryRequestDto)) body: QueryRequestDto) {
     return this.queryService.query(body.question);
   }
