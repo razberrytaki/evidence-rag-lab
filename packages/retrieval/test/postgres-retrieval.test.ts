@@ -305,6 +305,10 @@ describe("PostgreSQL retrieval schema", () => {
     expect(schema).toContain("USING gin(search_vector)");
     expect(schema).toContain("CREATE TABLE IF NOT EXISTS query_traces");
     expect(schema).toContain("sanitized boolean NOT NULL DEFAULT true");
+    expect(schema).toContain("query_traces_sanitized_created_id_idx");
+    expect(schema).toContain("ON query_traces(sanitized, created_at DESC, id DESC)");
+    expect(schema).toContain("query_traces_created_at_idx");
+    expect(schema).toContain("ON query_traces(created_at)");
   });
 });
 

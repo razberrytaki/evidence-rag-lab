@@ -50,3 +50,9 @@ CREATE TABLE IF NOT EXISTS query_traces (
   sanitized boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS query_traces_sanitized_created_id_idx
+  ON query_traces(sanitized, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS query_traces_created_at_idx
+  ON query_traces(created_at);
