@@ -35,6 +35,9 @@ describe("PostgreSQL ingest upsert plan", () => {
     expect(plan.statements).toHaveLength(2);
     expect(plan.statements[0]?.text).toContain("INSERT INTO source_documents");
     expect(plan.statements[0]?.text).toContain("ON CONFLICT (id) DO UPDATE");
+    expect(plan.statements[0]?.text).toContain("WHERE (");
+    expect(plan.statements[0]?.text).toContain("source_documents.title");
+    expect(plan.statements[0]?.text).toContain("IS DISTINCT FROM");
     expect(plan.statements[0]?.text).not.toContain("drop table");
     expect(plan.statements[0]?.values).toEqual([
       source.id,
@@ -52,6 +55,9 @@ describe("PostgreSQL ingest upsert plan", () => {
     expect(plan.statements[1]?.text).toContain("array_to_string($4::text[]");
     expect(plan.statements[1]?.text).toContain("$7::vector");
     expect(plan.statements[1]?.text).toContain("ON CONFLICT (id) DO UPDATE");
+    expect(plan.statements[1]?.text).toContain("WHERE (");
+    expect(plan.statements[1]?.text).toContain("document_chunks.normalized_text");
+    expect(plan.statements[1]?.text).toContain("IS DISTINCT FROM");
     expect(plan.statements[1]?.values).toEqual([
       chunk.id,
       chunk.documentId,

@@ -217,10 +217,10 @@ export function buildPostgresVectorRetrievalSql(input: PostgresVectorRetrievalIn
 WITH vector_candidates AS (
   SELECT
     id AS chunk_id,
-    row_number() OVER (ORDER BY embedding <=> $1::vector, id ASC) AS vector_rank
+    row_number() OVER (ORDER BY embedding <=> $1::vector) AS vector_rank
   FROM document_chunks
   WHERE embedding IS NOT NULL
-  ORDER BY embedding <=> $1::vector, id ASC
+  ORDER BY embedding <=> $1::vector
   LIMIT $2
 )
 SELECT
@@ -272,10 +272,10 @@ WITH lexical_base_candidates AS (
 vector_candidates AS (
   SELECT
     id AS chunk_id,
-    row_number() OVER (ORDER BY embedding <=> $2::vector, id ASC) AS vector_rank
+    row_number() OVER (ORDER BY embedding <=> $2::vector) AS vector_rank
   FROM document_chunks
   WHERE embedding IS NOT NULL
-  ORDER BY embedding <=> $2::vector, id ASC
+  ORDER BY embedding <=> $2::vector
   LIMIT $3
 ),
 candidate_ids AS (
@@ -448,7 +448,24 @@ ON CONFLICT (id) DO UPDATE SET
   candidates = EXCLUDED.candidates,
   generation = EXCLUDED.generation,
   sanitized = EXCLUDED.sanitized
-`.trim(),
+WHERE (
+  query_traces.query,
+  query_traces.normalized_query,
+  query_traces.selected_chunk_ids,
+  query_traces.rejected,
+  query_traces.candidates,
+  query_traces.generation,
+  query_traces.sanitized
+) IS DISTINCT FROM (
+  EXCLUDED.query,
+  EXCLUDED.normalized_query,
+  EXCLUDED.selected_chunk_ids,
+  EXCLUDED.rejected,
+  EXCLUDED.candidates,
+  EXCLUDED.generation,
+  EXCLUDED.sanitized
+)
+	`.trim(),
     values: [
       sanitizedTrace.id,
       sanitizedTrace.query,

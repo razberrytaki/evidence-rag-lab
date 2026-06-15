@@ -37,6 +37,7 @@ describe("PostgreSQL hybrid retrieval SQL", () => {
     expect(sql.text).toContain("$6::text[]");
     expect(sql.text).toContain("1.0 / ($4 +");
     expect(sql.text).toContain("LIMIT $3");
+    expect(sql.text).not.toContain("embedding <=> $2::vector, id ASC");
     expect(sql.text).toContain("candidate_ids AS");
     expect(sql.text).toContain("LEFT JOIN lexical_candidates USING (chunk_id)");
     expect(sql.text).toContain("LEFT JOIN vector_candidates USING (chunk_id)");
@@ -120,6 +121,7 @@ describe("PostgreSQL retrieval mode SQL", () => {
     expect(sql.text).toContain("1.0 / ($3 + vector_candidates.vector_rank)");
     expect(sql.text).toContain("LIMIT $2");
     expect(sql.text).not.toContain("websearch_to_tsquery");
+    expect(sql.text).not.toContain("embedding <=> $1::vector, id ASC");
     expect(sql.values).toEqual(["[0.25,-0.5,0.75]", 5, 60]);
   });
 
@@ -371,6 +373,9 @@ describe("PostgreSQL query trace persistence", () => {
     expect(sql.text).toContain("INSERT INTO query_traces");
     expect(sql.text).toContain("$5::jsonb");
     expect(sql.text).toContain("ON CONFLICT (id) DO UPDATE");
+    expect(sql.text).toContain("WHERE (");
+    expect(sql.text).toContain("query_traces.query");
+    expect(sql.text).toContain("IS DISTINCT FROM");
     expect(sql.text).not.toContain("drop table");
     expect(sql.values[0]).toBe("pg-trace-001");
     expect(sql.values[1]).toBe("semantic vectors'; drop table query_traces; --");

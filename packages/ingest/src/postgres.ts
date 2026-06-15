@@ -81,7 +81,22 @@ ON CONFLICT (id) DO UPDATE SET
   published_at = EXCLUDED.published_at,
   license_note = EXCLUDED.license_note,
   updated_at = now()
-`.trim(),
+WHERE (
+  source_documents.title,
+  source_documents.source_type,
+  source_documents.source_url,
+  source_documents.version,
+  source_documents.published_at,
+  source_documents.license_note
+) IS DISTINCT FROM (
+  EXCLUDED.title,
+  EXCLUDED.source_type,
+  EXCLUDED.source_url,
+  EXCLUDED.version,
+  EXCLUDED.published_at,
+  EXCLUDED.license_note
+)
+	`.trim(),
     values: [
       source.id,
       source.title,
@@ -130,7 +145,26 @@ ON CONFLICT (id) DO UPDATE SET
   search_vector = EXCLUDED.search_vector,
   version = EXCLUDED.version,
   updated_at = now()
-`.trim(),
+WHERE (
+  document_chunks.document_id,
+  document_chunks.parent_id,
+  document_chunks.heading_path,
+  document_chunks.normalized_text,
+  document_chunks.content_hash,
+  document_chunks.embedding::text,
+  document_chunks.search_vector::text,
+  document_chunks.version
+) IS DISTINCT FROM (
+  EXCLUDED.document_id,
+  EXCLUDED.parent_id,
+  EXCLUDED.heading_path,
+  EXCLUDED.normalized_text,
+  EXCLUDED.content_hash,
+  EXCLUDED.embedding::text,
+  EXCLUDED.search_vector::text,
+  EXCLUDED.version
+)
+	`.trim(),
     values: [
       chunk.id,
       chunk.documentId,
