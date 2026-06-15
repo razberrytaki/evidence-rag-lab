@@ -37,6 +37,10 @@ describe("PostgreSQL hybrid retrieval SQL", () => {
     expect(sql.text).toContain("$6::text[]");
     expect(sql.text).toContain("1.0 / ($4 +");
     expect(sql.text).toContain("LIMIT $3");
+    expect(sql.text).toContain("candidate_ids AS");
+    expect(sql.text).toContain("LEFT JOIN lexical_candidates USING (chunk_id)");
+    expect(sql.text).toContain("LEFT JOIN vector_candidates USING (chunk_id)");
+    expect(sql.text).not.toContain("FULL OUTER JOIN");
     expect(sql.text).not.toContain("drop table");
     expect(sql.values).toEqual([
       "semantic vectors'; drop table document_chunks; --",

@@ -277,9 +277,14 @@ vector_candidates AS (
   ORDER BY embedding <=> $2::vector, id ASC
   LIMIT $3
 ),
+candidate_ids AS (
+  SELECT chunk_id FROM lexical_candidates
+  UNION
+  SELECT chunk_id FROM vector_candidates
+),
 fused_candidates AS (
   SELECT
-    COALESCE(lexical_candidates.chunk_id, vector_candidates.chunk_id) AS chunk_id,
+    candidate_ids.chunk_id,
     lexical_candidates.lexical_rank,
     vector_candidates.vector_rank,
     (
@@ -293,8 +298,9 @@ fused_candidates AS (
         ELSE 1.0 / ($4 + vector_candidates.vector_rank)
       END
     ) AS retrieval_score
-  FROM lexical_candidates
-  FULL OUTER JOIN vector_candidates USING (chunk_id)
+  FROM candidate_ids
+  LEFT JOIN lexical_candidates USING (chunk_id)
+  LEFT JOIN vector_candidates USING (chunk_id)
 )
 SELECT
   source_documents.id AS document_id,
