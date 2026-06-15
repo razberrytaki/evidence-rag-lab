@@ -70,15 +70,15 @@ describe("query trace view model", () => {
   it("marks selected and rejected candidates from a persisted trace", () => {
     expect(buildTraceRows(trace)).toEqual([
       {
-        stage: "Rerank 1",
+        stage: "재순위 1",
         candidate: "hybrid-retrieval-note#chunk-001",
-        score: "lex 1 / vec 2 / rerank 0.787 / gate 0.99 / trust 0.80",
+        score: "키워드 1 / 벡터 2 / 재순위 0.787 / 답변 0.99 / 신뢰 0.80",
         decision: "selected"
       },
       {
-        stage: "Rerank 2",
+        stage: "재순위 2",
         candidate: "deployment-policy-v1#chunk-001",
-        score: "lex 2 / vec - / rerank 0.291 / gate 0.89 / trust 0.30",
+        score: "키워드 2 / 벡터 - / 재순위 0.291 / 답변 0.89 / 신뢰 0.30",
         decision: "rejected"
       }
     ]);
@@ -86,9 +86,9 @@ describe("query trace view model", () => {
 
   it("summarizes citation coverage and sanitize state", () => {
     expect(summarizeTrace(trace)).toEqual({
-      citationCoverage: "1/1 cited",
-      unsupportedClaimPolicy: "reject",
-      traceSanitize: "true"
+      citationCoverage: "1/1 인용",
+      unsupportedClaimPolicy: "거절",
+      traceSanitize: "정리됨"
     });
   });
 

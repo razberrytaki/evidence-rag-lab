@@ -375,9 +375,14 @@ th {
 
   .queryComposer,
   .answerHeader,
+  .sectionHeader,
   .answerMeta {
     display: grid;
     justify-items: stretch;
+  }
+
+  .sectionHeader span {
+    margin-top: 4px;
   }
 
   .runButton {
@@ -387,6 +392,53 @@ th {
   th,
   td {
     padding: 10px;
+  }
+
+  .traceSection {
+    overflow-x: visible;
+  }
+
+  table {
+    display: block;
+    min-width: 0;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody,
+  tr,
+  td {
+    display: block;
+  }
+
+  tbody tr {
+    padding: 12px 16px;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: #52606d;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pill {
+    justify-self: start;
   }
 }
 

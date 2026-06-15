@@ -193,7 +193,7 @@ export async function runQuery(
 ): Promise<QueryRunSummary> {
   const trimmedQuestion = question.trim();
   if (trimmedQuestion === "") {
-    throw new Error("question is required");
+    throw new Error("질의를 입력해야 합니다");
   }
 
   const response = await fetcher(`${trimApiBaseUrl(apiBaseUrl)}/query`, {
@@ -202,12 +202,12 @@ export async function runQuery(
     body: JSON.stringify({ question: trimmedQuestion })
   });
   if (!response.ok) {
-    throw new Error("query request failed");
+    throw new Error("질의 요청 실패");
   }
 
   const summary = toQueryRunSummary(await response.json());
   if (!summary) {
-    throw new Error("query response had an invalid shape");
+    throw new Error("질의 응답 형식이 올바르지 않습니다");
   }
 
   return summary;
@@ -248,8 +248,8 @@ export function buildTraceRows(trace: PublicQueryTrace): TraceRow[] {
   return trace.candidates.map((candidate, index) => ({
     stage:
       candidate.score.rerankRank !== undefined
-        ? `Rerank ${candidate.score.rerankRank}`
-        : `Rank ${candidate.score.fusedRank ?? index + 1}`,
+        ? `재순위 ${candidate.score.rerankRank}`
+        : `순위 ${candidate.score.fusedRank ?? index + 1}`,
     candidate: candidate.chunkId,
     score: buildScoreLabel(candidate.score),
     decision: rejectedChunkIds.has(candidate.chunkId)
@@ -263,9 +263,9 @@ export function buildTraceRows(trace: PublicQueryTrace): TraceRow[] {
 export function summarizeTrace(trace: PublicQueryTrace): TraceSummary {
   if (trace.generation.status === "rejected") {
     return {
-      citationCoverage: "0/0 cited",
-      unsupportedClaimPolicy: trace.generation.reason,
-      traceSanitize: String(trace.sanitized)
+      citationCoverage: "0/0 인용",
+      unsupportedClaimPolicy: formatPolicyLabel(trace.generation.reason),
+      traceSanitize: formatSanitizedLabel(trace.sanitized)
     };
   }
 
@@ -273,9 +273,9 @@ export function summarizeTrace(trace: PublicQueryTrace): TraceSummary {
   const citedClaimCount = trace.generation.claims.filter((claim) => claim.citations.length > 0).length;
 
   return {
-    citationCoverage: `${citedClaimCount}/${claimCount} cited`,
-    unsupportedClaimPolicy: "reject",
-    traceSanitize: String(trace.sanitized)
+    citationCoverage: `${citedClaimCount}/${claimCount} 인용`,
+    unsupportedClaimPolicy: "거절",
+    traceSanitize: formatSanitizedLabel(trace.sanitized)
   };
 }
 
@@ -424,7 +424,21 @@ function formatRank(rank: number | undefined): string {
 }
 
 function buildScoreLabel(score: PublicScoreBreakdown): string {
-  const rerank = score.rerankScore === undefined ? "" : ` / rerank ${score.rerankScore.toFixed(3)}`;
-  const gate = score.answerGateScore === undefined ? "" : ` / gate ${score.answerGateScore.toFixed(2)}`;
-  return `lex ${formatRank(score.lexicalRank)} / vec ${formatRank(score.vectorRank)}${rerank}${gate} / trust ${score.trustScore.toFixed(2)}`;
+  const rerank = score.rerankScore === undefined ? "" : ` / 재순위 ${score.rerankScore.toFixed(3)}`;
+  const gate = score.answerGateScore === undefined ? "" : ` / 답변 ${score.answerGateScore.toFixed(2)}`;
+  return `키워드 ${formatRank(score.lexicalRank)} / 벡터 ${formatRank(score.vectorRank)}${rerank}${gate} / 신뢰 ${score.trustScore.toFixed(2)}`;
+}
+
+function formatPolicyLabel(reason: string): string {
+  if (reason === "insufficient_evidence") {
+    return "근거 부족";
+  }
+  if (reason === "unsupported_claim") {
+    return "주장 근거 없음";
+  }
+  return reason;
+}
+
+function formatSanitizedLabel(sanitized: boolean): string {
+  return sanitized ? "정리됨" : "원문 포함";
 }
