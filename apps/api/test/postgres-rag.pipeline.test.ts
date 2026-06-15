@@ -5,7 +5,7 @@ import { createLiveLLMProvider } from "../src/rag/postgres/live-llm-provider";
 import { runPostgresRagPipeline } from "../src/rag/postgres/postgres-rag.pipeline";
 
 describe("PostgreSQL RAG pipeline", () => {
-  it("embeds the query, retrieves PostgreSQL rows, calibrates DB scores, and generates a grounded answer", async () => {
+  it("embeds the query, retrieves PostgreSQL rows, normalizes ranks, and generates a grounded answer", async () => {
     const embeddedTexts: string[] = [];
     const executed: Array<{ text: string; values: unknown[] }> = [];
     const embeddingProvider: EmbeddingProvider = {

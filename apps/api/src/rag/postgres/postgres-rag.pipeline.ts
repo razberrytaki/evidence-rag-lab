@@ -67,7 +67,7 @@ export async function runPostgresRagPipeline(
   const result = await input.queryExecutor.query(retrievalSql.text, retrievalSql.values);
   const mappedCandidates = result.rows
     .map((row) => mapPostgresRetrievalRow(row as PostgresRetrievalRow))
-    .map(calibratePostgresCandidateScore);
+    .map(normalizeRankForLocalAnswerGate);
   const candidates = rerankByQueryEvidence({
     query: input.question,
     candidates: mappedCandidates,
@@ -79,12 +79,11 @@ export async function runPostgresRagPipeline(
       chunkId: candidate.chunk.id,
       reason: "stale_source"
     }));
-  const selectedContext = candidates
-    .filter((candidate) => candidate.score.retrievalScore >= MINIMUM_RETRIEVAL_SCORE)
-    .filter((candidate) => (candidate.score.rerankScore ?? candidate.score.retrievalScore) >= MINIMUM_RERANK_SCORE)
-    .filter((candidate) => candidate.score.trustScore >= MINIMUM_TRUST_SCORE)
-    .filter((candidate) => !rejected.some((rejection) => rejection.chunkId === candidate.chunk.id))
-    .slice(0, input.topK ?? DEFAULT_TOP_K);
+  const selectedContext = selectContextForGroundedAnswer({
+    candidates,
+    rejected,
+    topK: input.topK ?? DEFAULT_TOP_K
+  });
 
   const provider = input.llmProvider ?? new FakeLLMProvider();
   const modelConfig = input.modelConfig ?? resolveDefaultModelConfig(provider);
@@ -143,14 +142,38 @@ export async function runPostgresRagPipelineWithExecutorFromEnv(
   });
 }
 
-function calibratePostgresCandidateScore(candidate: RetrievalResult, index: number): RetrievalResult {
+interface GroundedContextSelectionInput {
+  candidates: RetrievalResult[];
+  rejected: QueryTrace["rejected"];
+  topK: number;
+}
+
+function selectContextForGroundedAnswer(input: GroundedContextSelectionInput): RetrievalResult[] {
+  const rejectedChunkIds = new Set(input.rejected.map((rejection) => rejection.chunkId));
+
+  return input.candidates
+    .filter((candidate) => isEligibleForGroundedAnswer(candidate, rejectedChunkIds))
+    .slice(0, input.topK);
+}
+
+function isEligibleForGroundedAnswer(candidate: RetrievalResult, rejectedChunkIds: ReadonlySet<string>): boolean {
+  return (
+    candidate.score.retrievalScore >= MINIMUM_RETRIEVAL_SCORE &&
+    (candidate.score.rerankScore ?? candidate.score.retrievalScore) >= MINIMUM_RERANK_SCORE &&
+    candidate.score.trustScore >= MINIMUM_TRUST_SCORE &&
+    !rejectedChunkIds.has(candidate.chunk.id)
+  );
+}
+
+function normalizeRankForLocalAnswerGate(candidate: RetrievalResult, index: number): RetrievalResult {
   return {
     ...candidate,
     score: {
       ...candidate.score,
       fusedRank: index + 1,
-      // PostgreSQL RRF scores are small raw rank-fusion values. The answer gate
-      // uses a separate 0..1 confidence scale until eval-driven calibration exists.
+      // PostgreSQL RRF is a rank-combination score, not calibrated confidence.
+      // The local answer gate uses rank order as a deterministic proxy until
+      // eval-driven score calibration exists.
       retrievalScore: Math.max(0, 0.99 - index * 0.1)
     }
   };
