@@ -143,28 +143,42 @@ export function buildPostgresLexicalRetrievalSql(input: PostgresLexicalRetrieval
 
   return {
     text: `
-WITH lexical_candidates AS (
+WITH lexical_base_candidates AS (
   SELECT
     document_chunks.id AS chunk_id,
+    ts_rank_cd(search_vector, websearch_to_tsquery($3::regconfig, $1)) AS text_rank
+  FROM document_chunks
+  WHERE search_vector @@ websearch_to_tsquery($3::regconfig, $1)
+  ORDER BY
+    text_rank DESC,
+    document_chunks.id ASC
+  LIMIT ($2 * 4)
+),
+exact_matches AS (
+  SELECT
+    lexical_base_candidates.chunk_id,
+    count(*)::double precision AS exact_match_count
+  FROM lexical_base_candidates
+  JOIN document_chunks ON document_chunks.id = lexical_base_candidates.chunk_id
+  CROSS JOIN LATERAL unnest($4::text[]) AS exact_terms(term)
+  WHERE strpos(lower(document_chunks.normalized_text), lower(exact_terms.term)) > 0
+  GROUP BY lexical_base_candidates.chunk_id
+),
+lexical_candidates AS (
+  SELECT
+    lexical_base_candidates.chunk_id,
     row_number() OVER (
       ORDER BY
-        exact_matches.exact_match_count DESC,
-        ts_rank_cd(search_vector, websearch_to_tsquery($3::regconfig, $1)) DESC,
-        document_chunks.id ASC
+        COALESCE(exact_matches.exact_match_count, 0) DESC,
+        lexical_base_candidates.text_rank DESC,
+        lexical_base_candidates.chunk_id ASC
     ) AS lexical_rank
-  FROM document_chunks
-  CROSS JOIN LATERAL (
-    SELECT count(*)::double precision AS exact_match_count
-    FROM unnest($4::text[]) AS exact_terms(term)
-    WHERE strpos(lower(document_chunks.normalized_text), lower(exact_terms.term)) > 0
-  ) AS exact_matches
-  WHERE
-    search_vector @@ websearch_to_tsquery($3::regconfig, $1)
-    OR exact_matches.exact_match_count > 0
+  FROM lexical_base_candidates
+  LEFT JOIN exact_matches USING (chunk_id)
   ORDER BY
-    exact_matches.exact_match_count DESC,
-    ts_rank_cd(search_vector, websearch_to_tsquery($3::regconfig, $1)) DESC,
-    document_chunks.id ASC
+    COALESCE(exact_matches.exact_match_count, 0) DESC,
+    lexical_base_candidates.text_rank DESC,
+    lexical_base_candidates.chunk_id ASC
   LIMIT $2
 )
 SELECT
@@ -244,29 +258,16 @@ export function buildPostgresHybridRetrievalSql(input: PostgresHybridRetrievalIn
 
   return {
     text: `
-WITH lexical_candidates AS (
+WITH lexical_base_candidates AS (
   SELECT
     document_chunks.id AS chunk_id,
-    row_number() OVER (
-      ORDER BY
-        exact_matches.exact_match_count DESC,
-        ts_rank_cd(search_vector, websearch_to_tsquery($5::regconfig, $1)) DESC,
-        document_chunks.id ASC
-    ) AS lexical_rank
+    ts_rank_cd(search_vector, websearch_to_tsquery($5::regconfig, $1)) AS text_rank
   FROM document_chunks
-  CROSS JOIN LATERAL (
-    SELECT count(*)::double precision AS exact_match_count
-    FROM unnest($6::text[]) AS exact_terms(term)
-    WHERE strpos(lower(document_chunks.normalized_text), lower(exact_terms.term)) > 0
-  ) AS exact_matches
-  WHERE
-    search_vector @@ websearch_to_tsquery($5::regconfig, $1)
-    OR exact_matches.exact_match_count > 0
+  WHERE search_vector @@ websearch_to_tsquery($5::regconfig, $1)
   ORDER BY
-    exact_matches.exact_match_count DESC,
-    ts_rank_cd(search_vector, websearch_to_tsquery($5::regconfig, $1)) DESC,
+    text_rank DESC,
     document_chunks.id ASC
-  LIMIT $3
+  LIMIT ($3 * 4)
 ),
 vector_candidates AS (
   SELECT
@@ -278,9 +279,36 @@ vector_candidates AS (
   LIMIT $3
 ),
 candidate_ids AS (
-  SELECT chunk_id FROM lexical_candidates
+  SELECT chunk_id FROM lexical_base_candidates
   UNION
   SELECT chunk_id FROM vector_candidates
+),
+exact_matches AS (
+  SELECT
+    candidate_ids.chunk_id,
+    count(*)::double precision AS exact_match_count
+  FROM candidate_ids
+  JOIN document_chunks ON candidate_ids.chunk_id = document_chunks.id
+  CROSS JOIN LATERAL unnest($6::text[]) AS exact_terms(term)
+  WHERE strpos(lower(document_chunks.normalized_text), lower(exact_terms.term)) > 0
+  GROUP BY candidate_ids.chunk_id
+),
+lexical_candidates AS (
+  SELECT
+    lexical_base_candidates.chunk_id,
+    row_number() OVER (
+      ORDER BY
+        COALESCE(exact_matches.exact_match_count, 0) DESC,
+        lexical_base_candidates.text_rank DESC,
+        lexical_base_candidates.chunk_id ASC
+    ) AS lexical_rank
+  FROM lexical_base_candidates
+  LEFT JOIN exact_matches USING (chunk_id)
+  ORDER BY
+    COALESCE(exact_matches.exact_match_count, 0) DESC,
+    lexical_base_candidates.text_rank DESC,
+    lexical_base_candidates.chunk_id ASC
+  LIMIT $3
 ),
 fused_candidates AS (
   SELECT

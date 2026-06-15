@@ -41,6 +41,7 @@ describe("PostgreSQL hybrid retrieval SQL", () => {
     expect(sql.text).toContain("LEFT JOIN lexical_candidates USING (chunk_id)");
     expect(sql.text).toContain("LEFT JOIN vector_candidates USING (chunk_id)");
     expect(sql.text).not.toContain("FULL OUTER JOIN");
+    expect(sql.text).not.toContain("OR exact_matches.exact_match_count > 0");
     expect(sql.text).not.toContain("drop table");
     expect(sql.values).toEqual([
       "semantic vectors'; drop table document_chunks; --",
@@ -50,6 +51,22 @@ describe("PostgreSQL hybrid retrieval SQL", () => {
       "english",
       []
     ]);
+  });
+
+  it("limits exact term boost to the bounded hybrid candidate set", () => {
+    const sql = buildPostgresHybridRetrievalSql({
+      query: "Which note names RAG_QUERY_MODE=postgres and RB-17A?",
+      embedding: [0.125, -0.25, 0.5],
+      topK: 7,
+      reciprocalRankK: 60
+    });
+
+    expect(sql.text).toContain("lexical_base_candidates AS");
+    expect(sql.text).toContain("candidate_ids AS");
+    expect(sql.text).toContain("FROM candidate_ids");
+    expect(sql.text).toContain("JOIN document_chunks ON candidate_ids.chunk_id = document_chunks.id");
+    expect(sql.text).toContain("LEFT JOIN exact_matches USING (chunk_id)");
+    expect(sql.text).not.toContain("FROM document_chunks\n  CROSS JOIN LATERAL");
   });
 
   it("rejects empty or invalid embeddings before SQL execution", () => {
@@ -75,7 +92,10 @@ describe("PostgreSQL retrieval mode SQL", () => {
 
     expect(sql.text).toContain("websearch_to_tsquery");
     expect(sql.text).toContain("ts_rank_cd");
-    expect(sql.text).toContain("strpos(lower(document_chunks.normalized_text), lower(exact_terms.term)) > 0");
+    expect(sql.text).toContain("lexical_base_candidates AS");
+    expect(sql.text).toContain("LEFT JOIN exact_matches USING (chunk_id)");
+    expect(sql.text).not.toContain("OR exact_matches.exact_match_count > 0");
+    expect(sql.text).not.toContain("FROM document_chunks\n  CROSS JOIN LATERAL");
     expect(sql.text).toContain("$4::text[]");
     expect(sql.text).toContain("NULL::bigint AS vector_rank");
     expect(sql.text).toContain("LIMIT $2");
