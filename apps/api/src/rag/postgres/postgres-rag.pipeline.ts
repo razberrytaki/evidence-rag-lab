@@ -27,7 +27,7 @@ import { createLiveLLMProvider } from "./live-llm-provider";
 
 const DEFAULT_TOP_K = 3;
 const MINIMUM_TRUST_SCORE = 0.5;
-const MINIMUM_RETRIEVAL_SCORE = 0.5;
+const MINIMUM_ANSWER_GATE_SCORE = 0.5;
 const MINIMUM_RERANK_SCORE = 0.5;
 
 export interface PostgresRagPipelineInput {
@@ -158,7 +158,7 @@ function selectContextForGroundedAnswer(input: GroundedContextSelectionInput): R
 
 function isEligibleForGroundedAnswer(candidate: RetrievalResult, rejectedChunkIds: ReadonlySet<string>): boolean {
   return (
-    candidate.score.retrievalScore >= MINIMUM_RETRIEVAL_SCORE &&
+    answerGateScore(candidate) >= MINIMUM_ANSWER_GATE_SCORE &&
     (candidate.score.rerankScore ?? candidate.score.retrievalScore) >= MINIMUM_RERANK_SCORE &&
     candidate.score.trustScore >= MINIMUM_TRUST_SCORE &&
     !rejectedChunkIds.has(candidate.chunk.id)
@@ -174,9 +174,13 @@ function normalizeRankForLocalAnswerGate(candidate: RetrievalResult, index: numb
       // PostgreSQL RRF is a rank-combination score, not calibrated confidence.
       // The local answer gate uses rank order as a deterministic proxy until
       // eval-driven score calibration exists.
-      retrievalScore: Math.max(0, 0.99 - index * 0.1)
+      answerGateScore: Math.max(0, 0.99 - index * 0.1)
     }
   };
+}
+
+function answerGateScore(candidate: RetrievalResult): number {
+  return candidate.score.answerGateScore ?? candidate.score.retrievalScore;
 }
 
 function resolveDefaultModelConfig(provider: LLMProvider): GenerateAnswerInput["modelConfig"] {

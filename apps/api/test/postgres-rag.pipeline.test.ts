@@ -60,7 +60,8 @@ describe("PostgreSQL RAG pipeline", () => {
     ]);
     expect(result.generation.status).toBe("answered");
     expect(result.selectedContext[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
-    expect(result.selectedContext[0]?.score.retrievalScore).toBe(0.99);
+    expect(result.selectedContext[0]?.score.retrievalScore).toBeCloseTo(0.01639344262295082);
+    expect(result.selectedContext[0]?.score.answerGateScore).toBe(0.99);
     expect(result.selectedContext[0]?.score.rerankScore).toBeGreaterThanOrEqual(0.5);
     expect("sanitized" in result.trace).toBe(false);
     expect(result.trace.candidates[0]?.chunk.id).toBe("hybrid-retrieval-note#chunk-001");
@@ -144,7 +145,8 @@ describe("PostgreSQL RAG pipeline", () => {
     expect(result.selectedContext[0]?.score).toMatchObject({
       rerankRank: 1,
       rerankScore: 0.787,
-      retrievalScore: 0.89
+      answerGateScore: 0.89,
+      retrievalScore: 0.015
     });
     expect(result.trace.candidates[0]?.chunk.id).toBe("reranker-latency-note#chunk-001");
   });
@@ -184,7 +186,8 @@ describe("PostgreSQL RAG pipeline", () => {
 
     expect(result.selectedContext).toEqual([]);
     expect(result.trace.candidates[0]?.score).toMatchObject({
-      retrievalScore: 0.99
+      answerGateScore: 0.99,
+      retrievalScore: 0.016
     });
     expect(result.trace.candidates[0]?.score.rerankScore ?? 1).toBeLessThan(0.5);
     expect(result.generation).toEqual({
@@ -417,6 +420,7 @@ describe("PostgreSQL RAG pipeline", () => {
             lexicalRank: 1,
             vectorRank: 1,
             fusedRank: 1,
+            answerGateScore: 0.99,
             retrievalScore: 0.99,
             trustScore: 1,
             freshnessScore: 1,

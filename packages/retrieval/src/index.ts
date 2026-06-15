@@ -98,7 +98,8 @@ function computeRerankScore(queryTokens: readonly string[], candidate: Retrieval
   );
   const matched = queryTokens.filter((token) => candidateTokens.has(token)).length;
   const evidenceCoverage = matched / queryTokens.length;
-  const rankPrior = Math.min(Math.max(candidate.score.retrievalScore, 0), 1);
+  const searchPrior = candidate.score.answerGateScore ?? candidate.score.retrievalScore;
+  const rankPrior = Math.min(Math.max(searchPrior, 0), 1);
 
   return roundScore((evidenceCoverage * 0.85 + rankPrior * 0.15) * candidate.score.trustScore);
 }

@@ -10,7 +10,8 @@ export class FakeLLMProvider implements LLMProvider {
     }
 
     const best = input.selectedContext[0];
-    if (best.score.retrievalScore < 0.5 || best.score.trustScore < 0.5) {
+    const answerGateScore = best.score.answerGateScore ?? best.score.retrievalScore;
+    if (answerGateScore < 0.5 || best.score.trustScore < 0.5) {
       return rejected("low_retrieval_confidence", "Retrieval confidence was below the answer threshold.");
     }
 

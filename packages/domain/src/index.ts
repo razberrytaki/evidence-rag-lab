@@ -52,6 +52,7 @@ export interface ScoreBreakdown {
   fusedRank?: number;
   rerankRank?: number;
   rerankScore?: number;
+  answerGateScore?: number;
   retrievalScore: number;
   trustScore: number;
   freshnessScore: number;

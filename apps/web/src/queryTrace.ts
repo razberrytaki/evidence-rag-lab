@@ -4,6 +4,7 @@ export interface PublicScoreBreakdown {
   fusedRank?: number;
   rerankRank?: number;
   rerankScore?: number;
+  answerGateScore?: number;
   retrievalScore: number;
   trustScore: number;
   freshnessScore: number;
@@ -106,7 +107,8 @@ export const sampleTrace: PublicQueryTrace = {
         fusedRank: 1,
         rerankRank: 1,
         rerankScore: 0.787,
-        retrievalScore: 0.99,
+        answerGateScore: 0.99,
+        retrievalScore: 0.032,
         trustScore: 0.8,
         freshnessScore: 1,
         duplicatePenalty: 0
@@ -122,7 +124,8 @@ export const sampleTrace: PublicQueryTrace = {
         fusedRank: 2,
         rerankRank: 2,
         rerankScore: 0.672,
-        retrievalScore: 0.89,
+        answerGateScore: 0.89,
+        retrievalScore: 0.031,
         trustScore: 0.8,
         freshnessScore: 1,
         duplicatePenalty: 0
@@ -137,7 +140,8 @@ export const sampleTrace: PublicQueryTrace = {
         fusedRank: 3,
         rerankRank: 3,
         rerankScore: 0.291,
-        retrievalScore: 0.79,
+        answerGateScore: 0.79,
+        retrievalScore: 0.016,
         trustScore: 0.3,
         freshnessScore: 0.3,
         duplicatePenalty: 0
@@ -322,6 +326,7 @@ function isScoreBreakdown(value: unknown): value is PublicScoreBreakdown {
     isOptionalNumber(value.fusedRank) &&
     isOptionalNumber(value.rerankRank) &&
     isOptionalNumber(value.rerankScore) &&
+    isOptionalNumber(value.answerGateScore) &&
     typeof value.retrievalScore === "number" &&
     typeof value.trustScore === "number" &&
     typeof value.freshnessScore === "number" &&
@@ -420,5 +425,6 @@ function formatRank(rank: number | undefined): string {
 
 function buildScoreLabel(score: PublicScoreBreakdown): string {
   const rerank = score.rerankScore === undefined ? "" : ` / rerank ${score.rerankScore.toFixed(3)}`;
-  return `lex ${formatRank(score.lexicalRank)} / vec ${formatRank(score.vectorRank)}${rerank} / trust ${score.trustScore.toFixed(2)}`;
+  const gate = score.answerGateScore === undefined ? "" : ` / gate ${score.answerGateScore.toFixed(2)}`;
+  return `lex ${formatRank(score.lexicalRank)} / vec ${formatRank(score.vectorRank)}${rerank}${gate} / trust ${score.trustScore.toFixed(2)}`;
 }

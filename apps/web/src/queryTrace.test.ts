@@ -26,7 +26,8 @@ describe("query trace view model", () => {
           fusedRank: 1,
           rerankRank: 1,
           rerankScore: 0.787,
-          retrievalScore: 0.99,
+          answerGateScore: 0.99,
+          retrievalScore: 0.032,
           trustScore: 0.8,
           freshnessScore: 1,
           duplicatePenalty: 0
@@ -40,7 +41,8 @@ describe("query trace view model", () => {
           lexicalRank: 2,
           rerankRank: 2,
           rerankScore: 0.291,
-          retrievalScore: 0.89,
+          answerGateScore: 0.89,
+          retrievalScore: 0.016,
           trustScore: 0.3,
           freshnessScore: 0.3,
           duplicatePenalty: 0
@@ -70,13 +72,13 @@ describe("query trace view model", () => {
       {
         stage: "Rerank 1",
         candidate: "hybrid-retrieval-note#chunk-001",
-        score: "lex 1 / vec 2 / rerank 0.787 / trust 0.80",
+        score: "lex 1 / vec 2 / rerank 0.787 / gate 0.99 / trust 0.80",
         decision: "selected"
       },
       {
         stage: "Rerank 2",
         candidate: "deployment-policy-v1#chunk-001",
-        score: "lex 2 / vec - / rerank 0.291 / trust 0.30",
+        score: "lex 2 / vec - / rerank 0.291 / gate 0.89 / trust 0.30",
         decision: "rejected"
       }
     ]);
