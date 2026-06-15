@@ -55,6 +55,7 @@ Firewall을 `sfw pnpm install --frozen-lockfile`로 실행한다.
 ## 수동 검토
 
 - `.env`가 ignored 상태이며 staged 상태가 아닌지 확인한다.
+- `docs/submission/`이 ignored 상태이며 staged 상태가 아닌지 확인한다.
 - 생성 보고서가 집계 데이터만 포함하는지 확인한다.
 - docs가 과장된 표현을 사용하지 않는지 확인한다.
 - 샘플 문서가 합성이거나 사용 메모가 있는 짧은 공개 발췌인지 확인한다.

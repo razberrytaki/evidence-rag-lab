@@ -130,7 +130,7 @@ describe("public readiness scanner", () => {
     writeMinimalReadinessFiles(root, {
       includeLicense: true,
       ciCommand: "pnpm security:public",
-      gitignoreText: "*.sql\n"
+      gitignoreText: "*.sql\ndocs/submission/\n"
     });
 
     const result = scanPublicReadiness(root);
@@ -138,6 +138,24 @@ describe("public readiness scanner", () => {
     assert.equal(result.ok, false);
     assert.deepEqual(result.failures, [
       { path: "infra/postgres/init/001_schema.sql", reason: "required-file-is-gitignored" }
+    ]);
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("requires local submission drafts to stay gitignored", () => {
+    const root = makeTempRepo();
+    writeMinimalReadinessFiles(root, {
+      includeLicense: true,
+      ciCommand: "pnpm security:public",
+      gitignoreText: ".env\n"
+    });
+
+    const result = scanPublicReadiness(root);
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.failures, [
+      { path: "docs/submission/", reason: "local-only-path-must-be-gitignored" }
     ]);
 
     rmSync(root, { recursive: true, force: true });
@@ -196,7 +214,7 @@ function writeMinimalReadinessFiles(root, input) {
   const openAiApiKey = "OPENAI" + "_API_KEY";
   writeFileSync(join(root, "README.md"), "# EvidenceRAG Lab\n");
   writeFileSync(join(root, ".env.example"), `${openAiApiKey}=\n`);
-  writeFileSync(join(root, ".gitignore"), input.gitignoreText ?? ".env\n");
+  writeFileSync(join(root, ".gitignore"), input.gitignoreText ?? ".env\ndocs/submission/\n");
   writeFileSync(join(root, ".gitleaks.toml"), "title = \"EvidenceRAG Lab\"\n");
   writeFileSync(join(root, "infra", "postgres", "init", "001_schema.sql"), "CREATE EXTENSION IF NOT EXISTS vector;\n");
   writeFileSync(join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");

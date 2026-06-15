@@ -110,6 +110,24 @@ describe("public tree scanner", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it("skips local-only submission drafts under docs", () => {
+    const root = makeTempRepo();
+    const openAiApiKey = "OPENAI" + "_API_KEY";
+    mkdirSync(join(root, "docs", "submission"), { recursive: true });
+    writeFileSync(join(root, "docs", "submission", "devcat-code-brief.md"), `${openAiApiKey}=sk-local-draft-secret\n`);
+    writeFileSync(join(root, "README.md"), "Public setup instructions only.\n");
+
+    const result = scanPublicTree(root);
+
+    assert.deepEqual(result, {
+      ok: true,
+      failures: [],
+      scannedFileCount: 1
+    });
+
+    rmSync(root, { recursive: true, force: true });
+  });
+
   it("allows explicit fake secret markers used by unit tests", () => {
     const root = makeTempRepo();
     const openAiApiKey = "OPENAI" + "_API_KEY";

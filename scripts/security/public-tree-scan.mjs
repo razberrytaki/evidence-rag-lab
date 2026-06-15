@@ -24,6 +24,9 @@ const PUBLIC_ROOT_FILES = [
 const PUBLIC_ROOT_FILE_SET = new Set(PUBLIC_ROOT_FILES);
 const LOCAL_ONLY_ROOT_ENTRY_PATTERN =
   /^(?:\.git|node_modules|\.env|\.env\.local|\.env\.[^.]+\.local|\.DS_Store|\.agents|\.obsidian|\.pnpm-store|skills-lock\.json)$/;
+const LOCAL_ONLY_PATH_PATTERNS = [
+  /^docs\/submission(?:\/|$)/
+];
 const TEXT_FILE_PATTERN = /(?:^|\/)(?:LICENSE|\.gitignore|\.npmrc)$|\.(cjs|css|env\.example|html|js|json|md|mjs|sql|toml|ts|tsx|txt|yaml|yml)$/i;
 const EXCLUDED_DIRECTORY_NAMES = new Set([".git", ".turbo", ".vite", "coverage", "dist", "node_modules"]);
 
@@ -101,6 +104,10 @@ export function scanPublicTree(root = process.cwd()) {
 
   for (const publicPath of listPublicCandidateFiles(root)) {
     const relativePath = toPosix(relative(root, publicPath));
+    if (isLocalOnlyPath(relativePath)) {
+      continue;
+    }
+
     const blockedPath = BLOCKED_PATH_PATTERNS.find(({ pattern }) => pattern.test(relativePath));
     if (blockedPath) {
       failures.push({
@@ -145,6 +152,10 @@ export function scanPublicTree(root = process.cwd()) {
     failures,
     scannedFileCount
   };
+}
+
+function isLocalOnlyPath(relativePath) {
+  return LOCAL_ONLY_PATH_PATTERNS.some((pattern) => pattern.test(relativePath));
 }
 
 function findUnexpectedRootEntries(root) {

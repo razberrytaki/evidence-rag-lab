@@ -16,6 +16,10 @@ const REQUIRED_FILES = [
   "pnpm-workspace.yaml"
 ];
 
+const REQUIRED_LOCAL_ONLY_GITIGNORE_PATHS = [
+  "docs/submission/"
+];
+
 const PUBLIC_CHECK_SCRIPT_COMMANDS = [
   "pnpm build",
   "pnpm test",
@@ -49,6 +53,7 @@ export function scanPublicReadiness(root = process.cwd()) {
     }
   }
   checkRequiredFilesAreNotGitignored(root, failures);
+  checkLocalOnlyPathsAreGitignored(root, failures);
 
   const packagePath = join(root, "package.json");
   if (existsSync(packagePath)) {
@@ -124,6 +129,20 @@ export function scanPublicReadiness(root = process.cwd()) {
     ok: failures.length === 0,
     failures
   };
+}
+
+function checkLocalOnlyPathsAreGitignored(root, failures) {
+  const gitignorePath = join(root, ".gitignore");
+  if (!existsSync(gitignorePath)) {
+    return;
+  }
+
+  const rules = parseGitignoreRules(readFileSync(gitignorePath, "utf8"));
+  for (const path of REQUIRED_LOCAL_ONLY_GITIGNORE_PATHS) {
+    if (!isGitignoredByRules(`${path}.keep`, rules)) {
+      failures.push({ path, reason: "local-only-path-must-be-gitignored" });
+    }
+  }
 }
 
 function checkMitLicense(root, failures) {

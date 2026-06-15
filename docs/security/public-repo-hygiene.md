@@ -3,6 +3,7 @@
 ## 커밋 금지
 
 - `.env`, `.env.local`, `.env.*.local`
+- `docs/submission/` 아래 제출용 초안
 - API key, 접근 토큰, OAuth 비밀값, LLM 제공자 비밀값
 - `.npmrc` registry 인증 토큰
 - 회사 문서, 비공개 운영 노트, 고객/개인 데이터
@@ -41,6 +42,8 @@
 `node_modules` 같은 로컬 전용 루트 항목은 건너뛴다. 예상하지 않은 루트 파일, 원문 추적
 기록 경로, LLM 응답 산출물, dump/cache 경로, `.npmrc` registry 인증 토큰, 흔한
 비밀값 패턴이 있으면 실패한다.
+`docs/submission/`은 제출용 초안 작업 공간으로 취급해 공개 스캔 대상에서 제외한다.
+대신 `security:readiness`가 이 경로가 `.gitignore`에 남아 있는지 확인한다.
 
 `security:readiness`는 루트 공개 메타데이터, package metadata와 일치하는
 `LICENSE`, CI의 `pnpm security:public` 실행, 로컬 `public:check` 스크립트의 필수
@@ -48,7 +51,8 @@
 빌드하는지와 supply-chain workflow가 main push에서 실행되는지도 확인한다. 느슨한
 문자열 매칭이 아니라 실행 가능한 명령 구간을 검증하므로 출력 문자열에 적힌 명령은
 검증 절차를 만족하지 않는다. 또한 `infra/postgres/init/001_schema.sql` 같은
-공개 필수 파일이 `.gitignore` 규칙에 숨겨져 있지 않은지도 확인한다.
+공개 필수 파일이 `.gitignore` 규칙에 숨겨져 있지 않은지, 제출용 초안 경로가
+계속 `.gitignore`에 남아 있는지도 확인한다.
 
 `security:public`은 로컬 공개 파일/준비 검사를 실행한다. 커밋 이력 비밀값 검사와
 supply-chain 검사는 별도 검증 절차다.
