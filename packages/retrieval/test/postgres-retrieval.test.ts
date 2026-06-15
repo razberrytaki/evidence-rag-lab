@@ -34,9 +34,12 @@ describe("PostgreSQL hybrid retrieval SQL", () => {
 
     expect(sql.text).toContain("websearch_to_tsquery");
     expect(sql.text).toContain("embedding <=> $2::vector");
+    expect(sql.text).toContain("vector_base_candidates AS MATERIALIZED");
+    expect(sql.text).toContain("FROM vector_base_candidates");
     expect(sql.text).toContain("$6::text[]");
     expect(sql.text).toContain("1.0 / ($4 +");
     expect(sql.text).toContain("LIMIT $3");
+    expect(sql.text).not.toContain("row_number() OVER (ORDER BY embedding <=> $2::vector)");
     expect(sql.text).not.toContain("embedding <=> $2::vector, id ASC");
     expect(sql.text).toContain("candidate_ids AS");
     expect(sql.text).toContain("LEFT JOIN lexical_candidates USING (chunk_id)");
@@ -117,10 +120,13 @@ describe("PostgreSQL retrieval mode SQL", () => {
     });
 
     expect(sql.text).toContain("embedding <=> $1::vector");
+    expect(sql.text).toContain("vector_base_candidates AS MATERIALIZED");
+    expect(sql.text).toContain("FROM vector_base_candidates");
     expect(sql.text).toContain("NULL::bigint AS lexical_rank");
     expect(sql.text).toContain("1.0 / ($3 + vector_candidates.vector_rank)");
     expect(sql.text).toContain("LIMIT $2");
     expect(sql.text).not.toContain("websearch_to_tsquery");
+    expect(sql.text).not.toContain("row_number() OVER (ORDER BY embedding <=> $1::vector)");
     expect(sql.text).not.toContain("embedding <=> $1::vector, id ASC");
     expect(sql.values).toEqual(["[0.25,-0.5,0.75]", 5, 60]);
   });

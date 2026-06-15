@@ -214,14 +214,20 @@ export function buildPostgresVectorRetrievalSql(input: PostgresVectorRetrievalIn
 
   return {
     text: `
-WITH vector_candidates AS (
+WITH vector_base_candidates AS MATERIALIZED (
   SELECT
     id AS chunk_id,
-    row_number() OVER (ORDER BY embedding <=> $1::vector) AS vector_rank
+    embedding <=> $1::vector AS vector_distance
   FROM document_chunks
   WHERE embedding IS NOT NULL
-  ORDER BY embedding <=> $1::vector
+  ORDER BY vector_distance ASC
   LIMIT $2
+),
+vector_candidates AS (
+  SELECT
+    chunk_id,
+    row_number() OVER (ORDER BY vector_distance ASC, chunk_id ASC) AS vector_rank
+  FROM vector_base_candidates
 )
 SELECT
   source_documents.id AS document_id,
@@ -269,14 +275,20 @@ WITH lexical_base_candidates AS (
     document_chunks.id ASC
   LIMIT ($3 * 4)
 ),
-vector_candidates AS (
+vector_base_candidates AS MATERIALIZED (
   SELECT
     id AS chunk_id,
-    row_number() OVER (ORDER BY embedding <=> $2::vector) AS vector_rank
+    embedding <=> $2::vector AS vector_distance
   FROM document_chunks
   WHERE embedding IS NOT NULL
-  ORDER BY embedding <=> $2::vector
+  ORDER BY vector_distance ASC
   LIMIT $3
+),
+vector_candidates AS (
+  SELECT
+    chunk_id,
+    row_number() OVER (ORDER BY vector_distance ASC, chunk_id ASC) AS vector_rank
+  FROM vector_base_candidates
 ),
 candidate_ids AS (
   SELECT chunk_id FROM lexical_base_candidates
